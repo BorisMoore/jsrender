@@ -16,7 +16,7 @@
 		// Prototype is $.tmplSettings.view, which provides both methods and fields.
 
 		var self = this,
-			annotate = ( parentView||options ).annotate;
+			annotate = !!$.view || ( parentView||options ).annotate; // Temporary. Need to provide callout that JsViews can use to insert annotations
 		self.parent = parentView || null;
 		parentView = parentView || {};
 		options.path = options.path || "~";
@@ -200,6 +200,7 @@
 	function renderViews( tmpl, data, options, parentView ) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 		options = options || {};
+		options.annotate = options.annotate || !!$.view; // Temporary. Need to provide callout that JsViews can use to insert annotations
 		var arrayView, ret, topLevel = !parentView;
 		if ( topLevel ) {
 			// This is a top-level tmpl call (not from a nested template using {{tmpl}})
