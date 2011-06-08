@@ -15,7 +15,8 @@
 		// The content field is a hierarchical array of strings and nested views.
 		// Prototype is $.tmplSettings.view, which provides both methods and fields.
 
-		var self = this,
+		var content, 
+			self = this,
 			annotate = !!$.view || ( parentView||options ).annotate; // Temporary. Need to provide callout that JsViews can use to insert annotations
 		self.parent = parentView || null;
 		parentView = parentView || {};
@@ -71,7 +72,7 @@
 				// Compile template and associate with name
 				if ( typeof tmpl === "string" ) {
 					// This is an HTML string being passed directly in.
-					tmpl = buildTmplFn( tmpl )
+					tmpl = buildTmplFn( tmpl );
 				} else if ( tmpl instanceof $ ) {
 					tmpl = tmpl[0] || null; // WAS || {};
 				}
