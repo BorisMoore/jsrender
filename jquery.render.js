@@ -15,12 +15,12 @@
 		// The content field is a hierarchical array of strings and nested views.
 		// Prototype is $.tmplSettings.view, which provides both methods and fields.
 
-		var content, 
+		var content,
 			self = this,
 			annotate = !!$.view || ( parentView||options ).annotate; // Temporary. Need to provide callout that JsViews can use to insert annotations
 		self.parent = parentView || null;
 		parentView = parentView || {};
-		options.path = options.path || "~";
+		options.path = options.path || "";
 		$.extend( self, options, {
 			data: data || parentView.data || {},
 			annotate: annotate,
@@ -80,7 +80,7 @@
 					// If this is a template block, use cached copy, or generate tmpl function and cache.
 					tmpl = $.data( tmpl, "tmpl" ) || $.data( tmpl, "tmpl", buildTmplFn( tmpl.innerHTML ));
 				}
-				tmpl._name = tmpl._name || "_" + autoName++;
+				tmpl._name = tmpl._name || name || "_" + autoName++;
 				return $.template[ tmpl._name ] = tmpl;
 			}
 			// Return named compiled template
@@ -280,7 +280,7 @@
 				})
 
 			// If content is not defined, return view directly. Not a view. May be a string, or a string array, e.g. from {{html $view.html()}}.
-			: view;
+			: view || [];
 	}
 
 	function jqObjectWithTextNodes( content ) {
@@ -322,7 +322,7 @@
 			// Convert the template into pure JavaScript
 			$.trim(markup)
 				.replace( /([\\'])/g, "\\$1" )
-				.replace( /[\r\t\n]/g, " " )
+				.replace( /[\r\t\n]/g, " " )  // TODO This can now be removed, or made optional, for a 'preserve white-space mode
 				.replace( regExShortCut, "{{= $1}}" )
 				.replace( /\{\{(\/?)(\w+|.)(?:\(((?:[^\}]|\}(?!\}))*?)?\))?(?:\s+(.*?)?)?(\(((?:[^\}]|\}(?!\}))*)\))?\s*\}\}/g,
 				function( all, slash, type, fnargs, target, parens, args ) {
