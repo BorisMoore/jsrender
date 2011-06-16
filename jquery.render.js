@@ -68,7 +68,7 @@
 		// If templateString includes at least one HTML tag, $.template( templateString ) is equivalent
 		// to $.template( null, templateString )
 		template: function( name, tmpl ) {
-			if (tmpl) {
+			if ( tmpl !== undefined ) {
 				// Compile template and associate with name
 				if ( typeof tmpl === "string" ) {
 					// This is an HTML string being passed directly in.
@@ -161,9 +161,7 @@
 					// nested template, using {{tmpl}} tag
 					options = options || {};
 					options.path = paramString;
-					var ret = renderViews( $.template( tmpl ), data, options, this );
-					return ret;
-
+					return renderViews( $.template( tmpl ), data, options, this );
 				},
 				wrap: function( call, wrapped ) {
 					// nested template, using {{wrap}} tag
@@ -239,15 +237,6 @@
 				delete options.addIds;
 			}
 		}
-//		if ( $.isArray( data )) {
-//			arrayView = new View( options, parentView, null, data );
-//			return $.map( data, function( dataItem ) {
-//				options.path = "*";
-//				return dataItem ? new View( options, arrayView, tmpl, dataItem ) : null;
-//			})
-//		}
-//		return [ new View( options, parentView, tmpl, data ) ];
-
 		if ( $.isArray( data )) {
 			arrayView = new View( options, parentView, null, data );
 			ret = $.map( data, function( dataItem ) {
