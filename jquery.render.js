@@ -5,7 +5,8 @@
  */
 
 (function( $, undefined ) {
-	var oldManip = $.fn.domManip, htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
+	var oldManip = $.fn.domManip,
+		htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
 		viewKey = 0, stack = [], autoName = 0,
 		defaultOpen = "$view.calls($view,__,$1,$2);__=[];",
 		defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"];
@@ -48,6 +49,14 @@
 		}
 	});
 
+	function try$( selector ) {
+		// If selector is valid, return jQuery object, otherwise return (invalid) selector string
+		try {
+			return $( selector );
+		} catch( e) {}
+		return selector;
+	}
+
 	$.extend({
 		// Return string obtained by rendering template against data.
 		render: function( tmpl, data, options, parentView ) {
@@ -65,29 +74,35 @@
 		// Use $.template( name ) to access a cached template.
 		// Also $( selectorToScriptBlock ).template(), or $.template( null, templateString )
 		// will return the compiled template, without adding a name reference.
-		// If templateString includes at least one HTML tag, $.template( templateString ) is equivalent
-		// to $.template( null, templateString )
+		// If templateString is not a selector, $.template( templateString ) is equivalent
+		// to $.template( null, templateString ). To ensure a string is treated as a template,
+		// include an HTML element, an HTML comment, or a template comment tag.
 		template: function( name, tmpl ) {
-			if ( tmpl !== undefined ) {
+			if (tmpl) {
 				// Compile template and associate with name
 				if ( typeof tmpl === "string" ) {
 					// This is an HTML string being passed directly in.
 					tmpl = buildTmplFn( tmpl );
 				} else if ( tmpl instanceof $ ) {
-					tmpl = tmpl[0] || null; // WAS || {};
+					tmpl = tmpl[0];
 				}
-				if ( tmpl && tmpl.nodeType ) {
-					// If this is a template block, use cached copy, or generate tmpl function and cache.
-					tmpl = $.data( tmpl, "tmpl" ) || $.data( tmpl, "tmpl", buildTmplFn( tmpl.innerHTML ));
+				if ( tmpl ) {
+					if ( tmpl.nodeType ) {
+						// If this is a template block, use cached copy, or generate tmpl function and cache.
+						tmpl = $.data( tmpl, "tmpl" ) || $.data( tmpl, "tmpl", buildTmplFn( tmpl.innerHTML ));
+					}
+					$.template[ tmpl._name = tmpl._name || name || "_" + autoName++ ] = tmpl;
 				}
-				tmpl._name = tmpl._name || name || "_" + autoName++;
-				return $.template[ tmpl._name ] = tmpl;
+				return tmpl;
 			}
 			// Return named compiled template
-			return name ? (typeof name !== "string" ? $.template( null, name ):
-				($.template[name] ||
-					// If not in map, treat as a selector. (If integrated with core, use quickExpr.exec)
-					$.template( null, htmlExpr.test( name ) ? name : $( name )))) : null;
+			return name
+				? typeof name !== "string"
+					? $.template( null, name )
+					: $.template[name] ||
+						// If not in map, treat as a selector. (If integrated with core, use quickExpr.exec)
+						$.template( null, htmlExpr.test( name ) ? name : try$( name ))
+				: null;
 		},
 
 		encode: function( text ) {
@@ -237,6 +252,7 @@
 				delete options.addIds;
 			}
 		}
+
 		if ( $.isArray( data )) {
 			arrayView = new View( options, parentView, null, data );
 			ret = $.map( data, function( dataItem ) {
