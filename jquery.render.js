@@ -11,41 +11,55 @@
 		defaultOpen = "$view.calls($view,__,$1,$2);__=[];",
 		defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"];
 
-	function View( options, parentView, tmplFn, data ) { //, index ) {
+	function setViewContext( view, context, merge ) {
+		var parentContext = view.parent && view.parent.ctx;
+		// Set additional context on this view (which will modify the context inherited from the parent, and be inherited by child views)
+		view.ctx = context && context === parentContext
+			? parentContext
+			: (view._ctx = context, (parentContext ? $.extend( {}, parentContext, context ) : context));
+	}
+
+	function View( context, parentView, tmplFn, data, path ) { //, index ) {
 		// Returns a view data structure for a new rendered instance of a template.
 		// The content field is a hierarchical array of strings and nested views.
 		// Prototype is $.tmplSettings.view, which provides both methods and fields.
 
 		var content,
 			self = this,
-			annotate = !!$.view || ( parentView||options ).annotate; // Temporary. Need to provide callout that JsViews can use to insert annotations
-		self.parent = parentView || null;
+			parentContext;
+
+		self.parent = parentView;
 		parentView = parentView || {};
-		options.path = options.path || "";
-		$.extend( self, options, {
+		parentContext = parentView.ctx;
+
+		$.extend( self, {
+			path: path || "",
+			// inherit context from parentView, merged with new context.
 			data: data || parentView.data || {},
-			annotate: annotate,
 			tmpl: tmplFn || null,
 			_wrap: parentView._wrap
 		});
 
+		setViewContext( self, context );
+
 		if ( tmplFn ) {
-			// Build the hierarchical content to be used during insertion into DOM
+			// Build the hierarchical content of strings, by executing the compiled template function
 			content = self.tmpl( $, self );
-			self._ctnt = ( annotate && $.isArray( parentView.data )) ? [].concat( "<!--item-->", content, "<!--/item-->" ) : content;
+	//annotate = !!$.view; // TEMPORARY - make extensible and configurable
+			self._ctnt = ( !!$.view && $.isArray( parentView.data )) ? [].concat( "<!--item-->", content, "<!--/item-->" ) : content;
 			self.key = ++viewKey;
 		}
 	}
 	$.fn.extend({
 		// Use first wrapped element as template markup.
 		// Return string obtained by rendering the template against data.
-		render: function( data, options, parentView ) {
-			return $.render( this[0], data, options, parentView );
+		render: function( data, context, parentView ) {
+			return $.render( this[0], data, context, parentView );
 		},
 
 		// Consider the first wrapped element as a template declaration, and get the compiled template or store it as a named template.
-		template: function( name, options ) {
-			return $.template( name, this[0], options );
+		template: function( name, context ) {
+			return $.template( name, this[0], context );
 		}
 	});
 
@@ -59,8 +73,9 @@
 
 	$.extend({
 		// Return string obtained by rendering template against data.
-		render: function( tmpl, data, options, parentView ) {
-			var ret = renderTemplate( tmpl, data, options, parentView );
+		render: function( tmpl, data, context, parentView, topLevel ) {
+			var ret = renderViews( tmpl, data, context, parentView, topLevel );
+			ret = ( !topLevel && parentView && tmpl) ? ret : buildStringArray( parentView, ret ).join("");
 			viewKey = 0;
 			return ret;
 		},
@@ -172,18 +187,15 @@
 					}
 					stack.push( arguments );
 				},
-				nest: function( tmpl, paramString, data, options ) {
+				nest: function( tmpl, paramString, data, context ) {
 					// nested template, using {{tmpl}} tag
-					options = options || {};
-					options.path = paramString;
-					return renderViews( $.template( tmpl ), data, options, this );
+					return renderViews( tmpl, data, context, this, paramString );
 				},
 				wrap: function( call, wrapped ) {
 					// nested template, using {{wrap}} tag
-					var options = call[4] || {};
-					options.wrapped = wrapped;
+					call[0]._wrapped = wrapped; // Add to view
 					// Apply the template, which may incorporate wrapped content,
-					return $.render( $.template( call[2] ), call[3], options, call[0] ); // tmpl, data, options, view
+					return $.render( $.template( call[2] ), call[3], call[4], call[0] ); // tmpl, data, context, view
 				},
 				html: function( filter, textOnly ) {
 					var wrapped = this._wrap;
@@ -206,67 +218,46 @@
 
 	//========================== Private helper functions, used by code above ==========================
 
-	function renderTemplate( tmpl, data, options, parentView ) {
-		var ret = renderViews( tmpl, data, options, parentView );
-		return (parentView && tmpl) ? ret : buildStringArray( parentView, ret ).join("");
-	}
-
-	function renderViews( tmpl, data, options, parentView ) {
+	function renderViews( tmpl, data, context, parentView, path ) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
-		options = options || {};
-		options.annotate = options.annotate || !!$.view; // Temporary. Need to provide callout that JsViews can use to insert annotations
-		var arrayView, ret, topLevel = !parentView;
-		if ( topLevel ) {
-			// This is a top-level tmpl call (not from a nested template using {{tmpl}})
-//			parentView = topView;
+	//		context = context || {};
+	//		context.annotate = context.annotate || !!$.view; // Temporary. Need to provide callout that JsViews can use to insert annotations
+		var arrayView, ret,
+			topLevel = !parentView;
+
+		if ( tmpl ) {
+			tmpl  = $.template( tmpl );
 			if ( !$.isFunction( tmpl ) ) {
 				tmpl = $.template[tmpl] || $.template( null, tmpl );
 			}
-//			wrappedViews = {}; // Any wrapped views will be rebuilt, since this is top level
-		} else if ( !tmpl ) {
-			// The view is already associated with DOM - this is a refresh.
-			// Re-evaluate rendered template for the parentView
-			tmpl = parentView.tmpl;
-//			newViews[parentView.key] = parentView;
-			parentView.nodes = [];
-			if ( parentView.wrapped ) {
-				updateWrapped( parentView, parentView.wrapped );
-			}
-			// Rebuild, without creating a new view
-			return parentView.tmpl( $, parentView );
 		}
 		if ( !tmpl ) {
 			return null; // Could throw...
 		}
-	//	options =  $.extend( {}, options, tmpl )
 		if ( typeof data === "function" ) {
 			data = data.call( parentView || {} );
 		}
-		if ( options.wrapped ) {
-			updateWrapped( options, options.wrapped );
-			if ( options.addIds ) {
-				// TEMPORARY?
-				tmpl = $.template( null, options._wrap );
-				options._wrap = null;
-				options.wrapped = null;
-				delete options.addIds;
-			}
+		if ( parentView && parentView._wrapped ) {
+			updateWrapped( parentView );
 		}
 
 		if ( $.isArray( data )) {
-			arrayView = new View( options, parentView, null, data );
+			// Create a view item for the array, whose child views correspond to each data item.
+			arrayView = new View( context, parentView, null, data, path );
 			ret = $.map( data, function( dataItem ) {
-				options.path = "*";
-				return dataItem ? new View( options, arrayView, tmpl, dataItem ) : null;
+				// Create child views corresponding to the rendered template for each data item.
+				return dataItem ? new View( context, arrayView, tmpl, dataItem, "*" ) : null;
 			})
 		} else {
-			ret = [ new View( options, parentView, tmpl, data ) ];
+			ret = [ new View( context, parentView, tmpl, data, path ) ];
 		}
-		return ( parentView || options ).annotate
+		return $.view
+			// If $.view is defined, include annotations
 			? [].concat(
 				"<!--tmpl(" + (arrayView||ret[0]).path + ") " + tmpl._name + "-->", //+ tmpl._name + ":"
 				ret,
 				"<!--/tmpl-->" )
+			// else return just the string array
 			: ret;
 	}
 
@@ -275,7 +266,7 @@
 		// (optionally with attribute annotations for views)
 		// Add data-jq-path attribute to top-level elements (if any) of the rendered view...
 
-		var annotate = view && view.annotate;
+	//		var annotate = view && view.annotate;
 
 		return content
 			? $.map( content, function( view ) {
@@ -319,7 +310,7 @@
 	function buildTmplFn( markup ) {
 		var regExShortCut = /\$\{([^\}]*)\}/g;
 
-		var code = "var $=jQuery,call,__=[],$data=$view.data;" +
+		var code = "var call,__=[],$data=$view.data,$ctx=$view.ctx||{};" +
 
 			// Introduce the data as local variables using with(){}
 			"with($data){__.push('" +
@@ -352,20 +343,21 @@
 						tag[ slash ? "close" : "open" ]
 							.split( "$notnull_1" ).join( target ? "typeof(" + target + ")!=='undefined' && (" + target + ")!=null" : "true" )
 							.split( "$1a" ).join( exprAutoFnDetect )
-							.split( "$2s" ).join( "'" + fnargs + "'" )  // TODO Optimize for perf later...
+							.split( "$2s" ).join( "'" + fnargs + "'" )  // This means fnargs must not include single quotes!! // TODO Optimize for perf later...
 							.split( "$1" ).join( expr )
 							.split( "$2" ).join( fnargs || def.$2 || "" ) +
 						"__.push('";
 					return test;
 				}) +
 			"');}return __;"
-		return new Function( "jQuery","$view", code );
+		return new Function( "$","$view", code );
 	}
 
-	function updateWrapped( options, wrapped ) {
+	function updateWrapped( view ) {
 		// Build the wrapped content.
-		options._wrap = buildStringArray( options,
-			// Suport imperative scenario in which options.wrapped can be set to a selector or an HTML string.
+		var wrapped = view._wrapped;
+		view._wrap = buildStringArray( view,
+			// Suport imperative scenario in which context.wrapped can be set to a selector or an HTML string.
 			$.isArray( wrapped ) ? wrapped : [htmlExpr.test( wrapped ) ? wrapped : $( wrapped ).html()]
 		).join("");
 	}
