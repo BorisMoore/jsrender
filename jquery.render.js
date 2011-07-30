@@ -10,7 +10,20 @@ var htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
 	stack = [], 
 	autoName = 0,
 	defaultOpen = "$view.calls($view,__,$1,$2);__=[];",
-	defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"];
+	defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"],
+	escapeMapForHtml = {
+		"&": "&amp;",
+		"<": "&lt;",
+		">": "&gt;"
+	},
+	htmlSpecialChar = /[\x00"&'<>]/g;
+
+function replacerForHtml( ch ) {
+	// Original code from Mike Samuel <msamuel@google.com>
+	return escapeMapForHtml[ ch ]
+		// Intentional assignment that caches the result of encoding ch.
+		|| ( escapeMapForHtml[ ch ] = "&#" + ch.charCodeAt( 0 ) + ";" );
+}
 
 function setViewContext( view, context, merge ) {
 	var parentContext = view.parent && view.parent.ctx;
@@ -123,7 +136,9 @@ $.extend({
 
 	encode: function( text ) {
 		// Do HTML encoding replacing < > & and ' and " by corresponding entities.
-		return ("" + text).split("<").join("&lt;").split(">").join("&gt;").split('"').join("&#34;").split("'").join("&#39;");
+		// Implementation, from Mike Samuel <msamuel@google.com>
+		return text === undefined
+			? "" : String( text ).replace( htmlSpecialChar, replacerForHtml );
 	},
 
 	// The following substitution terms can be uses in template tag definitions:
