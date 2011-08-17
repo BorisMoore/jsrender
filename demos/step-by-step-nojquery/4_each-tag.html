@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<!--<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>-->
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="../index-nojquery.html">Home</a><br />
+
+<h3>Using {{each}} to render repeating sections.</h3>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<tr>
+		<td>${Title}</td>
+		<td>Languages:
+			<em>
+				{{each Languages}}
+					${$value.Name}
+				{{/each}}
+			</em>
+		</td>
+	</tr>
+</script>
+
+<div id="movieList"></div>
+
+<script type="text/javascript">
+
+	function namePlusSeparator( name, index, length ){
+		var ret = name;
+		if ( index < length - 1 ) {
+			if ( index === length - 2 ) {
+				ret += " and";
+			} else {
+				ret += ",";
+			}
+		}
+		return ret;
+	}
+
+	var movies = [
+		{
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "French" }
+			]
+		},
+		{
+			Title: "Eyes Wide Shut",
+			Languages: [
+				{ Name: "French" },
+				{ Name: "German" },
+				{ Name: "Spanish" }
+			]
+		}
+	];
+
+	$.template( "movieTemplate", document.getElementById( "movieTemplate" ).innerHTML )
+
+	document.getElementById( "movieList" ).innerHTML =
+		"<table><tbody class='header'><tr><th>Title</th><th>Synopsis</th></tr></tbody><tbody id='movieList'>"
+		+ $.render( "movieTemplate", movies )
+		+ "</tbody></table>"
+
+</script>
+
+</body>
+</html>
