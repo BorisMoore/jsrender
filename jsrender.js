@@ -1,7 +1,6 @@
-/*!
- * jQuery Render Plugin v1.0pre
+/*! JsRender v1.0pre - (jsrender.js version: does not require jQuery): http://github.com/BorisMoore/jsrender */
+/*
  * Optimized version of jQuery Templates, for rendering to string
- * http://github.com/BorisMoore/jsrender
  */
 window.JsViews || window.jQuery && jQuery.jsViews || (function( window, undefined ) {
 

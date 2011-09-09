@@ -1,13 +1,12 @@
-/*!
- * jQuery Render Plugin v1.0pre
+/*! JsRender v1.0pre - (jquery.render.js version: requires jQuery): http://github.com/BorisMoore/jsrender */
+/*
  * Optimized version of jQuery Templates, for rendering to string
- * http://github.com/BorisMoore/jsrender
  */
 
 (function( $, undefined ) {
 var htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
-	viewKey = 0, 
-	stack = [], 
+	viewKey = 0,
+	stack = [],
 	autoName = 0,
 	defaultOpen = "$view.calls($view,__,$1,$2);__=[];",
 	defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"],
