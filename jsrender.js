@@ -202,7 +202,7 @@ $.extend({
 			? "" : String( text ).replace( htmlSpecialChar, replacerForHtml );
 	},
 
-	// The following substitution terms can be uses in template tag definitions:
+	// The following substitution terms can be used in template tag definitions:
 	// $1 is the target parameter - as in {{if targetParam}}
 	// $1a is the target parameter as above, but with automatic detection of functions, so if targetParam is a function it will
 	// be replaced by its return value during rendering

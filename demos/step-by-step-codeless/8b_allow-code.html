@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="../../jsrender-codeless.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="../index-codeless.html">Home</a><br />
+
+<h3>Allowing code within templates: returning content</h3>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=Title}}</td>
+		<td><b>Languages:</b>
+			<em>
+				{{#each Languages}}
+					{{=Name}}{{*
+
+						if ( $view.index === $view.parent.data.length - 2 ) {
+							result+= " and";
+						} else if ( $view.index < $view.parent.data.length - 2 ) {
+							result+= ",";
+						}
+
+					}}
+				{{/each}}
+			</em><br/><br/>
+		</td>
+	</tr>
+</script>
+
+<table><tbody class="header"><tr><th>Synopsis</th><th>Title</th></tr></tbody>
+	<tbody id="movieList"></tbody>
+</table>
+
+<script type="text/javascript">
+
+	var movies = [
+		{
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "French" }
+			],
+			Subtitles: [
+				{ Name: "English" },
+				{ Name: "French" },
+				{ Name: "Chinese" }
+			]
+		},
+		{
+			Title: "Eyes Wide Shut",
+			Languages: [
+				{ Name: "French" },
+				{ Name: "German" },
+				{ Name: "Spanish" }
+			],
+			Subtitles: [
+				{ Name: "English" }
+			]
+		}
+	];
+
+	$.tmplSettings.allowCode = true;
+
+	$( "#movieList" ).html(
+		$( "#movieTemplate" ).renderTmpl( movies )
+	);
+
+</script>
+
+</body>
+</html>

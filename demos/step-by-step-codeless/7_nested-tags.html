@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="../../jsrender-codeless.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="../index-codeless.html">Home</a><br />
+
+<h3>Nesting of tags, to pass computed parameters</h3>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=Title}}</td>
+		<td><b>Languages:</b>
+			<em>
+				{{#each Languages}}
+					{{upper Name}}{{#nextToLast}} and{{else {{notLast}} }}, {{/nextToLast}}
+				{{/each}}
+			</em><br/><br/>
+		</td>
+	</tr>
+</script>
+
+<table><tbody class="header"><tr><th>Synopsis</th><th>Title</th></tr></tbody>
+	<tbody id="movieList"></tbody>
+</table>
+
+<script type="text/javascript">
+
+	$.registerTags({
+		upper: function( val ){
+			return val.toUpperCase();
+		},
+		nextToLast: function( content ) {
+			if ( this.index === this.parent.data.length - 2 ) {
+				return content( this );
+			}
+			this.onElse = function( val, content ) {
+				return val === "true" ? content( this ) : "";
+			};
+			return "";
+		},
+		notLast: function( content ) {
+			return (this.index !== this.parent.data.length - 1).toString();
+		}
+	});
+
+	var movies = [
+		{
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "French" }
+			]
+		},
+		{
+			Title: "Eyes Wide Shut",
+			Languages: [
+				{ Name: "French" },
+				{ Name: "German" },
+				{ Name: "Spanish" }
+			]
+		}
+	];
+
+	$( "#movieList" ).html(
+		$( "#movieTemplate" ).renderTmpl( movies )
+	);
+
+</script>
+
+</body>
+</html>
