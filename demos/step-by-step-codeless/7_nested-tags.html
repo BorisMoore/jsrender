@@ -14,11 +14,11 @@
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{=Title!}}</td>
 		<td><b>Languages:</b>
 			<em>
 				{{#each Languages}}
-					{{upper Name}}{{#nextToLast}} and{{else {{notLast}} }}, {{/nextToLast}}
+					{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast}} }}, {{/nextToLast}}
 				{{/each}}
 			</em><br/><br/>
 		</td>
@@ -32,20 +32,29 @@
 <script type="text/javascript">
 
 	$.registerTags({
-		upper: function( val ){
-			return val.toUpperCase();
+		format: function( val, format, content, params, encoding ){
+			var ret;
+			switch( format ) {
+				case "upper":
+					ret = val.toUpperCase();
+					break;
+				case "lower":
+					ret = val.toLowerCase();
+					break;
+			}
+			return $.tmplEncode[ encoding || "html" ]( ret );
 		},
 		nextToLast: function( content ) {
-			if ( this.index === this.parent.data.length - 2 ) {
-				return content( this );
+			if ( this.itemNumber === this.parent.data.length - 1 ) {
+				return $.renderTmpl( content, this.data );
 			}
 			this.onElse = function( val, content ) {
-				return val === "true" ? content( this ) : "";
+				return val === "true" ? $.renderTmpl( content, this.data ) : "";
 			};
 			return "";
 		},
 		notLast: function( content ) {
-			return (this.index !== this.parent.data.length - 1).toString();
+			return (this.itemNumber !== this.parent.data.length).toString();
 		}
 	});
 
@@ -53,7 +62,7 @@
 		{
 			Title: "Meet Joe Black",
 			Languages: [
-				{ Name: "English" },
+				{ Name: "English( <b>US</b>)" },
 				{ Name: "French" }
 			]
 		},

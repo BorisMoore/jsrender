@@ -11,7 +11,7 @@
 <h3>Accessing paths</h3>
 <script id="peopleTemplate" type="text/x-jquery-tmpl">
 
-{{add $view.index "1"}}: {{=firstName}} {{=lastName}}:
+{{=$itemNumber!}}: {{=firstName!}} {{=lastName!}}:
 
 <br/>
 {{each address "#addressTemplate"}}
@@ -19,14 +19,14 @@
 {{#if phones cells}}
 	<div>
 		Phones:
-		{{#each phones cells}} <b>{{=$data}}</b> ({{=$view.parent.parent.data.firstName}}'s){{#notLast}}, {{/notLast}} {{/each}}
+		{{#each phones cells}} <b>{{=$data!}}</b> ({{=$view.parent.parent.data.firstName!}}'s){{#notLast}}, {{/notLast}} {{/each}}
 	</div>
 {{/if}}
 <br/>
 
 <i>
 	{{#if address.street}}
-		{{=firstName}} lives in {{=address.street}}.
+		{{=firstName!}} lives in {{=address.street!}}.
 	{{else}}
 		No street address...
 	{{/if}}
@@ -37,7 +37,7 @@
 
 <script id="addressTemplate" type="text/x-jquery-tmpl">
 <div>
-	{{=street}} {{=city}}
+	{{=street!}} {{=city!}}
 </div>
 </script>
 
@@ -77,9 +77,6 @@
 		notLast: function( content ) {
 			var array = this.parent.data;
 			return array[ array.length - 1 ] === this.data ? "" : content( this );
-		},
-		add: function( val1, val2 ) {
-			return +val1 + +val2;
 		}
 	});
 
