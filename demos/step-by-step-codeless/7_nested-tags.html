@@ -18,7 +18,7 @@
 		<td><b>Languages:</b>
 			<em>
 				{{#each Languages}}
-					{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast}} }}, {{/nextToLast}}
+					{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast!string}} }}, {{/nextToLast}}
 				{{/each}}
 			</em><br/><br/>
 		</td>
@@ -46,10 +46,10 @@
 		},
 		nextToLast: function( content ) {
 			if ( this.itemNumber === this.parent.data.length - 1 ) {
-				return $.renderTmpl( content, this.data );
+				return $.render( content, this.data );
 			}
 			this.onElse = function( val, content ) {
-				return val === "true" ? $.renderTmpl( content, this.data ) : "";
+				return val === "true" ? $.render( content, this.data ) : "";
 			};
 			return "";
 		},
@@ -77,7 +77,7 @@
 	];
 
 	$( "#movieList" ).html(
-		$( "#movieTemplate" ).renderTmpl( movies )
+		$( "#movieTemplate" ).render( movies )
 	);
 
 </script>

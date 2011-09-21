@@ -1,7 +1,6 @@
-/*!
- * jQuery Render Plugin v1.0pre
- * Optimized version of jQuery Templates, for rendering to string
- * http://github.com/BorisMoore/jsrender
+/*! JsRender v1.0pre - (jquery.render.js version: requires jQuery): http://github.com/BorisMoore/jsrender */
+/*
+ * Optimized version of jQuery Templates, for rendering to string - 'codeless' version
  */
 window.JsViews || window.jQuery && jQuery.jsViews || (function( window, undefined ) {
 
@@ -27,13 +26,13 @@ if ( jQuery ) {
 	$.fn.extend({
 		// Use first wrapped element as template markup.
 		// Return string obtained by rendering the template against data.
-		renderTmpl: function( data, context, parentView, path ) {
-			return $.renderTmpl( this[0], data, context, parentView, path );
+		render: function( data, context, parentView, path ) {
+			return $.render( this[0], data, context, parentView, path );
 		},
 
 		// Consider the first wrapped element as a template declaration, and get the compiled template or store it as a named template.
-		compiledTmpl: function( name, context ) {
-			return $.compiledTmpl( name, this[0], context );
+		template: function( name, context ) {
+			return $.template( name, this[0], context );
 		}
 	});
 } else {
@@ -125,6 +124,9 @@ function View( context, path, parentView, data, template ) {
 //===============
 
 function getValue( view, path ) { // TODO optimize in case whether this a simple path on an object - no bindings etc.
+	if ( typeof path !== "string" ) {
+		return path;
+	}
 	var object, varName;
 	path = path.split(".");
 	object = path[ 0 ].charAt( 0 ) === "$"
@@ -148,48 +150,50 @@ $.extend({
 	},
 
 	renderTag: function( tagName, path, view, encoding ) {
-	// This is a tag call, with arguments: "tagName", [params, ...], view, encoding, [nestedTemplateFnIndex]   
-	var content, ret,
-		args = slice.call( arguments, 1 ),
-		tagFn = tmplTags[ tagName ];
+		// This is a tag call, with arguments: "tagName", [params, ...], view, encoding, [nestedTemplateFnIndex]   
+		var content, ret,
+			args = slice.call( arguments, 1 ),
+			tagFn = tmplTags[ tagName ];
 
-	if ( !tagFn ) {
-		// If not a tagFn, return empty string, and throw if in debug mode
-		return "";
-	}
+		if ( !tagFn ) {
+			// If not a tagFn, return empty string, and throw if in debug mode
+			return "";
+		}
 
-	encoding = args.pop();
-	if ( +encoding === encoding ) {
-		// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
-		// assign the sub-content template function as last arg
-		content = encoding;
-		encoding = args.pop(); // In this case, encoding is the next to last arg
-	}
-	view = args.pop(); 
-	content = content !== undefined && view.tmpl.nested[ content ];
+		encoding = args.pop();
+		if ( +encoding === encoding ) {
+			// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
+			// assign the sub-content template function as last arg
+			content = encoding;
+			encoding = args.pop(); // In this case, encoding is the next to last arg
+		}
+		view = args.pop(); 
+		content = content !== undefined && view.tmpl.nested[ content ];
 
-	ret = args.length
-		? tagFn.apply( view, [].concat( $.map( args, function( val ) {
-			return /^(['"]).*\1$/.test( val )
-				// If parameter is quoted text ('text' or "text") - replace by string: text
-				? val.slice( 1,-1 )
-				// Otherwise, treat as path to be evaluated
-				: [getValue( view, val )];
-		}), content, args.toString(), encoding ))
-		: tagFn.call( view, content, encoding );
+		ret = args.length
+			? tagFn.apply( view, [].concat( $.map( args, function( val ) {
+				return /^(['"]).*\1$/.test( val )
+					// If parameter is quoted text ('text' or "text") - replace by string: text
+					? val.slice( 1,-1 )
+					// Otherwise, treat as path to be evaluated
+					: [getValue( view, val )];
+			}), content, args.toString(), encoding ))
+			: tagFn.call( view, content, encoding );
 
-	return encoding === "quoted" ? ('"' + ret + '"') : ret; // chained tags return results wrapped as quoted string - passed as arguments to calling tag 
+		return encoding === "string" ? ('"' + ret + '"') : ret; 
+		// Useful to force chained tags to return results as string values, 
+		// (wrapped as quoted string) for passing as arguments to calling tag 
 	},
 
 //===============
-// renderTmpl
+// render
 //===============
 
-	renderTmpl: function( tmpl, data, context, parentView, path ) {
+	render: function( tmpl, data, context, parentView, path ) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 		var i, l, dataItem, arrayView, content, result = "";
 
-		tmpl = $.compiledTmpl( tmpl );
+		tmpl = $.template( tmpl );
 		if ( !tmpl ) {
 			return null; // Could throw...
 		}
@@ -204,7 +208,7 @@ $.extend({
 			for ( i = 0, l = data.length; i < l; i++ ) {
 				dataItem = data[ i ];
 				content = dataItem ? tmpl( dataItem, View( context, path, arrayView, dataItem, tmpl )) : "";
-				result += $.view && view.parent && $.isArray( view.parent.data ) ? "<!--item-->" + content + "<!--/item-->" : content;
+				result += $.view ? "<!--item-->" + content + "<!--/item-->" : content;
 			}
 		} else {
 			result += tmpl( data, View( context, path, parentView, data, tmpl ))
@@ -218,22 +222,22 @@ $.extend({
 	},
 
 //===============
-// compiledTmpl
+// template
 //===============
 
 	// Set:
-	// Use $.compiledTmpl( name, tmpl ) to cache a named template,
+	// Use $.template( name, tmpl ) to cache a named template,
 	// where tmpl is a template string, a script element or a jQuery instance wrapping a script element, etc.
-	// Use $( "selector" ).compiledTmpl( name ) to provide access by name to a script block template declaration.
+	// Use $( "selector" ).template( name ) to provide access by name to a script block template declaration.
 
 	// Get:
-	// Use $.compiledTmpl( name ) to access a cached template.
-	// Also $( selectorToScriptBlock ).compiledTmpl(), or $.compiledTmpl( null, templateString )
+	// Use $.template( name ) to access a cached template.
+	// Also $( selectorToScriptBlock ).template(), or $.template( null, templateString )
 	// will return the compiled template, without adding a name reference.
-	// If templateString is not a selector, $.compiledTmpl( templateString ) is equivalent
-	// to $.compiledTmpl( null, templateString ). To ensure a string is treated as a template,
+	// If templateString is not a selector, $.template( templateString ) is equivalent
+	// to $.template( null, templateString ). To ensure a string is treated as a template,
 	// include an HTML element, an HTML comment, or a template comment tag.
-	compiledTmpl: function( name, tmpl ) {
+	template: function( name, tmpl ) {
 		if (tmpl) {
 			// Compile template and associate with name
 			if ( typeof tmpl === "string" ) {
@@ -256,10 +260,10 @@ $.extend({
 			? typeof name !== "string"
 				? (name._name 
 					? name // already compiled
-					: $.compiledTmpl( null, name ))
+					: $.template( null, name ))
 				: $.tmpls[ name ] ||
 					// If not in map, treat as a selector. (If integrated with core, use quickExpr.exec)
-					$.compiledTmpl( null, htmlExpr.test( name ) ? name : try$( name ))
+					$.template( null, htmlExpr.test( name ) ? name : try$( name ))
 			: null;
 	},
 
@@ -298,7 +302,7 @@ $.extend({
 					}
 				}
 				self.onElse = undefined;
-				return $.renderTmpl( args[ l < 0 ? 0 : l ], self.data, self.context, self, l > 0 && args[ l + 1 ] );
+				return $.render( args[ l < 0 ? 0 : l ], self.data, self.context, self);//, l > 0 && args[ l + 1 ] );
 			}
 			var self = this;
 			self.onElse = function() {
@@ -314,13 +318,14 @@ $.extend({
 				args = arguments,
 				i = 0,
 				l = args.length - 1,
-				tmpl = args[ l - 2 ];
+				tmpl = args[ l - 2 ],
+				path = args[ l - 1 ];
 				if ( !tmpl ) {
 					l--;
 					tmpl = args[ l - 2 ];
 				}
 			for ( ; i < l - 2; i++ ) {
-				result += args[ i ] ? $.renderTmpl( tmpl, args[ i ], this.context, this, args[ l - 1 ] ) : "";
+				result += args[ i ] ? $.render( tmpl, args[ i ], this.context, this, path ) : "";
 			}
 			return result;
 		},
@@ -341,7 +346,10 @@ $.extend({
 			// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
 			// Implementation, from Mike Samuel <msamuel@google.com>
 			return String( text ).replace( htmlSpecialChar, replacerForHtml );
-		}
+		},
+		"string": function( text ) {
+			return '"' + text + '"'; // Used for chained helpers to return quoted strings
+		},
 		//TODO add URL encoding, and perhaps other encoding helpers...
 	}
 });
@@ -444,8 +452,7 @@ function buildTmplFunction( nodes ) {
 		var codeFrag, tokens,
 			tag = node[ 0 ],
 			params = node[ 1 ],
-			encoding = chainingDepth ? "quoted" : node[ 3 ];  // Chained tags return results wrapped as quoted string - passed as arguments to calling tag
-
+			encoding = node[ 3 ]; 
 		if ( tag === "=" ) {
 			// TODO test for chainingDepth: using {{= }} at depth>0 is an error.
 			if ( chainingDepth > 0 || params.length !== 1 ) {

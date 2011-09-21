@@ -87,8 +87,8 @@
 		},
 
 		// Consider the first wrapped element as a template declaration, and get the compiled template or store it as a named template.
-		template: function( name ) {
-			return jQuery.template( name, this[0] );
+		templateJQT: function( name ) {
+			return jQuery.templateJQT( name, this[0] );
 		},
 
 		domManip: function( args, table, callback, options ) {
@@ -120,7 +120,7 @@
 			if ( topLevel ) {
 				// This is a top-level tmpl call (not from a nested template using {{tmpl}})
 				parentItem = topTmplItem;
-				tmpl = jQuery.template[tmpl] || jQuery.template( null, tmpl );
+				tmpl = jQuery.template[tmpl] || jQuery.templateJQT( null, tmpl );
 				wrappedItems = {}; // Any wrapped items will be rebuilt, since this is top level
 			} else if ( !tmpl ) {
 				// The template item is already associated with DOM - this is a refresh.
@@ -172,7 +172,7 @@
 		// will return the compiled template, without adding a name reference.
 		// If templateString includes at least one HTML tag, $.template( templateString ) is equivalent
 		// to $.template( null, templateString )
-		template: function( name, tmpl ) {
+		templateJQT: function( name, tmpl ) {
 			if (tmpl) {
 				// Compile template and associate with name
 				if ( typeof tmpl === "string" ) {
@@ -191,11 +191,11 @@
 				return typeof name === "string" ? (jQuery.template[name] = tmpl) : tmpl;
 			}
 			// Return named compiled template
-			return name ? (typeof name !== "string" ? jQuery.template( null, name ):
+			return name ? (typeof name !== "string" ? jQuery.templateJQT( null, name ):
 				(jQuery.template[name] ||
 					// If not in map, and not containing at least on HTML tag, treat as a selector.
 					// (If integrated with core, use quickExpr.exec)
-					jQuery.template( null, htmlExpr.test( name ) ? name : jQuery( name )))) : null;
+					jQuery.templateJQT( null, htmlExpr.test( name ) ? name : jQuery( name )))) : null;
 		},
 
 		encode: function( text ) {
@@ -454,7 +454,7 @@
 
 	function tiNest( tmpl, data, options ) {
 		// nested template, using {{tmpl}} tag
-		return jQuery.tmpl( jQuery.template( tmpl ), data, options, this );
+		return jQuery.tmpl( jQuery.templateJQT( tmpl ), data, options, this );
 	}
 
 	function tiWrap( call, wrapped ) {
@@ -462,7 +462,7 @@
 		var options = call.options || {};
 		options.wrapped = wrapped;
 		// Apply the template, which may incorporate wrapped content,
-		return jQuery.tmpl( jQuery.template( call.tmpl ), call.data, options, call.item );
+		return jQuery.tmpl( jQuery.templateJQT( call.tmpl ), call.data, options, call.item );
 	}
 
 	function tiHtml( filter, textOnly ) {

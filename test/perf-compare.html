@@ -4,7 +4,9 @@
 	<title>Benchmark JsRender</title>
 	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
 	<script src="../jsrender-codeless.js" type="text/javascript"></script>
-	<script src="jquery.tmpl.js" type="text/javascript"></script>
+	<script src="jquery.tmpl-JQT.js" type="text/javascript"></script>
+	<!--Fixed to avoid collision of $.template with JsRender-->
+	
 	<script src="dot.js" type="text/javascript"></script>
 </head>
 <body>
@@ -65,10 +67,10 @@
 		movie = { Name: "The <i>Red</i> Violin", ReleaseYear: "1998" },
 		
 		tmpl_doT = doT.template($( "#dotTemplate" )[0].innerHTML),
-		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).template(),
-		tmpl_JsRender = $( "#jsRenderTemplate" ).compiledTmpl(),
-		tmpl_jQueryTmplEncode = $( "#jqueryTmplTemplateEncode" ).template(),
-		tmpl_JsRenderEncode = $( "#jsRenderTemplateEncode" ).compiledTmpl();
+		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).templateJQT(),
+		tmpl_JsRender = $( "#jsRenderTemplate" ).template(),
+		tmpl_jQueryTmplEncode = $( "#jqueryTmplTemplateEncode" ).templateJQT(),
+		tmpl_JsRenderEncode = $( "#jsRenderTemplateEncode" ).template();
 	
 	// Test compile perf
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
@@ -78,10 +80,10 @@
 		tmpl_doT = doT.template($( "#dotTemplate" )[0].innerHTML);
 	});
 	test( "JsRender compile", function() { 
-		tmpl_JsRender = $( "#jsRenderTemplate" ).compiledTmpl();
+		tmpl_JsRender = $( "#jsRenderTemplate" ).template();
 	});
 	test( "jQuery Template compile", function() { 
-		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).template();
+		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).templateJQT();
 	});
 
 	// Test render perf
@@ -103,10 +105,10 @@
 
 	ret = $( "#output" ).html();
 	test( "JsRender full features - to string", function() { 
-		ret = $.renderTmpl( tmpl_JsRender, movie );
+		ret = $.render( tmpl_JsRender, movie );
 	});
 	test( "JsRender full features - inserted in DOM", function() { 
-		$( "#output" ).html( ret = $.renderTmpl( tmpl_JsRender, movie ));
+		$( "#output" ).html( ret = $.render( tmpl_JsRender, movie ));
 	});
 	test( "jQuery Template full features - inserted in DOM", function() { 
 		$( "#output" ).empty();
@@ -125,7 +127,7 @@
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	
 function test( label, cb ) {
-	times = 10000
+	times = 8000
 	count = times;
 	startTime = +new Date;
 	while (count--) {
