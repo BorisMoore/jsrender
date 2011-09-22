@@ -9,9 +9,10 @@
 <a href="../index-codeless.html">Home</a><br />
 
 <h3>Accessing paths</h3>
+
 <script id="peopleTemplate" type="text/x-jquery-tmpl">
 
-{{=$itemNumber!}}: {{=firstName!}} {{=lastName!}}:
+<b>{{=$itemNumber!}}:</b> {{=firstName!}} {{=lastName!}}:
 
 <br/>
 {{each address "#addressTemplate"}}
@@ -25,10 +26,12 @@
 <br/>
 
 <i>
+	{{=firstName!}}
+
 	{{#if address.street}}
-		{{=firstName!}} lives in {{=address.street!}}.
+		lives in {{=address.street!}}.
 	{{else}}
-		No street address...
+		has no street address...
 	{{/if}}
 </i>
 <hr/>
@@ -37,7 +40,12 @@
 
 <script id="addressTemplate" type="text/x-jquery-tmpl">
 <div>
-	{{=street!}} {{=city!}}
+	{{#if street}}
+		{{=street!}}
+	{{else}}
+		<i>Somewhere</i> in
+	{{/if}}
+	{{=city!}}
 </div>
 </script>
 
@@ -73,7 +81,7 @@
 		}
 	];
 
-	$.registerTags({
+	$.tmpl.registerTags({
 		notLast: function( content ) {
 			var array = this.parent.data;
 			return array[ array.length - 1 ] === this.data ? "" : content( this );

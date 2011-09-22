@@ -19,6 +19,7 @@ var $, tmplTags, tmplEncode,
 	slice = Array.prototype.slice;
 
 if ( jQuery ) {
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// jQuery is loaded, so make $ the jQuery object
 	$ = jQuery;
@@ -35,7 +36,9 @@ if ( jQuery ) {
 			return $.template( name, this[0], context );
 		}
 	});
+
 } else {
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// jQuery is not loaded. Make $ the JsViews object
 	window.JsViews = window.$ = $ = {
@@ -96,7 +99,6 @@ if ( jQuery ) {
 function View( context, path, parentView, data, template ) {
 	// Returns a view data structure for a new rendered instance of a template.
 	// The content field is a hierarchical array of strings and nested views.
-	// Prototype is $.tmplSettings.view, which provides both methods and fields.
 
 	var self, content,
 		parentContext = parentView && parentView.ctx;
@@ -124,7 +126,7 @@ function View( context, path, parentView, data, template ) {
 //===============
 
 function getValue( view, path ) { // TODO optimize in case whether this a simple path on an object - no bindings etc.
-	if ( typeof path !== "string" ) {
+	if ( "" + path !== path ) {
 		return path;
 	}
 	var object, varName;
@@ -143,46 +145,148 @@ function getValue( view, path ) { // TODO optimize in case whether this a simple
 }
 
 $.extend({
-	tmpls: {},
+	tmpl: {
+		templates: {},
 
-	tmplSettings: {
-		allowCode: FALSE
-	},
+		allowCode: FALSE,
 
-	renderTag: function( tagName, path, view, encoding ) {
-		// This is a tag call, with arguments: "tagName", [params, ...], view, encoding, [nestedTemplateFnIndex]   
-		var content, ret,
-			args = slice.call( arguments, 1 ),
-			tagFn = tmplTags[ tagName ];
+//===============
+// renderTag
+//===============
 
-		if ( !tagFn ) {
-			// If not a tagFn, return empty string, and throw if in debug mode
-			return "";
+		renderTag: function( tagName ) {
+			// This is a tag call, with arguments: "tagName", [params, ...], [content,] [params.toString,] view, encoding, [hash,] [nestedTemplateFnIndex]
+			var content, ret, path, view, encoding, hash, l,
+				args = slice.call( arguments, 1 ),
+				tagFn = tmplTags[ tagName ];
+
+			if ( !tagFn ) {
+				// If not a tagFn, return empty string, and throw if in debug mode
+				return "";
+			}
+
+			encoding = args.pop();
+			if ( +encoding === encoding ) {
+				// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
+				// assign the sub-content template function as last arg
+				content = encoding;
+				encoding = args.pop(); // In this case, encoding is the next to last arg
+			}
+			if ( "" + encoding !== encoding ) {
+				// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
+				// assign the sub-content template function as last arg
+				hash = encoding;
+				encoding = args.pop(); // In this case, encoding is the next to last arg
+			}
+			view = args.pop();
+			content = content !== undefined && view.tmpl.nested[ content ];
+			l = args.length;
+			if ( l ) {
+				ret = [ content, args.toString(), encoding ];
+				if ( hash ) {
+					ret.unshift( hash );
+				}
+				ret = tagFn.apply( view, $.map( args, function( val ) {
+					return /^(['"]).*\1$/.test( val )
+						// If parameter is quoted text ('text' or "text") - replace by string: text
+						? val.slice( 1,-1 )
+						// Otherwise, treat as path to be evaluated
+						: [getValue( view, val )];
+				}).concat( ret ));
+			} else {
+				ret = tagFn.call( view, content, encoding );
+			}
+
+			return encoding === "string" ? ('"' + ret + '"') : ret;
+			// Useful to force chained tags to return results as string values,
+			// (wrapped as quoted string) for passing as arguments to calling tag
+		},
+
+//===============
+// registerTags
+//===============
+
+		// Register declarative tag.
+		registerTags: function registerTags( name, fn ) {
+			if ( typeof( name ) === "object" ) {
+				// Object representation where property name is path and property value is value.
+				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
+				for ( var key in name ) {
+					registerTags( key, name[ key ])
+				}
+			} else {
+				// Simple single property case.
+				tmplTags[ name ] = fn;
+			}
+			return this;
+		},
+
+//===============
+// Built-in tags
+//===============
+
+		tmplTags: tmplTags = {
+			"if": function() {
+				function ifArgs( args ) {
+					var i = 0,
+						l = args.length - 3; // number of parameters, since args are: (parameters..., content, params.toString, encoding)
+					while ( l > -1 && !args[ i++ ]) {
+						// Only render content if args.length < 3 (i.e. this is an else with no condition) or if a condition argument is truey
+						if ( i === l ) {
+							return "";
+						}
+					}
+					self.onElse = undefined;
+					return $.render( args[ l < 0 ? 0 : l ], self.data, self.context, self);//, l > 0 && args[ l + 1 ] );
+				}
+				var self = this;
+				self.onElse = function() {
+					return ifArgs( arguments );
+				};
+				return ifArgs( arguments );
+			},
+			"else": function() {
+				return this.onElse ? this.onElse.apply( this, arguments ) : "";
+			},
+			each: function() {
+				var result = "",
+					args = arguments,
+					i = 0,
+					l = args.length - 1,
+					content = args[ l - 2 ],
+					path = args[ l - 1 ];
+					if ( !content ) {
+						l--;
+						content = args[ l - 2 ];
+					}
+				for ( ; i < l - 2; i++ ) {
+					result += args[ i ] ? $.render( content, args[ i ], this.context, this, path ) : "";
+				}
+				return result;
+			},
+			"*": function( value ) {
+				return value;
+			}
+		},
+
+//===============
+// tmpl.encode
+//===============
+
+		encode: tmplEncode = {
+			"none": function( text ) {
+				return text;
+			},
+			"html": function( text ) {
+				// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
+				// Implementation, from Mike Samuel <msamuel@google.com>
+				return String( text ).replace( htmlSpecialChar, replacerForHtml );
+			},
+			"string": function( text ) {
+				return '"' + text + '"'; // Used for chained helpers to return quoted strings
+			}
+			//TODO add URL encoding, and perhaps other encoding helpers...
 		}
-
-		encoding = args.pop();
-		if ( +encoding === encoding ) {
-			// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
-			// assign the sub-content template function as last arg
-			content = encoding;
-			encoding = args.pop(); // In this case, encoding is the next to last arg
-		}
-		view = args.pop(); 
-		content = content !== undefined && view.tmpl.nested[ content ];
-
-		ret = args.length
-			? tagFn.apply( view, [].concat( $.map( args, function( val ) {
-				return /^(['"]).*\1$/.test( val )
-					// If parameter is quoted text ('text' or "text") - replace by string: text
-					? val.slice( 1,-1 )
-					// Otherwise, treat as path to be evaluated
-					: [getValue( view, val )];
-			}), content, args.toString(), encoding ))
-			: tagFn.call( view, content, encoding );
-
-		return encoding === "string" ? ('"' + ret + '"') : ret; 
-		// Useful to force chained tags to return results as string values, 
-		// (wrapped as quoted string) for passing as arguments to calling tag 
 	},
 
 //===============
@@ -240,7 +344,7 @@ $.extend({
 	template: function( name, tmpl ) {
 		if (tmpl) {
 			// Compile template and associate with name
-			if ( typeof tmpl === "string" ) {
+			if ( "" + tmpl === tmpl ) {
 				// This is an HTML string being passed directly in.
 				tmpl = compile( tmpl );
 			} else if ( jQuery && tmpl instanceof $ ) {
@@ -251,106 +355,20 @@ $.extend({
 					// If this is a template block, use cached copy, or generate tmpl function and cache.
 					tmpl = $.data( tmpl, "tmpl" ) || $.data( tmpl, "tmpl", compile( tmpl.innerHTML ));
 				}
-				$.tmpls[ tmpl._name = tmpl._name || name || "_" + autoName++ ] = tmpl;
+				$.tmpl.templates[ tmpl._name = tmpl._name || name || "_" + autoName++ ] = tmpl;
 			}
 			return tmpl;
 		}
 		// Return named compiled template
 		return name
-			? typeof name !== "string"
-				? (name._name 
+			? "" + name !== name
+				? (name._name
 					? name // already compiled
 					: $.template( null, name ))
-				: $.tmpls[ name ] ||
+				: $.tmpl.templates[ name ] ||
 					// If not in map, treat as a selector. (If integrated with core, use quickExpr.exec)
 					$.template( null, htmlExpr.test( name ) ? name : try$( name ))
 			: null;
-	},
-
-//===============
-// registerTags
-//===============
-
-	// Register declarative tag.
-	registerTags: function( name, fn ) {
-		if ( typeof( name ) === "object" ) {
-			// Object representation where property name is path and property value is value.
-			// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
-			for ( var key in name ) {
-				this.registerTags( key, name[ key ])
-			}
-		} else {
-			// Simple single property case.
-			tmplTags[ name ] = fn;
-		}
-		return this;
-	},
-
-//===============
-// Built-in tags
-//===============
-
-	tmplTags: tmplTags = {
-		"if": function() {
-			function ifArgs( args ) {
-				var i = 0,
-					l = args.length - 3;
-				while ( l > -1 && !args[ i++ ]) {
-					// Only render content if args.length < 3 (i.e. this is an else with no condition) or if a condition argument is truey
-					if ( i === l ) {
-						return "";
-					}
-				}
-				self.onElse = undefined;
-				return $.render( args[ l < 0 ? 0 : l ], self.data, self.context, self);//, l > 0 && args[ l + 1 ] );
-			}
-			var self = this;
-			self.onElse = function() {
-				return ifArgs( arguments );
-			};
-			return ifArgs( arguments );
-		},
-		"else": function() {
-			return this.onElse ? this.onElse.apply( this, arguments ) : "";
-		},
-		each: function() {
-			var result = "",
-				args = arguments,
-				i = 0,
-				l = args.length - 1,
-				tmpl = args[ l - 2 ],
-				path = args[ l - 1 ];
-				if ( !tmpl ) {
-					l--;
-					tmpl = args[ l - 2 ];
-				}
-			for ( ; i < l - 2; i++ ) {
-				result += args[ i ] ? $.render( tmpl, args[ i ], this.context, this, path ) : "";
-			}
-			return result;
-		},
-		"*": function( value ) {
-			return value;
-		}
-	},
-
-//===============
-// tmplEncode
-//===============
-
-	tmplEncode: tmplEncode = {
-		"none": function( text ) {
-			return text;
-		},
-		"html": function( text ) {
-			// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
-			// Implementation, from Mike Samuel <msamuel@google.com>
-			return String( text ).replace( htmlSpecialChar, replacerForHtml );
-		},
-		"string": function( text ) {
-			return '"' + text + '"'; // Used for chained helpers to return quoted strings
-		},
-		//TODO add URL encoding, and perhaps other encoding helpers...
 	}
 });
 
@@ -380,8 +398,8 @@ function compile( markup ) {
 					return TRUE;
 				}
 										//( path	or 	\"string\" )	   or (   path        =    ( path    or  \"string\" )
-				(text + " ").replace( /([\w\$\.\[\]]+|(\\?['"])(.*?)\2)(?=\s)|([\w\$\.\[\]]+)\=([\w\$\.\[\]]+|\\(['"]).*?\\\5)(?=\s)/g,
-					function( all, path, quot, lhs, rhs ) {
+				(text + " ").replace( /([\w\$\.\[\]]+|(\\?['"])(.*?)\2)(?=\s)|([\w\$\.\[\]]+)\=([\w\$\.\[\]]+|\\(['"]).*?\\\6)(?=\s)/g,
+					function( all, path, quot, string, lhs, rhs, quot2 ) {
 						content.push( path ? path : [ lhs, rhs ] ); // lhs and rhs are for named params
 					}
 				);
@@ -404,7 +422,7 @@ function compile( markup ) {
 				return;
 			}
 			if ( code ) {
-				if ( $.tmplSettings.allowCode ) {
+				if ( $.tmpl.allowCode ) {
 					content.push([ "*", code.replace( /\\(['"])/g, "$1" )]);   // unescape ', and "
 				}
 			} else if ( tagName ) {
@@ -443,16 +461,22 @@ function buildTmplFunction( nodes ) {
 		nested = [],
 		i = 0,
 		l = nodes.length,
-		code = 'var tag=$.renderTag,html=$.tmplEncode.html,\nresult=""+';
+		code = 'var tag=$.tmpl.renderTag,html=$.tmpl.encode.html,\nresult=""+';
 
-	function nestedCall( node ) {
-		if ( typeof node === "string" ) {
+	function nestedCall( node, parentCtx ) {
+		if ( "" + node === node ) {
 			return '"' + node + '"';
 		}
-		var codeFrag, tokens,
+		if ( node.length < 3 ) {
+			// Named parameter
+			parentCtx[ 0 ] += (parentCtx[ 0 ] && ",") + node[ 0 ] + ":" + nestedCall( node[ 1 ]);
+			return FALSE;
+		}
+		var codeFrag, tokens, j, k, ctx, val,
+			hash = "",
 			tag = node[ 0 ],
 			params = node[ 1 ],
-			encoding = node[ 3 ]; 
+			encoding = node[ 3 ];
 		if ( tag === "=" ) {
 			// TODO test for chainingDepth: using {{= }} at depth>0 is an error.
 			if ( chainingDepth > 0 || params.length !== 1 ) {
@@ -467,21 +491,26 @@ function buildTmplFunction( nodes ) {
 						: params // $view, $data - unchanged
 					: '$data.' + params; // other paths -> $data.path
 				if ( encoding !== "none" ) {
-					codeFrag = 'html(' + codeFrag + ')';  
+					codeFrag = 'html(' + codeFrag + ')';
 				}
 			} else {
 				// Cannot optimize here. Must call renderTag() for processing, encoding etc.
-				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")'; // Not able 
+				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")'; // Not able
 			}
 		} else {
 			codeFrag = 'tag("' + tag + '",';
 			chainingDepth++;
-			for ( var j = 0, k = params.length; j < k; j++ ) {
-				codeFrag += nestedCall( params[ j ]) + ',';
+			ctx = [ hash ]; // out param
+			for ( j = 0, k = params.length; j < k; j++ ) {
+				val = nestedCall( params[ j ], ctx );
+				codeFrag += val ? (val + ',') : "";
 			}
+			hash = ctx[ 0 ];
 			chainingDepth--;
 			content = node[ 2 ];
-				codeFrag += '$view,"' + encoding + '"'
+			codeFrag += '$view,"'
+				+ encoding + '"'
+				+ (hash ? ",{" + hash + "}" : "")
 				+ (content ? "," + nested.length : ""); // For block tags, pass in the key to the nested content template
 			if( content ) {
 				nested.push( buildTmplFunction( content ));

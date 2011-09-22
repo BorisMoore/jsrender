@@ -31,7 +31,7 @@
 
 <script type="text/javascript">
 
-	$.registerTags({
+	$.tmpl.registerTags({
 		format: function( val, format, content, params, encoding ){
 			var ret;
 			switch( format ) {
@@ -42,7 +42,7 @@
 					ret = val.toLowerCase();
 					break;
 			}
-			return $.tmplEncode[ encoding || "html" ]( ret );
+			return $.tmpl.encode[ encoding || "html" ]( ret );
 		},
 		nextToLast: function( content ) {
 			if ( this.itemNumber === this.parent.data.length - 1 ) {

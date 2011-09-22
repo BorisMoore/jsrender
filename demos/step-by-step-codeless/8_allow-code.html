@@ -20,11 +20,11 @@
 				{{#each Languages}}
 					{{=Name}}{{*
 
-						if ( $view.index === $view.parent.data.length - 2 ) {
+						if ( $view.itemNumber === $view.parent.data.length - 1 ) {
 
 					}} and {{*
 
-						} else if ( $view.index < $view.parent.data.length - 2 ) {
+						} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
 
 					}}, {{* } }}
 				{{/each}}
@@ -65,7 +65,7 @@
 		}
 	];
 
-	$.tmplSettings.allowCode = true;
+	$.tmpl.allowCode = true;
 
 	$( "#movieList" ).html(
 		$( "#movieTemplate" ).render( movies )

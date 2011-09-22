@@ -10,25 +10,16 @@
 <body>
 <a href="../index-codeless.html">Home</a><br />
 
-<h3>Allowing code within templates: returning content</h3>
+<h3>Providing a named parameter to a custom tag: {{sort array reverse=true}}</h3>
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td><b>Languages:</b>
-			<em>
-				{{#each Languages}}
-					{{=Name}}{{*
-
-						if ( $view.itemNumber === $view.parent.data.length - 1 ) {
-							result+= " and";
-						} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
-							result+= ",";
-						}
-
-					}}
-				{{/each}}
-			</em><br/><br/>
+		<td>{{#sort Languages reverse=true}}
+				<div>
+					<em>{{=Name}}</em>
+				</div>
+			{{/sort}}
 		</td>
 	</tr>
 </script>
@@ -39,17 +30,28 @@
 
 <script type="text/javascript">
 
+	$.tmpl.registerTags({
+		sort: function( array, hash, content, path ){
+			var ret = "";
+			if ( hash.reverse === "true" ) {
+				// Render in reverse order
+				for ( var l = array.length, i = l; i; i-- ) {
+					ret += $.render( content, array[ i - 1 ], this.context, this, path );
+				}
+			} else {
+				// Render in original order
+				ret += $.render( content, array, this.context, this, path );
+			}
+			return ret;
+		},
+	});
+
 	var movies = [
 		{
 			Title: "Meet Joe Black",
 			Languages: [
 				{ Name: "English" },
 				{ Name: "French" }
-			],
-			Subtitles: [
-				{ Name: "English" },
-				{ Name: "French" },
-				{ Name: "Chinese" }
 			]
 		},
 		{
@@ -58,14 +60,9 @@
 				{ Name: "French" },
 				{ Name: "German" },
 				{ Name: "Spanish" }
-			],
-			Subtitles: [
-				{ Name: "English" }
 			]
 		}
 	];
-
-	$.tmpl.allowCode = true;
 
 	$( "#movieList" ).html(
 		$( "#movieTemplate" ).render( movies )

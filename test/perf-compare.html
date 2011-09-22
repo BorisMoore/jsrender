@@ -6,7 +6,7 @@
 	<script src="../jsrender-codeless.js" type="text/javascript"></script>
 	<script src="jquery.tmpl-JQT.js" type="text/javascript"></script>
 	<!--Fixed to avoid collision of $.template with JsRender-->
-	
+
 	<script src="dot.js" type="text/javascript"></script>
 </head>
 <body>
@@ -33,7 +33,7 @@
 
 <script id="jsRenderTemplate" type="text/x-jquery-tmpl">
 	<div>
-		<b>{{=Name!}}</b> ({{=ReleaseYear!}}) 
+		<b>{{=Name!}}</b> ({{=ReleaseYear!}})
 		<b>{{=Name!}}</b> ({{=ReleaseYear!}})
 		<b>{{=Name!}}</b> ({{=ReleaseYear!}})
 		<b>{{=Name!}}</b> ({{=ReleaseYear!}})
@@ -42,7 +42,7 @@
 
 <script id="jsRenderTemplateEncode" type="text/x-jquery-tmpl">
 	<div>
-		<b>{{=Name}}</b> ({{=ReleaseYear}}) 
+		<b>{{=Name}}</b> ({{=ReleaseYear}})
 		<b>{{=Name}}</b> ({{=ReleaseYear}})
 		<b>{{=Name}}</b> ({{=ReleaseYear}})
 		<b>{{=Name}}</b> ({{=ReleaseYear}})
@@ -63,26 +63,26 @@
 <br /><div id="output"></div>
 
 <script type="text/javascript">
-	var ret, 
+	var ret,
 		movie = { Name: "The <i>Red</i> Violin", ReleaseYear: "1998" },
-		
+
 		tmpl_doT = doT.template($( "#dotTemplate" )[0].innerHTML),
 		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).templateJQT(),
 		tmpl_JsRender = $( "#jsRenderTemplate" ).template(),
 		tmpl_jQueryTmplEncode = $( "#jqueryTmplTemplateEncode" ).templateJQT(),
 		tmpl_JsRenderEncode = $( "#jsRenderTemplateEncode" ).template();
-	
+
 	// Test compile perf
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#console" ).append( "<tr><td colspan='2'><b>Compilation</b></td></tr>");
 
-	test( "doT compile", function() { 
+	test( "doT compile", function() {
 		tmpl_doT = doT.template($( "#dotTemplate" )[0].innerHTML);
 	});
-	test( "JsRender compile", function() { 
+	test( "JsRender compile", function() {
 		tmpl_JsRender = $( "#jsRenderTemplate" ).template();
 	});
-	test( "jQuery Template compile", function() { 
+	test( "jQuery Template compile", function() {
 		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).templateJQT();
 	});
 
@@ -90,13 +90,13 @@
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#console" ).append( "<tr><td colspan='2'><b>Rendering - to string. No HTML encoding</b></td></tr>");
 
-	test( "doT", function() { 
+	test( "doT", function() {
 		ret = tmpl_doT(movie);
 	});
-	test( "JsRender", function() { 
+	test( "JsRender", function() {
 		ret = tmpl_JsRender( movie );
 	});
-	test( "jQuery Template", function() { 
+	test( "jQuery Template", function() {
 		ret = tmpl_jQueryTmpl($, { data: movie }).join("");
 	});
 
@@ -104,28 +104,28 @@
 	$( "#console" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
 	ret = $( "#output" ).html();
-	test( "JsRender full features - to string", function() { 
+	test( "JsRender full features - to string", function() {
 		ret = $.render( tmpl_JsRender, movie );
 	});
-	test( "JsRender full features - inserted in DOM", function() { 
+	test( "JsRender full features - inserted in DOM", function() {
 		$( "#output" ).html( ret = $.render( tmpl_JsRender, movie ));
 	});
-	test( "jQuery Template full features - inserted in DOM", function() { 
+	test( "jQuery Template full features - inserted in DOM", function() {
 		$( "#output" ).empty();
-		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
+		$.tmplJQT( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
 	});
 
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#console" ).append( "<tr><td colspan='2'><b>Rendering to string, with HTML encoding</b></td></tr>");
-	
-	test( "JsRender Encode", function() { 
+
+	test( "JsRender Encode", function() {
 		ret = tmpl_JsRenderEncode( movie );
 	});
-	test( "jQuery Template Encode", function() { 
+	test( "jQuery Template Encode", function() {
 		ret =tmpl_jQueryTmplEncode($, { data: movie }).join("");
 	});
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
-	
+
 function test( label, cb ) {
 	times = 8000
 	count = times;
