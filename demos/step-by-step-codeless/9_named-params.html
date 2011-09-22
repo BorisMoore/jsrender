@@ -15,32 +15,37 @@
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td>{{#sort Languages reverse=true}}
+		<td>{{sort Languages reverse="false" content="#sortedTemplate"}}</td>
+		<td>{{#sort Languages reverse="true"}}
 				<div>
-					<em>{{=Name}}</em>
+					<b>{{=Name}}</b>
 				</div>
 			{{/sort}}
 		</td>
 	</tr>
 </script>
 
-<table><tbody class="header"><tr><th>Synopsis</th><th>Title</th></tr></tbody>
+<script id="sortedTemplate" type="text/x-jquery-tmpl">
+	<div>{{=Name}}</div>
+</script>
+
+<table><tbody class="header"><tr><th>Title</th><th>Orginal order</th><th>Reverse order</th></tr></tbody>
 	<tbody id="movieList"></tbody>
 </table>
 
 <script type="text/javascript">
 
 	$.tmpl.registerTags({
-		sort: function( array, hash, content, path ){
+		sort: function( array, hash, content ){
 			var ret = "";
 			if ( hash.reverse === "true" ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( content, array[ i - 1 ], this.context, this, path );
+					ret += $.render( content, array[ i - 1 ]);
 				}
 			} else {
 				// Render in original order
-				ret += $.render( content, array, this.context, this, path );
+				ret += $.render( content, array );
 			}
 			return ret;
 		},

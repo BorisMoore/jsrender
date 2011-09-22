@@ -69,23 +69,6 @@ if ( jQuery ) {
 			// Flatten any nested arrays
 			return ret.concat.apply( [], ret );
 		},
-		each: function( object, callback ) {
-			var name,
-				i = 0,
-				length = object.length;
-
-			if ( length === undefined || $.isFunction( object )) {
-				for ( name in object ) {
-					callback.call( object[ name ], name, object[ name ] );
-				}
-			} else for ( ; i < length; ) {
-				callback.call( object[ i ], i, object[ i++ ] );
-			}
-			return object;
-		},
-		isFunction: function( obj ) {
-			return typeof obj === "function";
-		},
 		isArray: Array.isArray || function( obj ) {
 			return Object.prototype.toString.call( obj ) === "[object Array]";
 		}
@@ -125,24 +108,6 @@ function View( context, path, parentView, data, template ) {
 // renderTag
 //===============
 
-function getValue( view, path ) { // TODO optimize in case whether this a simple path on an object - no bindings etc.
-	if ( "" + path !== path ) {
-		return path;
-	}
-	var object, varName;
-	path = path.split(".");
-	object = path[ 0 ].charAt( 0 ) === "$"
-		? (varName = path.shift().slice( 1 ), varName === "view" ? view : view[ varName ])
-		: view.data;
-
-	// If 'from' path points to a property of a descendant 'leaf object',
-	// link not only from leaf object, but also from intermediate objects
-	while ( object && path.length > 1 ) {
-		object = object[ path.shift() ];
-	}
-	path = path[ 0 ];
-	return path ? object && object[ path ] : object;
-}
 
 $.extend({
 	tmpl: {
@@ -156,9 +121,36 @@ $.extend({
 
 		renderTag: function( tagName ) {
 			// This is a tag call, with arguments: "tagName", [params, ...], [content,] [params.toString,] view, encoding, [hash,] [nestedTemplateFnIndex]
-			var content, ret, path, view, encoding, hash, l,
+			var content, ret, path, key, view, encoding, hash, l,
+				keyCount = 0,
 				args = slice.call( arguments, 1 ),
 				tagFn = tmplTags[ tagName ];
+
+			function getValue( val ) { // TODO optimize in case whether this a simple path on an object - no bindings etc.
+				var ret, object, varName;
+				
+				if ( /^(['"]).*\1$/.test( val )) {
+					// If parameter is quoted text ('text' or "text") - replace by string: text
+					ret = val.slice( 1,-1 );
+				} else if ( "" + val !== val ) {
+					// Otherwise, treat as path to be evaluated
+					ret = val;
+				} else {
+					val = val.split(".");
+					object = val[ 0 ].charAt( 0 ) === "$"
+						? (varName = val.shift().slice( 1 ), varName === "view" ? view : view[ varName ])
+						: view.data;
+
+					// If 'from' val points to a property of a descendant 'leaf object',
+					// link not only from leaf object, but also from intermediate objects
+					while ( object && val.length > 1 ) {
+						object = object[ val.shift() ];
+					}
+					val = val[ 0 ];
+					ret = val ? object && object[ val ] : object;
+				}
+				return [ ret ];
+			}
 
 			if ( !tagFn ) {
 				// If not a tagFn, return empty string, and throw if in debug mode
@@ -179,23 +171,30 @@ $.extend({
 				encoding = args.pop(); // In this case, encoding is the next to last arg
 			}
 			view = args.pop();
-			content = content !== undefined && view.tmpl.nested[ content ];
+			content = content && view.tmpl.nested[ content - 1 ];
 			l = args.length;
 			if ( l ) {
-				ret = [ content, args.toString(), encoding ];
+				path = args.toString()
+				args = $.map( args, getValue );
 				if ( hash ) {
-					ret.unshift( hash );
+					for ( key in hash ) {
+						keyCount++;
+						hash[ key ] = getValue( hash[ key ])[0];
+					}
+					if ( hash.content ) {
+						content = content || hash.content;
+						keyCount--;
+						delete hash.content;
+					}
 				}
-				ret = tagFn.apply( view, $.map( args, function( val ) {
-					return /^(['"]).*\1$/.test( val )
-						// If parameter is quoted text ('text' or "text") - replace by string: text
-						? val.slice( 1,-1 )
-						// Otherwise, treat as path to be evaluated
-						: [getValue( view, val )];
-				}).concat( ret ));
+				args = args.concat( content, path, encoding );
+				if ( keyCount ) {
+					args.splice( -3, 0, hash );
+				}
 			} else {
-				ret = tagFn.call( view, content, encoding );
+				args = [ content, encoding ];
 			}
+			ret = tagFn.apply( view, args );
 
 			return encoding === "string" ? ('"' + ret + '"') : ret;
 			// Useful to force chained tags to return results as string values,
@@ -255,10 +254,6 @@ $.extend({
 					l = args.length - 1,
 					content = args[ l - 2 ],
 					path = args[ l - 1 ];
-					if ( !content ) {
-						l--;
-						content = args[ l - 2 ];
-					}
 				for ( ; i < l - 2; i++ ) {
 					result += args[ i ] ? $.render( content, args[ i ], this.context, this, path ) : "";
 				}
@@ -301,9 +296,6 @@ $.extend({
 		if ( !tmpl ) {
 			return null; // Could throw...
 		}
-//		if (  $.isFunction( data )) {
-//			data = data.call( parentView || {} );
-//		}
 
 		if ( $.isArray( data )) {
 			// Create a view item for the array, whose child views correspond to each data item.
@@ -508,13 +500,13 @@ function buildTmplFunction( nodes ) {
 			hash = ctx[ 0 ];
 			chainingDepth--;
 			content = node[ 2 ];
+			if( content ) {
+				nested.push( buildTmplFunction( content ));
+			}
 			codeFrag += '$view,"'
 				+ encoding + '"'
 				+ (hash ? ",{" + hash + "}" : "")
 				+ (content ? "," + nested.length : ""); // For block tags, pass in the key to the nested content template
-			if( content ) {
-				nested.push( buildTmplFunction( content ));
-			}
 			codeFrag += ')';
 		}
 		return codeFrag;

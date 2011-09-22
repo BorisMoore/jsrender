@@ -16,18 +16,27 @@
 	<tr>
 		<td>{{=Title}}</td>
 		<td>
-			{{each Languages "#languageTemplate"}}
+			{{each Languages content="#languageTemplate1"}}
+		</td>
+		<td>
+			{{each Languages content=tmpl}}
 		</td>
 	</tr>
 </script>
 
-<script id="languageTemplate" type="text/x-jquery-tmpl">
+<script id="languageTemplate1" type="text/x-jquery-tmpl">
 	<div>
 		<em>{{=Name}}</em>
 	</div>
 </script>
 
-<table><tbody class="header"><tr><th>Synopsis</th><th>Title</th></tr></tbody>
+<script id="languageTemplate2" type="text/x-jquery-tmpl">
+	<div>
+		<b>{{=Name}}</b>
+	</div>
+</script>
+
+<table><tbody class="header"><tr><th>Synopsis</th><th>Fixed Template</th><th>Template specified in data</th></tr></tbody>
 	<tbody id="movieList"></tbody>
 </table>
 
@@ -39,7 +48,8 @@
 			Languages: [
 				{ Name: "English" },
 				{ Name: "French" }
-			]
+			],
+			tmpl: "#languageTemplate1"
 		},
 		{
 			Title: "Eyes Wide Shut",
@@ -47,7 +57,8 @@
 				{ Name: "French" },
 				{ Name: "German" },
 				{ Name: "Spanish" }
-			]
+			],
+			tmpl: "#languageTemplate2"
 		}
 	];
 	$( "#movieList" ).html(

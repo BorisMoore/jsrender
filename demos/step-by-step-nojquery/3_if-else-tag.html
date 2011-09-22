@@ -53,7 +53,7 @@
 	$.template( "movieTemplate", document.getElementById( "movieTemplate" ).innerHTML )
 
 	document.getElementById( "movieList" ).innerHTML =
-		"<table><tbody class='header'><tr><th>Title</th><th>Synopsis</th></tr></tbody><tbody id='movieList'>"
+		"<table><tbody class='header'><tr><th>Title</th><th>Languages</th></tr></tbody><tbody id='movieList'>"
 		+ $.render( "movieTemplate", movies )
 		+ "</tbody></table>"
 
