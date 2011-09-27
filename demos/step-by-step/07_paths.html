@@ -2,11 +2,11 @@
 <html>
 <head>
 	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
-	<script src="../../jsrender-codeless.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
  	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="../index-codeless.html">Home</a><br />
+<a href="index.html">Home</a><br />
 
 <h3>Accessing paths</h3>
 
@@ -81,7 +81,7 @@
 		}
 	];
 
-	$.tmpl.registerTags({
+	$.views.registerTags({
 		notLast: function( content ) {
 			var array = this.parent.data;
 			return array[ array.length - 1 ] === this.data ? "" : content( this );

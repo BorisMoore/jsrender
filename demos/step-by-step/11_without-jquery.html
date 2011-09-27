@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="index.html">Home</a><br />
+
+<h3>JsRender without jQuery</h3>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=Title}}</td>
+		<td>{{sort Languages reverse="false" content="sortedTemplate"}}</td>
+		<td>{{#sort Languages reverse="true"}}
+				<div>
+					<b>{{=Name}}</b>
+				</div>
+			{{/sort}}
+		</td>
+	</tr>
+</script>
+
+<script id="sortedTemplate" type="text/x-jquery-tmpl">
+	<div>{{=Name}}</div>
+</script>
+
+<div id="movieList"></div>
+
+<script type="text/javascript">
+
+	$.views.registerTags({
+		sort: function( array, hash, content ){
+			var ret = "";
+			if ( hash.reverse === "true" ) {
+				// Render in reverse order
+				for ( var l = array.length, i = l; i; i-- ) {
+					ret += $.render( content, array[ i - 1 ]);
+				}
+			} else {
+				// Render in original order
+				ret += $.render( content, array );
+			}
+			return ret;
+		},
+	});
+
+	var movies = [
+		{
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "French" }
+			]
+		},
+		{
+			Title: "Eyes Wide Shut",
+			Languages: [
+				{ Name: "French" },
+				{ Name: "German" },
+				{ Name: "Spanish" }
+			]
+		}
+	];
+
+	$.template( "movieTemplate", document.getElementById( "movieTemplate" ).innerHTML )
+	$.template( "sortedTemplate", document.getElementById( "sortedTemplate" ).innerHTML )
+
+	document.getElementById( "movieList" ).innerHTML =
+		"<table><tbody class='header'><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></tbody><tbody>"
+		+ $.render( "movieTemplate", movies )
+		+ "</tbody></table>"
+</script>
+
+</body>
+</html>

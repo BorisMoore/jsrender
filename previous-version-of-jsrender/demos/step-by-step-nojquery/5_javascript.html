@@ -10,15 +10,21 @@
 <body>
 <a href="../index-nojquery.html">Home</a><br />
 
-<h3>Using {{each}} to render repeating sections.</h3>
+<h3>Using JavaScript expressions and functions calls within templates.</h3>
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>${Title}</td>
-		<td>Languages:
+		<td><b>Languages:</b>
 			<em>
 				{{each Languages}}
-					${$value.Name}
+					${$value.Name}{{if $index < Languages.length - 2}}, {{else $index === Languages.length - 2}} and {{/if}}
+				{{/each}}
+			</em><br/><br/>
+			<b>Subtitles:</b>
+			<em>
+				{{each( i, lang ) Subtitles}}
+					${namePlusSeparator( lang.Name, i, Subtitles.length )}
 				{{/each}}
 			</em>
 		</td>
@@ -30,7 +36,7 @@
 <script type="text/javascript">
 
 	function namePlusSeparator( name, index, length ){
-		var ret = name;
+		var ret = name.toUpperCase();
 		if ( index < length - 1 ) {
 			if ( index === length - 2 ) {
 				ret += " and";
@@ -47,6 +53,11 @@
 			Languages: [
 				{ Name: "English" },
 				{ Name: "French" }
+			],
+			Subtitles: [
+				{ Name: "English" },
+				{ Name: "French" },
+				{ Name: "Chinese" }
 			]
 		},
 		{
@@ -55,6 +66,9 @@
 				{ Name: "French" },
 				{ Name: "German" },
 				{ Name: "Spanish" }
+			],
+			Subtitles: [
+				{ Name: "English" }
 			]
 		}
 	];
@@ -62,7 +76,7 @@
 	$.template( "movieTemplate", document.getElementById( "movieTemplate" ).innerHTML )
 
 	document.getElementById( "movieList" ).innerHTML =
-		"<table><tbody class='header'><tr><th>Title</th><th>Languages</th></tr></tbody><tbody id='movieList'>"
+		"<table><tbody class='header'><tr><th>Title</th><th>Languages</th></tr></tbody><tbody>"
 		+ $.render( "movieTemplate", movies )
 		+ "</tbody></table>"
 

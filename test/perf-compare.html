@@ -3,7 +3,7 @@
 <head>
 	<title>Benchmark JsRender</title>
 	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
-	<script src="../jsrender-codeless.js" type="text/javascript"></script>
+	<script src="../jsrender.js" type="text/javascript"></script>
 	<script src="jquery.tmpl-JQT.js" type="text/javascript"></script>
 	<!--Fixed to avoid collision of $.template with JsRender-->
 
@@ -112,7 +112,7 @@
 	});
 	test( "jQuery Template full features - inserted in DOM", function() {
 		$( "#output" ).empty();
-		$.tmplJQT( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
+		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
 	});
 
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );

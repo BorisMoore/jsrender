@@ -69,7 +69,7 @@
 			}
 			tmplItems = appendToTmplItems;
 			appendToTmplItems = null;
-			jQuery.tmplJQT.complete( tmplItems );
+			jQuery.tmpl.complete( tmplItems );
 			return ret;
 		};
 	});
@@ -77,8 +77,8 @@
 	jQuery.fn.extend({
 		// Use first wrapped element as template markup.
 		// Return wrapped set of template items, obtained by rendering template against data.
-		tmplJQT: function( data, options, parentItem ) {
-			return jQuery.tmplJQT( this[0], data, options, parentItem );
+		tmpl: function( data, options, parentItem ) {
+			return jQuery.tmpl( this[0], data, options, parentItem );
 		},
 
 		// Find which rendered template item the first wrapped DOM element belongs to
@@ -98,7 +98,7 @@
 				if ( tmplItem && cloneIndex ) {
 					dmArgs[2] = function( fragClone ) {
 						// Handler called by oldManip when rendered template has been inserted into DOM.
-						jQuery.tmplJQT.afterManip( this, fragClone, callback );
+						jQuery.tmpl.afterManip( this, fragClone, callback );
 					};
 				}
 				oldManip.apply( this, dmArgs );
@@ -107,7 +107,7 @@
 			}
 			cloneIndex = 0;
 			if ( !appendToTmplItems ) {
-				jQuery.tmplJQT.complete( newTmplItems );
+				jQuery.tmpl.complete( newTmplItems );
 			}
 			return this;
 		}
@@ -115,7 +115,7 @@
 
 	jQuery.extend({
 		// Return wrapped set of template items, obtained by rendering template against data.
-		tmplJQT: function( tmpl, data, options, parentItem ) {
+		tmpl: function( tmpl, data, options, parentItem ) {
 			var ret, topLevel = !parentItem;
 			if ( topLevel ) {
 				// This is a top-level tmpl call (not from a nested template using {{tmpl}})
@@ -204,7 +204,7 @@
 		}
 	});
 
-	jQuery.extend( jQuery.tmplJQT, {
+	jQuery.extend( jQuery.tmpl, {
 		tag: {
 			"tmpl": {
 				_default: { $2: "null" },
@@ -328,7 +328,7 @@
 				.replace( /\$\{([^\}]*)\}/g, "{{= $1}}" )
 				.replace( /\{\{(\/?)(\w+|.)(?:\(((?:[^\}]|\}(?!\}))*?)?\))?(?:\s+(.*?)?)?(\(((?:[^\}]|\}(?!\}))*?)\))?\s*\}\}/g,
 				function( all, slash, type, fnargs, target, parens, args ) {
-					var tag = jQuery.tmplJQT.tag[ type ], def, expr, exprAutoFnDetect;
+					var tag = jQuery.tmpl.tag[ type ], def, expr, exprAutoFnDetect;
 					if ( !tag ) {
 						throw "Unknown template tag: " + type;
 					}
@@ -454,7 +454,7 @@
 
 	function tiNest( tmpl, data, options ) {
 		// nested template, using {{tmpl}} tag
-		return jQuery.tmplJQT( jQuery.templateJQT( tmpl ), data, options, this );
+		return jQuery.tmpl( jQuery.templateJQT( tmpl ), data, options, this );
 	}
 
 	function tiWrap( call, wrapped ) {
@@ -462,7 +462,7 @@
 		var options = call.options || {};
 		options.wrapped = wrapped;
 		// Apply the template, which may incorporate wrapped content,
-		return jQuery.tmplJQT( jQuery.templateJQT( call.tmpl ), call.data, options, call.item );
+		return jQuery.tmpl( jQuery.templateJQT( call.tmpl ), call.data, options, call.item );
 	}
 
 	function tiHtml( filter, textOnly ) {
@@ -478,7 +478,7 @@
 
 	function tiUpdate() {
 		var coll = this.nodes;
-		jQuery.tmplJQT( null, null, null, this).insertBefore( coll[0] );
+		jQuery.tmpl( null, null, null, this).insertBefore( coll[0] );
 		jQuery( coll ).remove();
 	}
 })( jQuery );

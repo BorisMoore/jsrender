@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="index.html">Home</a><br />
+
+<h3>Compiling templates from strings</h3>
+
+<button id="switchBtn">Show full details</button><br/>
+<br />
+<table>
+	<tbody id="movieList"></tbody>
+</table>
+
+<script type="text/javascript">
+	var movies = [
+		{ Name: "The Red Violin", ReleaseYear: "1998", Director: "François Girard" },
+		{ Name: "Eyes Wide Shut", ReleaseYear: "1999", Director: "Stanley Kubrick" },
+		{ Name: "The Inheritance", ReleaseYear: "1976", Director: "Mauro Bolognini" }
+	];
+
+	/* Compile markup as named templates */
+	$.template( "titleTemplate", "<tr><td>{{=Name}}</td></tr>" );
+	$.template( "detailTemplate", "<tr><td colspan='3'>{{=Name}}</td><td>Released: {{=ReleaseYear}}</td><td>Director: {{=Director}}</td></tr>" );
+
+	var details = true;
+
+	function switchTemplates() {
+		details = !details;
+		$(this).text( details ? "Show titles only" : "Show full details" );
+		/* Render using the other named template */
+		$( "#movieList" ).html( $.render( details ? "detailTemplate" : "titleTemplate", movies ));
+	}
+
+	$( "#switchBtn" ).click( switchTemplates );
+
+	switchTemplates();
+</script>
+
+</body>
+</html>
