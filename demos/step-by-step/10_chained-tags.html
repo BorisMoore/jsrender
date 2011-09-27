@@ -12,26 +12,74 @@
 
 <h3>Nesting of tags, to pass computed parameters</h3>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+<script id="movieTemplate1" type="text/x-jquery-tmpl">
 	<tr>
-		<td>{{=Title!}}</td>
-			<td><b>Languages:</b>
-			<em>
-				{{#each Languages}}
-					{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast!string}} }}, {{/nextToLast}}
-				{{/each}}
-			</em>
+		<td>{{=Title}}</td>
+		<td>
+			{{#if {{not Languages}} }}
+				<b>Warning:</b><em>No alternate languages</em>
+			{{/if}}
 		</td>
 	</tr>
 </script>
 
+<pre>
+{{#if {{not Languages}} }}...{{/if}}
+
+$.views.registerTags({
+    not: function( value ){
+        return !value;
+    }
+});
+</pre>	
+
 <table><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
-	<tbody id="movieList"></tbody>
+	<tbody id="movieList1"></tbody>
+</table>
+
+<script id="movieTemplate2" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=Title!}}</td>
+		<td>
+			{{#if Languages}}
+				<b>Languages:</b>
+				<em>
+					{{#each Languages}}
+						{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast}} }}, {{/nextToLast}}
+					{{/each}}
+				</em>
+			{{/if}}
+		</td>
+	</tr>
+</script>
+
+
+<pre>
+{{#nextToLast}}
+	and 
+{{else {{notLast}} }}
+	,
+{{/nextToLast}}
+
+$.views.registerTags({
+    notLast: function( content ) {
+        return this.itemNumber !== this.parent.data.length;
+    }
+});
+</pre>	
+
+<table><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
+	<tbody id="movieList2"></tbody>
 </table>
 
 <script type="text/javascript">
 
 	$.views.registerTags({
+
+		not: function( value ){
+			return !value;
+		},
+
 		format: function( val, format, params, encoding ){
 			var ret;
 			switch( format ) {
@@ -44,17 +92,19 @@
 			}
 			return $.views.encode[ encoding || "html" ]( ret );
 		},
+
 		nextToLast: function( content ) {
 			if ( this.itemNumber === this.parent.data.length - 1 ) {
 				return $.render( content, this.data );
 			}
 			this.onElse = function( val, content ) {
-				return val === "true" ? $.render( content, this.data ) : "";
+				return val ? $.render( content, this.data ) : "";
 			};
 			return "";
 		},
+
 		notLast: function( content ) {
-			return (this.itemNumber !== this.parent.data.length).toString();
+			return this.itemNumber !== this.parent.data.length;
 		}
 	});
 
@@ -67,6 +117,9 @@
 			]
 		},
 		{
+			Title: "The Mighty"
+		},
+		{
 			Title: "Eyes Wide Shut",
 			Languages: [
 				{ Name: "French" },
@@ -76,8 +129,12 @@
 		}
 	];
 
-	$( "#movieList" ).html(
-		$( "#movieTemplate" ).render( movies )
+	$( "#movieList1" ).html(
+		$( "#movieTemplate1" ).render( movies )
+	);
+
+	$( "#movieList2" ).html(
+		$( "#movieTemplate2" ).render( movies )
 	);
 
 </script>

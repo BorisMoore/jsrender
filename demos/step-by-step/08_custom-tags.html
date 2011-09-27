@@ -10,7 +10,29 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Providing a named parameter to a custom tag: {{sort array reverse=true}}</h3>
+<h3>Providing a custom tag</h3>
+
+<pre>
+<td>{{#sort Languages reverse="true"}}</td>
+
+$.views.registerTags({
+
+    sort: function( array, hash, content ){
+        var ret = "";
+        if ( hash.reverse === "true" ) {
+            // Render in reverse order
+            for ( var l = array.length, i = l; i; i-- ) {
+                ret += $.render( content, array[ i - 1 ]);
+            }
+        } else {
+            // Render in original order
+            ret += $.render( content, array );
+        }
+        return ret;
+    }
+
+});
+</pre>	
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
@@ -36,6 +58,7 @@
 <script type="text/javascript">
 
 	$.views.registerTags({
+
 		sort: function( array, hash, content ){
 			var ret = "";
 			if ( hash.reverse === "true" ) {
@@ -48,7 +71,8 @@
 				ret += $.render( content, array );
 			}
 			return ret;
-		},
+		}
+
 	});
 
 	var movies = [

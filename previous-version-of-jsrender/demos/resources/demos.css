@@ -5,3 +5,4 @@ h4 { font-size: inherit`; font-variant: small-caps; }
 body > button { float: left; clear: right; margin: 3px }
 .subhead { margin: 15px 0 4px 0; font-weight:bolder; color:#116; font-family:Arial; font-size:10pt }
 a { color: #55b}
+pre { font-size:10pt; font-weight:bold; }

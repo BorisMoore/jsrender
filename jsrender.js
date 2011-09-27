@@ -481,8 +481,8 @@ function buildTmplFunction( nodes ) {
 			params = node[ 1 ],
 			encoding = node[ 3 ];
 		if ( tag === "=" ) {
-			// TODO test for chainingDepth: using {{= }} at depth>0 is an error.
 			if ( chainingDepth > 0 || params.length !== 1 ) {
+				// Using {{= }} at depth>0 is an error.
 				return ""; // Could throw...
 			}
 			params = params[ 0 ];
@@ -515,7 +515,11 @@ function buildTmplFunction( nodes ) {
 				nested.push( buildTmplFunction( content ));
 			}
 			codeFrag += '$view,"'
-				+ encoding + '"'
+				+ ( encoding
+					? encoding
+					: chainingDepth
+						? "string"		// Default encoding for chained tags is "string"
+						: "" ) + '"'
 				+ (hash ? ",{ json:'{" + out[ 1 ] + "}'," + hash + "}" : "")
 				+ (content ? "," + nested.length : ""); // For block tags, pass in the key to the nested content template
 			codeFrag += ')';
