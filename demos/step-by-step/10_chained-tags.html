@@ -41,14 +41,9 @@ $.views.registerTags({
 	<tr>
 		<td>{{=Title!}}</td>
 		<td>
-			{{#if Languages}}
-				<b>Languages:</b>
-				<em>
-					{{#each Languages}}
-						{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast}} }}, {{/nextToLast}}
-					{{/each}}
-				</em>
-			{{/if}}
+			{{#each Languages}}
+				{{format Name "upper"!}}{{#nextToLast}} and {{else {{notLast}} }}, {{/nextToLast}}
+			{{/each}}
 		</td>
 	</tr>
 </script>

@@ -33,9 +33,10 @@
 
 	function switchTemplates() {
 		details = !details;
-		$(this).text( details ? "Show titles only" : "Show full details" );
+		$( this ).text( details ? "Show titles only" : "Show full details" );
 		/* Render using the other named template */
-		$( "#movieList" ).html( $.render( details ? "detailTemplate" : "titleTemplate", movies ));
+		var templateName = details ? "detailTemplate" : "titleTemplate";
+		$( "#movieList" ).html( $.render( templateName, movies ));
 	}
 
 	$( "#switchBtn" ).click( switchTemplates );

@@ -15,20 +15,18 @@
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td><b>Languages:</b>
-			<em>
-				{{#each Languages}}
-					{{=Name}}{{*
+		<td>
+			{{#each Languages}}
+				{{=Name}}{{*
 
-						if ( $view.itemNumber === $view.parent.data.length - 1 ) {
+					if ( $view.itemNumber === $view.parent.data.length - 1 ) {
 
-					}} and {{*
+				}} and {{*
 
-						} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
+					} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
 
-					}}, {{* } }}
-				{{/each}}
-			</em>
+				}}, {{* } }}
+			{{/each}}
 		</td>
 	</tr>
 </script>
