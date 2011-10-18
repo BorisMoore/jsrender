@@ -172,8 +172,8 @@ $.extend({
 			}
 
 			if ( hash ) {
-				json = hash.json;
-				delete hash.json;
+				json = hash.hash;
+				delete hash.hash;
 				if ( hash.content ) {
 					content = content || getValue( hash.content )[0];
 					delete hash.content;
@@ -371,6 +371,9 @@ viewsNs.registerTags({
 	},
 	"*": function( value ) {
 		return value;
+	},
+	"=": function( value, hash ) {
+		return value === undefined ? hash.undef : value;
 	}
 });
 
@@ -476,14 +479,14 @@ function buildTmplFunction( nodes ) {
 			outParams[ 1 ] += key + node[ 1 ];
 			return FALSE;
 		}
-		var codeFrag, tokens, j, k, ctx, val, hash, key, out,
+		var codeFrag, tokens, j, k, ctx, val, hash, key, out, defaultValue,
 			tag = node[ 0 ],
 			params = node[ 1 ],
 			encoding = node[ 3 ];
-		if ( tag === "=" ) {
-			if ( chainingDepth > 0 || params.length !== 1 ) {
+		if ( tag === "=" && params.length === 1 ) {
+			if ( chainingDepth ) {
 				// Using {{= }} at depth>0 is an error.
-				return ""; // Could throw...
+				return "''"; // Could throw...
 			}
 			params = params[ 0 ];
 			if ( tokens = /^((?:\$view|\$data|\$(itemNumber)|\$(ctx))(?:$|\.))?[\w\.]*$/.exec( params )) {
@@ -520,7 +523,7 @@ function buildTmplFunction( nodes ) {
 					: chainingDepth
 						? "string"		// Default encoding for chained tags is "string"
 						: "" ) + '"'
-				+ (hash ? ",{ json:'{" + out[ 1 ] + "}'," + hash + "}" : "")
+				+ (hash ? ",{ hash:'{" + out[ 1 ] + "}'," + hash + "}" : "")
 				+ (content ? "," + nested.length : ""); // For block tags, pass in the key to the nested content template
 			codeFrag += ')';
 		}
