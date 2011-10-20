@@ -37,7 +37,7 @@ $.views.registerTags({
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse="false" content="#sortedTemplate"}}</td>
+		<td>{{sort Languages reverse="false" _content="#sortedTemplate"}}</td>
 		<td>{{#sort Languages reverse="true"}}
 				<div>
 					<b>{{=Name}}</b>
@@ -59,16 +59,16 @@ $.views.registerTags({
 
 	$.views.registerTags({
 
-		sort: function( array, hash, content ){
+		sort: function( array, hash ){
 			var ret = "";
 			if ( hash.reverse === "true" ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( content, array[ i - 1 ]);
+					ret += $.render( hash._content, array[ i - 1 ]);
 				}
 			} else {
 				// Render in original order
-				ret += $.render( content, array );
+				ret += $.render( hash._content, array );
 			}
 			return ret;
 		}

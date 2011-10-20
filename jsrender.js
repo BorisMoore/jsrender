@@ -118,9 +118,8 @@ $.extend({
 		renderTag: function( tagName ) {
 			// This is a tag call, with arguments: "tagName", [params, ...], [content,] [params.toString,] view, encoding, [hash,] [nestedTemplateFnIndex]
 			var content, ret, key, view, encoding, hash, l,
-				json = "",
+				hashString = "",
 				path = "",
-				keyCount = 0,
 				args = slice.call( arguments, 1 ),
 			tagFn = viewsNs.tags[ tagName ];
 
@@ -130,7 +129,7 @@ $.extend({
 				if ( /^(['"]).*\1$/.test( val )) {
 					// If parameter is quoted text ('text' or "text") - replace by string: text
 					result = val.slice( 1,-1 );
-				} else if ( "" + val !== val ) {
+				} else if ( "" + val !== val ) { // not type string
 					// Otherwise, treat as path to be evaluated
 					result = val;
 				} else {
@@ -151,13 +150,13 @@ $.extend({
 			}
 
 			encoding = args.pop();
-			if ( +encoding === encoding ) {
+			if ( +encoding === encoding ) { // type number
 				// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
 				// assign the sub-content template function as last arg
 				content = encoding;
 				encoding = args.pop(); // In this case, encoding is the next to last arg
 			}
-			if ( "" + encoding !== encoding ) {
+			if ( "" + encoding !== encoding ) { // not type string
 				// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
 				// assign the sub-content template function as last arg
 				hash = encoding;
@@ -170,34 +169,18 @@ $.extend({
 				path = args.toString()
 				args = $.map( args, getValue );
 			}
-
 			if ( hash ) {
-				json = hash.hash;
-				delete hash.hash;
-				if ( hash.content ) {
-					content = content || getValue( hash.content )[0];
-					delete hash.content;
-				}
-				for ( key in hash ) {
-					keyCount++;
+				hashString = hash._hash;
+				delete hash._hash;
+				for ( key in hash ) { 
 					hash[ key ] = getValue( hash[ key ])[0];
 				}
-				if ( keyCount ) {
-					args.push( hash );
-				}
 			}
-			if ( content ) {
-				args.push( content );
-			}
-			if ( l ) {
-				args.push( path );
-			}
-			if ( keyCount ) {
-				args.push( json );
-			}
-			args.push( encoding );
-
-			// Parameters are params..., hash, content, layout, path, json
+			hash = hash || {};
+			hash._content = content || hash._content || "";
+			hash._hash = hashString;
+			args.push( hash, path, encoding );
+			// Parameters are params..., hash, content, path, encoding
 			ret = tagFn && (tagFn.apply( view, args ) || "");
 
 			return encoding === "string" ? ('"' + ret + '"') : ret;
@@ -302,7 +285,7 @@ $.extend({
 	template: function( name, tmpl ) {
 		if (tmpl) {
 			// Compile template and associate with name
-			if ( "" + tmpl === tmpl ) {
+			if ( "" + tmpl === tmpl ) { // type string
 				// This is an HTML string being passed directly in.
 				tmpl = compile( tmpl );
 			} else if ( jQuery && tmpl instanceof $ ) {
@@ -336,17 +319,27 @@ $.extend({
 
 viewsNs.registerTags({
 	"if": function() {
+		function failTest( arg ) {
+			return !arg
+			|| hash.eq !== undefined && arg !== hash.eq
+			|| hash.ne !== undefined && arg === hash.ne
+			|| hash.lt !== undefined && arg >= hash.lt
+			|| hash.gt !== undefined && arg <= hash.gt
+			|| hash.le !== undefined && arg > hash.le
+			|| hash.ge !== undefined && arg < hash.ge;
+		}
 		function ifArgs( args ) {
 			var i = 0,
-				l = args.length - 3; // number of parameters, since args are: (parameters..., content, params.toString, encoding)
-			while ( l > -1 && !args[ i++ ]) {
+				l = args.length - 3
+				hash = args[ l ]; // number of 'condition' parameters, since args are: (conditions..., hash, path, encoding
+			while ( l > -1 && failTest( args[ i++ ])) {
 				// Only render content if args.length < 3 (i.e. this is an else with no condition) or if a condition argument is truey
 				if ( i === l ) {
 					return "";
 				}
 			}
 			self.onElse = undefined;
-			return render( args[ l < 0 ? 0 : l ], self.data, self.context, self);//, l > 0 && args[ l + 1 ] );
+			return render( hash._content, self.data, self.context, self);
 		}
 		var self = this;
 		self.onElse = function() {
@@ -361,10 +354,10 @@ viewsNs.registerTags({
 		var result = "",
 			args = arguments,
 			i = 0,
-			l = args.length - 1,
-			content = args[ l - 2 ],
-			path = args[ l - 1 ];
-		for ( ; i < l - 2; i++ ) {
+			l = args.length - 3; // number of 'for' parameters, since args are: (for..., hash, path, encoding
+			content = args[ l ]._content,
+			path = args[ l + 1 ];
+		for ( ; i < l; i++ ) {
 			result += args[ i ] ? render( content, args[ i ], this.context, this, path ) : "";
 		}
 		return result;
@@ -412,7 +405,7 @@ function compile( markup ) {
 		}
 	}
 
-	// Build abstract syntax tree: [ tag, params, content, encoding ]
+	// Build abstract syntax tree: [ tag, params, encoding ]
 	markup = markup
 		.replace( /\\'|'/g, "\\\'" ).replace( /\\"|"/g, "\\\"" )  //escape ', and "
 		.split( /\s+/g ).join( " " ) // collapse white-space
@@ -469,14 +462,14 @@ function buildTmplFunction( nodes ) {
 		code = 'var tag=$.views.renderTag,html=$.views.encode.html,\nresult=""+';
 
 	function nestedCall( node, outParams ) {
-		if ( "" + node === node ) {
-			return '"' + node + '"';
+		if ( "" + node === node ) { // type string
+			return '"' + node + '"'; 
 		}
 		if ( node.length < 3 ) {
 			// Named parameter
 			key = (outParams[ 0 ] && ",") + node[ 0 ] + ":";
-			outParams[ 0 ] += key + nestedCall( node[ 1 ]);
-			outParams[ 1 ] += key + node[ 1 ];
+			outParams[ 0 ] += key + nestedCall( node[ 1 ]); // key:value for hash
+			outParams[ 1 ] += key + node[ 1 ]; // key:path for hash
 			return FALSE;
 		}
 		var codeFrag, tokens, j, k, ctx, val, hash, key, out, defaultValue,
@@ -511,7 +504,7 @@ function buildTmplFunction( nodes ) {
 				val = nestedCall( params[ j ], out );
 				codeFrag += val ? (val + ',') : "";
 			}
-			hash = out[ 0 ];
+			hash = out[ 0 ]; // key:value
 			chainingDepth--;
 			content = node[ 2 ];
 			if( content ) {
@@ -523,8 +516,8 @@ function buildTmplFunction( nodes ) {
 					: chainingDepth
 						? "string"		// Default encoding for chained tags is "string"
 						: "" ) + '"'
-				+ (hash ? ",{ hash:'{" + out[ 1 ] + "}'," + hash + "}" : "")
-				+ (content ? "," + nested.length : ""); // For block tags, pass in the key to the nested content template
+				+ (hash ? ",{ _hash:'{" + out[ 1 ] + "}'," + hash + "}" : "") // key:value pairs, plus _hash for key:path pairs  
+				+ (content ? "," + nested.length : ""); // For block tags, pass in the key (nested.length) to the nested content template
 			codeFrag += ')';
 		}
 		return codeFrag;

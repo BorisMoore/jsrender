@@ -75,7 +75,7 @@ $.views.registerTags({
 			return !value;
 		},
 
-		format: function( val, format, params, encoding ){
+		format: function( val, format, hash, path, encoding ){
 			var ret;
 			switch( format ) {
 				case "upper":
@@ -88,17 +88,17 @@ $.views.registerTags({
 			return $.views.encode[ encoding || "html" ]( ret );
 		},
 
-		nextToLast: function( content ) {
+		nextToLast: function( hash ) {
 			if ( this.itemNumber === this.parent.data.length - 1 ) {
-				return $.render( content, this.data );
+				return $.render( hash._content, this.data );
 			}
-			this.onElse = function( val, content ) {
-				return val ? $.render( content, this.data ) : "";
+			this.onElse = function( val, hash ) {
+				return val ? $.render( hash._content, this.data ) : "";
 			};
 			return "";
 		},
 
-		notLast: function( content ) {
+		notLast: function() {
 			return this.itemNumber !== this.parent.data.length;
 		}
 	});
