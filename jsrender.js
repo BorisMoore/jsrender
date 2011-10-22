@@ -4,7 +4,7 @@
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
-var $, viewsNs, tmplEncode, render, registerTags,
+var $, viewsNs, tmplEncode, render, tagRegex, registerTags,
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document;
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
@@ -115,6 +115,17 @@ $.extend({
 // renderTag
 //===============
 
+
+		setDelimiters: function( openTag, closeTag ) {
+			//                    {{
+			tagRegex = "(?:" + openTag
+				//       #      tag                            singleCharTag                                               code
+				+ "(?:(\\#)?([\\w\\$\\.\\[\\]]+(?=[\\s\\}!]))|([^\\/\\*\\>$\\w\\s\\d\\x7f\\x00-\\x1f](?=[\\s\\w\\$\\[]))|\\*((?:[^\\}]|\\}(?!\\}))+)"
+				//                !encoding      endTag                            {{/closeBlock}}
+				+ closeTag + "))|(!(\\w*))?(" + closeTag + ")|(?:" + openTag + "\\/([\\w\\$\\.\\[\\]]+)" + closeTag + ")";
+			
+			tagRegex = new RegExp( tagRegex, "g" );
+		},
 		renderTag: function( tagName ) {
 			// This is a tag call, with arguments: "tagName", [params, ...], [content,] [params.toString,] view, encoding, [hash,] [nestedTemplateFnIndex]
 			var content, ret, key, view, encoding, hash, l,
@@ -316,6 +327,8 @@ $.extend({
 // Built-in tags
 //===============
 
+viewsNs.setDelimiters( "\\{\\{", "\\}\\}" );
+
 viewsNs.registerTags({
 	"if": function() {
 		function failTest( arg ) {
@@ -408,9 +421,7 @@ function compile( markup ) {
 		.replace( /^\s+/, "" ) // trim left
 		.replace( /\s+$/, "" ); // trim right;
 
-	//					 {{		 #		tag							singleCharTag							code						 !encoding  endTag		{{/closeBlock}}
-	markup.replace( /(?:\{\{(?:(\#)?([\w\$\.\[\]]+(?=[\s\}!]))|([^\/\*\>$\w\s\d\x7f\x00-\x1f](?=[\s\w\$\[]))|\*((?:[^\}]|\}(?!\}))+)\}\}))|(!(\w*))?(\}\})|(?:\{\{\/([\w\$\.\[\]]+)\}\})/g,
-		function( all, isBlock, tagName, singleCharTag, code, useEncode, encoding, endTag, closeBlock, index ) {
+	markup.replace( tagRegex, function( all, isBlock, tagName, singleCharTag, code, useEncode, encoding, endTag, closeBlock, index ) {
 			tagName = tagName || singleCharTag;
 			if ( inBlock && endTag || pushPreceedingContent( index )) {
 				return;
