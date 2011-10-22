@@ -4,7 +4,7 @@
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
-var $, viewsNs, tmplEncode, render,
+var $, viewsNs, tmplEncode, render, registerTags,
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document;
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
@@ -157,8 +157,7 @@ $.extend({
 				encoding = args.pop(); // In this case, encoding is the next to last arg
 			}
 			if ( "" + encoding !== encoding ) { // not type string
-				// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
-				// assign the sub-content template function as last arg
+				// This arg is not a string, so must be the hash
 				hash = encoding;
 				encoding = args.pop(); // In this case, encoding is the next to last arg
 			}
@@ -193,7 +192,7 @@ $.extend({
 //===============
 
 		// Register declarative tag.
-		registerTags: function registerTags( name, tag ) {
+		registerTags: registerTags = function( name, tag ) {
 			if ( typeof name === "object" ) {
 				// Object representation where property name is path and property value is value.
 				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
@@ -364,9 +363,6 @@ viewsNs.registerTags({
 	},
 	"*": function( value ) {
 		return value;
-	},
-	"=": function( value, hash ) {
-		return value === undefined ? hash.undef : value;
 	}
 });
 
@@ -472,7 +468,7 @@ function buildTmplFunction( nodes ) {
 			outParams[ 1 ] += key + node[ 1 ]; // key:path for hash
 			return FALSE;
 		}
-		var codeFrag, tokens, j, k, ctx, val, hash, key, out, defaultValue,
+		var codeFrag, tokens, j, k, ctx, val, hash, key, out,
 			tag = node[ 0 ],
 			params = node[ 1 ],
 			encoding = node[ 3 ];
@@ -484,17 +480,17 @@ function buildTmplFunction( nodes ) {
 			params = params[ 0 ];
 			if ( tokens = /^((?:\$view|\$data|\$(itemNumber)|\$(ctx))(?:$|\.))?[\w\.]*$/.exec( params )) {
 				// Can optimize for perf and not go through call to renderTag()
-				codeFrag = tokens[ 1 ]
+				codeFrag = "(" + (tokens[ 1 ]
 					? tokens[ 2 ] || tokens[ 3 ]
 						? ('$view.' + params.slice( 1 )) // $itemNumber, $ctx -> $view.itemNumber, $view.ctx
 						: params // $view, $data - unchanged
-					: '$data.' + params; // other paths -> $data.path
+					: '$data.' + params) + "||'')"; // other paths -> $data.path
 				if ( encoding !== "none" ) {
 					codeFrag = 'html(' + codeFrag + ')';
 				}
 			} else {
 				// Cannot optimize here. Must call renderTag() for processing, encoding etc.
-				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")'; // Not able
+				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")';
 			}
 		} else {
 			codeFrag = 'tag("' + tag + '",';

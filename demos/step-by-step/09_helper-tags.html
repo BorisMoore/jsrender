@@ -17,9 +17,15 @@
 
 <pre>
 $.views.registerTags({
+
+    get: function( value, hash ){
+        return value  || hash[ "default" ];
+    },
+
     yesNo: function( value, hash ){
         return value ? hash.yes : hash.no;
     }
+
 });
 </pre>	
 
@@ -36,7 +42,7 @@ $.views.registerTags({
 	<tr>
 		<td>{{=Title}}</td>
 		<td>
-			{{=Languages undef="No alternate languages"}}
+			{{get Languages default="No alternate languages"}}
 		</td>
 	</tr>
 </script>
@@ -65,6 +71,10 @@ $.views.registerTags({
 <script type="text/javascript">
 
 	$.views.registerTags({
+		get: function( value, hash ){
+			return value  || hash[ "default" ];
+		},
+
 		yesNo: function( value, hash ){
 			return value ? hash.yes : hash.no;
 		}
