@@ -4,7 +4,7 @@
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
-var $, viewsNs, tmplEncode, render, tagRegex, registerTags,
+var $, JsViews, viewsNs, tmplEncode, render, tagRegex, registerTags,
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document;
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
@@ -41,6 +41,7 @@ if ( jQuery ) {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// jQuery is not loaded. Make $ the JsViews object
+	
 	window.JsViews = window.$ = $ = {
 		extend: function( target, source ) {
 			if ( source === undefined ) {
@@ -112,9 +113,8 @@ $.extend({
 		allowCode: FALSE,
 
 //===============
-// renderTag
+// setDelimiters
 //===============
-
 
 		setDelimiters: function( openTag, closeTag ) {
 			var firstCloseChar = closeTag.charAt( 1 ),
@@ -132,6 +132,11 @@ $.extend({
 			
 			tagRegex = new RegExp( tagRegex, "g" );
 		},
+
+//===============
+// renderTag
+//===============
+
 		renderTag: function( tagName ) {
 			// This is a tag call, with arguments: "tagName", [params, ...], [content,] [params.toString,] view, encoding, [hash,] [nestedTemplateFnIndex]
 			var content, ret, key, view, encoding, hash, l,
@@ -467,12 +472,11 @@ function compile( markup ) {
 // Build javascript compiled template function, from AST
 function buildTmplFunction( nodes ) {
 	var ret, content, node,
-		endsInPlus = TRUE,
 		chainingDepth = 0,
 		nested = [],
 		i = 0,
 		l = nodes.length,
-		code = 'var tag=$.views.renderTag,html=$.views.encode.html,\nresult=""+';
+		code = "var views=$.views,tag=views.renderTag,enc=views.encode,html=enc.html,\nresult=""+';
 
 	function nestedCall( node, outParams ) {
 		if ( "" + node === node ) { // type string
@@ -497,14 +501,17 @@ function buildTmplFunction( nodes ) {
 			params = params[ 0 ];
 			if ( tokens = /^((?:\$view|\$data|\$(itemNumber)|\$(ctx))(?:$|\.))?[\w\.]*$/.exec( params )) {
 				// Can optimize for perf and not go through call to renderTag()
-				codeFrag = "(" + (tokens[ 1 ]
+				codeFrag = 
+					(encoding
+						? encoding === "none"
+							? ""
+							: "enc." + encoding
+						: "html")  
+					+ "(" + (tokens[ 1 ]
 					? tokens[ 2 ] || tokens[ 3 ]
 						? ('$view.' + params.slice( 1 )) // $itemNumber, $ctx -> $view.itemNumber, $view.ctx
 						: params // $view, $data - unchanged
 					: '$data.' + params) + "||'')"; // other paths -> $data.path
-				if ( encoding !== "none" ) {
-					codeFrag = 'html(' + codeFrag + ')';
-				}
 			} else {
 				// Cannot optimize here. Must call renderTag() for processing, encoding etc.
 				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")';
@@ -537,16 +544,14 @@ function buildTmplFunction( nodes ) {
 	}
 
 	for ( ; i < l; i++ ) {
-		endsInPlus = TRUE;
 		node = nodes[ i ];
 		if ( node[ 0 ] === "*" ) {
 			code = code.slice( 0, -1 ) + ";" + node[ 1 ] + "result+=";
 		} else {
 			code += nestedCall( node ) + "+";
-			endsInPlus = TRUE;
 		}
 	}
-	ret = new Function( "$data, $view", code.slice( 0, endsInPlus ? -1 : -8 ) + ";\nreturn result;" );
+	ret = new Function( "$data, $view", code.slice( 0, -1) + ";\nreturn result;" );
 	ret.nested = nested;
 	return ret;
 }
