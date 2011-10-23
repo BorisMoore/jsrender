@@ -485,7 +485,7 @@ function buildTmplFunction( nodes ) {
 		nested = [],
 		i = 0,
 		l = nodes.length,
-		code = "var views=" + (jQuery ? "jQuery" : "JsViews") + '.views,tag=views.renderTag,enc=views.encode,html=enc.html,\nresult=""+';
+		code = "try{var views=" + (jQuery ? "jQuery" : "JsViews") + '.views,tag=views.renderTag,enc=views.encode,html=enc.html,\nresult=""+';
 
 	function nestedCall( node, outParams ) {
 		if ( "" + node === node ) { // type string
@@ -560,7 +560,7 @@ function buildTmplFunction( nodes ) {
 			code += nestedCall( node ) + "+";
 		}
 	}
-	ret = new Function( "$data, $view", code.slice( 0, -1) + ";\nreturn result;" );
+	ret = new Function( "$data, $view", code.slice( 0, -1) + ";}catch(e){result=e.message;}\nreturn result;" );
 	ret.nested = nested;
 	return ret;
 }
