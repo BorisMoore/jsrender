@@ -4,7 +4,7 @@
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
-var $, JsViews, viewsNs, tmplEncode, render, tagRegex, registerTags,
+var $, _$, JsViews, viewsNs, tmplEncode, render, tagRegex, registerTags,
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document;
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
@@ -42,7 +42,10 @@ if ( jQuery ) {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// jQuery is not loaded. Make $ the JsViews object
 	
-	window.JsViews = window.$ = $ = {
+	// Map over the $ in case of overwrite
+	_$ = window.$,
+	
+	window.JsViews = JsViews = window.$ = $ = {
 		extend: function( target, source ) {
 			if ( source === undefined ) {
 				source = target;
@@ -72,6 +75,12 @@ if ( jQuery ) {
 		},
 		isArray: Array.isArray || function( obj ) {
 			return Object.prototype.toString.call( obj ) === "[object Array]";
+		},
+		noConflict: function() {
+			if ( window.$ === JsViews ) {
+				window.$ = _$;
+			}
+			return JsViews;
 		}
 	}
 }
@@ -476,7 +485,7 @@ function buildTmplFunction( nodes ) {
 		nested = [],
 		i = 0,
 		l = nodes.length,
-		code = "var views=$.views,tag=views.renderTag,enc=views.encode,html=enc.html,\nresult=""+';
+		code = "var views=" + (jQuery ? "jQuery" : "JsViews") + '.views,tag=views.renderTag,enc=views.encode,html=enc.html,\nresult=""+';
 
 	function nestedCall( node, outParams ) {
 		if ( "" + node === node ) { // type string
