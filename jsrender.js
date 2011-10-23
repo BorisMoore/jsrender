@@ -117,12 +117,18 @@ $.extend({
 
 
 		setDelimiters: function( openTag, closeTag ) {
+			var firstCloseChar = closeTag.charAt( 1 ),
+				secondCloseChar = closeTag.charAt( 0 );
+			openTag = openTag.charAt( 0 ) + "\\" + openTag.charAt( 1 ); // Not including first escape '\'
+			closeTag = firstCloseChar + "\\" + secondCloseChar; // Not including first escape '\'
 			//                    {{
-			tagRegex = "(?:" + openTag
-				//       #      tag                            singleCharTag                                               code
-				+ "(?:(\\#)?([\\w\\$\\.\\[\\]]+(?=[\\s\\}!]))|([^\\/\\*\\>$\\w\\s\\d\\x7f\\x00-\\x1f](?=[\\s\\w\\$\\[]))|\\*((?:[^\\}]|\\}(?!\\}))+)"
+			tagRegex = "(?:\\" + openTag
+				//       #      tag
+				+ "(?:(\\#)?([\\w\\$\\.\\[\\]]+(?=[\\s\\" + firstCloseChar
+				//       singleCharTag                                               code
+				+ "!]))|([^\\/\\*\\>$\\w\\s\\d\\x7f\\x00-\\x1f](?=[\\s\\w\\$\\[]))|\\*((?:[^\\" + firstCloseChar + "]|\\" + firstCloseChar + "(?!\\" + secondCloseChar + "))+)\\"
 				//                !encoding      endTag                            {{/closeBlock}}
-				+ closeTag + "))|(!(\\w*))?(" + closeTag + ")|(?:" + openTag + "\\/([\\w\\$\\.\\[\\]]+)" + closeTag + ")";
+				+ closeTag + "))|(!(\\w*))?(\\" + closeTag + ")|(?:\\" + openTag + "\\/([\\w\\$\\.\\[\\]]+)\\" + closeTag + ")";
 			
 			tagRegex = new RegExp( tagRegex, "g" );
 		},
@@ -327,7 +333,7 @@ $.extend({
 // Built-in tags
 //===============
 
-viewsNs.setDelimiters( "\\{\\{", "\\}\\}" );
+viewsNs.setDelimiters( "{{", "}}" );
 
 viewsNs.registerTags({
 	"if": function() {
