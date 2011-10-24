@@ -120,7 +120,7 @@ $.extend({
 		templates: {},
 		tags: {},
 		allowCode: FALSE,
-
+		debugMode: TRUE,
 //===============
 // setDelimiters
 //===============
@@ -130,14 +130,21 @@ $.extend({
 				secondCloseChar = closeTag.charAt( 0 );
 			openTag = openTag.charAt( 0 ) + "\\" + openTag.charAt( 1 ); // Not including first escape '\'
 			closeTag = firstCloseChar + "\\" + secondCloseChar; // Not including first escape '\'
-			//                    {{
-			tagRegex = "(?:\\" + openTag
-				//       #      tag
-				+ "(?:(\\#)?([\\w\\$\\.\\[\\]]+(?=[\\s\\" + firstCloseChar
-				//       singleCharTag                                               code
-				+ "!]))|([^\\/\\*\\>$\\w\\s\\d\\x7f\\x00-\\x1f](?=[\\s\\w\\$\\[]))|\\*((?:[^\\" + firstCloseChar + "]|\\" + firstCloseChar + "(?!\\" + secondCloseChar + "))+)\\"
-				//                !encoding      endTag                            {{/closeBlock}}
-				+ closeTag + "))|(!(\\w*))?(\\" + closeTag + ")|(?:\\" + openTag + "\\/([\\w\\$\\.\\[\\]]+)\\" + closeTag + ")";
+			tagRegex =
+				//         OPEN
+				"(?:\\" + openTag 
+				
+					// EITHER #?    tagname
+					+ "(?:(\\#)?(\\w+(?=[\\s\\" + firstCloseChar + "!]))"
+					// OR       =
+					+ "|(\\=(?=[\\s\\w\\$\\[]))"
+					// OR   code
+					+ "|\\*((?:[^\\" + firstCloseChar + "]|\\" + firstCloseChar + "(?!\\" + secondCloseChar + "))+)\\" + closeTag + "))"
+				
+				// OR !encoding?      CLOSE
+				+ "|(!(\\w*))?(\\" + closeTag + ")"
+				// OR  {{/closeBlock}}
+				+ "|(?:\\" + openTag + "\\/([\\w\\$\\.\\[\\]]+)\\" + closeTag + ")";
 			
 			tagRegex = new RegExp( tagRegex, "g" );
 		},
@@ -351,20 +358,11 @@ viewsNs.setDelimiters( "{{", "}}" );
 
 viewsNs.registerTags({
 	"if": function() {
-		function failTest( arg ) {
-			return !arg
-			|| hash.eq !== undefined && arg !== hash.eq
-			|| hash.ne !== undefined && arg === hash.ne
-			|| hash.lt !== undefined && arg >= hash.lt
-			|| hash.gt !== undefined && arg <= hash.gt
-			|| hash.le !== undefined && arg > hash.le
-			|| hash.ge !== undefined && arg < hash.ge;
-		}
 		function ifArgs( args ) {
 			var i = 0,
 				l = args.length - 3
 				hash = args[ l ]; // number of 'condition' parameters, since args are: (conditions..., hash, path, encoding
-			while ( l > -1 && failTest( args[ i++ ])) {
+			while ( l > -1 && !args[ i++ ]) {
 				// Only render content if args.length < 3 (i.e. this is an else with no condition) or if a condition argument is truey
 				if ( i === l ) {
 					return "";
@@ -434,12 +432,16 @@ function compile( markup ) {
 		}
 	}
 
-	// Build abstract syntax tree: [ tag, params, encoding ]
+	// Build abstract syntax tree: [ tag, params, content, encoding ]
 	markup = markup
 		.replace( /\\'|'/g, "\\\'" ).replace( /\\"|"/g, "\\\"" )  //escape ', and "
 		.split( /\s+/g ).join( " " ) // collapse white-space
 		.replace( /^\s+/, "" ) // trim left
 		.replace( /\s+$/, "" ); // trim right;
+
+// Note: In the case of the default delimiters {{}} tagRegex is:
+//     {{     #   tag               =                code                           !encoding  endTag    {{/closeBlock}}
+// /(?:\{\{(?:(\#)?(\w+(?=[\s\}!]))|(\=(?=[\s\w\$\[]))|\*((?:[^\}]|\}(?!\}))+)\}\}))|(!(\w*))?(\}\})|(?:\{\{\/([\w\$\.\[\]]+)\}\})/g;
 
 	markup.replace( tagRegex, function( all, isBlock, tagName, singleCharTag, code, useEncode, encoding, endTag, closeBlock, index ) {
 			tagName = tagName || singleCharTag;
@@ -560,7 +562,7 @@ function buildTmplFunction( nodes ) {
 			code += nestedCall( node ) + "+";
 		}
 	}
-	ret = new Function( "$data, $view", code.slice( 0, -1) + ";}catch(e){result=e.message;}\nreturn result;" );
+	ret = new Function( "$data, $view", code.slice( 0, -1) + ";}catch(e){result=" + (viewsNs.debugMode ? "e.message" : '""') + ";}\nreturn result;" );
 	ret.nested = nested;
 	return ret;
 }
