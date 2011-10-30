@@ -557,7 +557,10 @@ function buildTmplFunction( nodes ) {
 	for ( ; i < l; i++ ) {
 		node = nodes[ i ];
 		if ( node[ 0 ] === "*" ) {
-			code = code.slice( 0, -1 ) + ";" + node[ 1 ] + "result+=";
+			code = code.slice( 0, -1 ) + ";" + node[ 1 ];
+			if (i+1 < l) {
+			    code += "result+=";
+			}
 		} else {
 			code += nestedCall( node ) + "+";
 		}
