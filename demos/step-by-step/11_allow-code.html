@@ -12,6 +12,18 @@
 
 <h3>Allowing code within templates: program flow</h3>
 
+<pre>
+{{*
+    if ( myexpression ) {
+}}
+    ...
+{{*
+    }
+}}
+
+$.views.allowCode = true;
+</pre>	
+
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>

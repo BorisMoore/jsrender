@@ -16,14 +16,18 @@
 <h3>Registering 'helper' tags.</h3>
 
 <pre>
+{{get Languages defaultValue="No languages!"}}
+
+{{yesNo Languages yes="Alternate languages available:" no="No alternate languages"}}
+
 $.views.registerTags({
 
-    get: function( value, hash ){
-        return value  || hash[ "default" ];
+    get: function( value ){
+        return value  || this.defaultValue;
     },
 
-    yesNo: function( value, hash ){
-        return value ? hash.yes : hash.no;
+    yesNo: function( value ){
+        return value ? this.yes : this.no;
     }
 
 });
@@ -42,7 +46,7 @@ $.views.registerTags({
 	<tr>
 		<td>{{=Title}}</td>
 		<td>
-			{{get Languages default="No alternate languages"}}
+			{{get Languages defaultValue="No languages!"}}
 		</td>
 	</tr>
 </script>
@@ -51,7 +55,8 @@ $.views.registerTags({
 	<tr>
 		<td>{{=Title}}</td>
 		<td>
-			{{yesNo Languages yes="Alternate languages available" no="No alternate languages"}}
+			{{yesNo Languages yes="Alternate languages available:" no="No alternate languages"}}
+			<em>{{=Languages}}</em>
 		</td>
 	</tr>
 </script>
@@ -71,12 +76,12 @@ $.views.registerTags({
 <script type="text/javascript">
 
 	$.views.registerTags({
-		get: function( value, hash ){
-			return value  || hash[ "default" ];
+		get: function( value ){
+			return value  || this.defaultValue;
 		},
 
 		yesNo: function( value, hash ){
-			return value ? hash.yes : hash.no;
+			return value ? this.yes : this.no;
 		}
 	});
 

@@ -13,20 +13,20 @@
 <h3>Providing a custom tag</h3>
 
 <pre>
-<td>{{#sort Languages reverse="true"}}...{{/sort}}</td>
+<td>{{#sort Languages reverse=true}}...{{/sort}}</td>
 
 $.views.registerTags({
 
-    sort: function( array, hash, content ){
+    sort: function( array ){
         var ret = "";
-        if ( hash.reverse === "true" ) {
+        if ( this.reverse ) {
             // Render in reverse order
             for ( var l = array.length, i = l; i; i-- ) {
-                ret += $.render( content, array[ i - 1 ]);
+                ret += $.render( this.tmpl, array[ i - 1 ]);
             }
         } else {
             // Render in original order
-            ret += $.render( content, array );
+            ret += $.render( this.tmpl, array );
         }
         return ret;
     }
@@ -37,8 +37,8 @@ $.views.registerTags({
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse="false" _content="#sortedTemplate"}}</td>
-		<td>{{#sort Languages reverse="true"}}
+		<td>{{sort Languages reverse=false tmpl="#sortedTemplate"}}</td>
+		<td>{{#sort Languages reverse=true}}
 				<div>
 					<b>{{=Name}}</b>
 				</div>
@@ -59,16 +59,16 @@ $.views.registerTags({
 
 	$.views.registerTags({
 
-		sort: function( array, hash ){
+		sort: function( array ){
 			var ret = "";
-			if ( hash.reverse === "true" ) {
+			if ( this.reverse ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( hash._content, array[ i - 1 ]);
+					ret += $.render( this.tmpl, array[ i - 1 ]);
 				}
 			} else {
 				// Render in original order
-				ret += $.render( hash._content, array );
+				ret += $.render( this.tmpl, array );
 			}
 			return ret;
 		}
