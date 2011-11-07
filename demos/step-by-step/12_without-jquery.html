@@ -39,11 +39,11 @@
 			if ( this.reverse ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( this.tmpl, array[ i - 1 ]);
+					ret += $.render( array[ i - 1 ], this.tmpl );
 				}
 			} else {
 				// Render in original order
-				ret += $.render( this.tmpl, array );
+				ret += $.render( array, this.tmpl );
 			}
 			return ret;
 		}
@@ -73,7 +73,7 @@
 
 	document.getElementById( "movieList" ).innerHTML =
 		"<table><tbody class='header'><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></tbody><tbody>"
-		+ $.render( "movieTemplate", movies )
+		+ $.render( movies, "movieTemplate" )
 		+ "</tbody></table>"
 </script>
 

@@ -1,6 +1,9 @@
 /*! JsRender v1.0pre - (jsrender.js version: does not require jQuery): http://github.com/BorisMoore/jsrender */
 /*
  * Optimized version of jQuery Templates, for rendering to string, using 'codeless' markup.
+ *
+ * Copyright 2011, Boris Moore
+ * Released under the MIT License.
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -33,7 +36,7 @@ if ( jQuery ) {
 		// Use first wrapped element as template markup.
 		// Return string obtained by rendering the template against data.
 		render: function( data, context, parentView, path ) {
-			return render( this[0], data, context, parentView, path );
+			return render( data, this[0], context, parentView, path );
 		},
 
 		// Consider the first wrapped element as a template declaration, and get the compiled template or store it as a named template.
@@ -119,7 +122,7 @@ $.extend({
 						}
 					}
 					view.onElse = undefined; // If condition satisfied, so won't run 'else'.
-					return render( presenter.tmpl, view.data, view.ctx, view);
+					return render( view.data, presenter.tmpl, view.ctx, view);
 				};
 				return view.onElse( this, arguments );
 			},
@@ -134,11 +137,11 @@ $.extend({
 					content = this.tmpl,
 					view = this._view;
 				for ( i = 0; i < l; i++ ) {
-					result += args[ i ] ? render( content, args[ i ], view.ctx, view, this._path, this._tag ) : "";
+					result += args[ i ] ? render( args[ i ], content, view.ctx, view, this._path, this._tag ) : "";
 				}
 				return l ? result 
 					// If no data parameter, use the current $data from view, and render once
-					:  result + render( content, view.data, view.ctx, view, this._path, this._tag );
+					:  result + render( view.data, content, view.ctx, view, this._path, this._tag );
 			},
 			"=": function( value ) {
 				return value;
@@ -286,7 +289,7 @@ $.extend({
 // render
 //===============
 
-	render: render = function( tmpl, data, context, parentView, path, tagName ) {
+	render: render = function( data, tmpl, context, parentView, path, tagName ) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 		// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated context objects)
 		var i, l, dataItem, arrayView, content, result = "";
