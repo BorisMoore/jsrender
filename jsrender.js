@@ -10,7 +10,7 @@ var $, _$, JsViews, viewsNs, tmplEncode, render, rTag, registerTags, registerHel
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
 	rPath = /^(true|false|null|[\d\.]+)|(\w+|\$(view|data|ctx|(\w+)))([\w\.]*)|((['"])(?:\\\1|.)*\7)$/g,
 	rParams = /(\$?[\w\.\[\]]+)(?:(\()|\s*(===|!==|==|!=|<|>|<=|>=)\s*|\s*(\=)\s*)?|(\,\s*)|\\?(\')|\\?(\")|(\))|(\s+)/g,
-	rNewLine = /\n/g,
+	rNewLine = /\r?\n/g,
 	rUnescapeQuotes = /\\(['"])/g,
 	rEscapeQuotes = /\\?(['"])/g,
 	rBuildHash = /\x08([^\x08]+)\x08/g,
