@@ -1,13 +1,13 @@
 /*! JsRender v1.0pre - (jsrender.js version: does not require jQuery): http://github.com/BorisMoore/jsrender */
 /*
- * Optimized version of jQuery Templates, for rendering to string, using 'codeless' markup.
+ * Optimized version of jQuery Templates, fosr rendering to string, using 'codeless' markup.
  *
  * Copyright 2011, Boris Moore
  * Released under the MIT License.
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
-var $, _$, JsViews, viewsNs, tmplEncode, render, rTag, registerTags, registerHelpers,
+var $, _$, JsViews, viewsNs, tmplEncode, render, rTag, registerTags, registerHelpers, extend,
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document,
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
@@ -56,10 +56,6 @@ if ( jQuery ) {
 	window.JsViews = JsViews = window.$ = $ = {
 		extend: function( target, source ) {
 			var name;
-			if ( source === undefined ) {
-				source = target;
-				target = $;
-			}
 			for ( name in source ) {
 				target[ name ] = source[ name ];
 			}
@@ -76,6 +72,8 @@ if ( jQuery ) {
 		}
 	};
 }
+
+extend = $.extend;
 
 //=================
 // View constructor
@@ -100,12 +98,12 @@ function View( context, path, parentView, data, template ) {
 		// Set additional context on this view (which will modify the context inherited from the parent, and be inherited by child views)
 		ctx : context && context === parentContext
 			? parentContext
-			: (parentContext ? $.extend( {}, parentContext, context ) : context||{}),
+			: (parentContext ? extend( extend( {}, parentContext ), context ) : context||{}), 
+			// If no jQuery, extend does not support chained copies - so limit to two parameters
 		parent: parentView
 	};
 }
-
-$.extend({
+extend( $, {
 	views: viewsNs = {
 		templates: {},
 		tags: {
@@ -131,17 +129,19 @@ $.extend({
 				return view.onElse ? view.onElse( this, arguments ) : "";
 			},
 			each: function() {
-				var i, result = "",
+				var i, 
+					self = this,
+					result = "",
 					args = arguments,
 					l = args.length,
-					content = this.tmpl,
-					view = this._view;
+					content = self.tmpl,
+					view = self._view;
 				for ( i = 0; i < l; i++ ) {
-					result += args[ i ] ? render( args[ i ], content, view.ctx, view, this._path, this._tag ) : "";
+					result += args[ i ] ? render( args[ i ], content, self.ctx || view.ctx, view, self._path, self._ctor ) : "";
 				}
 				return l ? result 
 					// If no data parameter, use the current $data from view, and render once
-					:  result + render( view.data, content, view.ctx, view, this._path, this._tag );
+					:  result + render( view.data, content, view.ctx, view, self._path, self.tag );
 			},
 			"=": function( value ) {
 				return value;
@@ -167,8 +167,8 @@ $.extend({
 
 		setDelimiters: function( openTag, closeTag ) {
 			// Set or modify the delimiter characters for tags: "{{" and "}}"
-			var firstCloseChar = closeTag.charAt( 1 ),
-				secondCloseChar = closeTag.charAt( 0 );
+			var firstCloseChar = closeTag.charAt( 0 ),
+				secondCloseChar = closeTag.charAt( 1 );
 			openTag = "\\" + openTag.charAt( 0 ) + "\\" + openTag.charAt( 1 );
 			closeTag = "\\" + firstCloseChar + "\\" + secondCloseChar;
 
@@ -198,17 +198,15 @@ $.extend({
 //===============
 
 		// Register declarative tag.
-		registerTags: registerTags = function( name, tag ) {
+		registerTags: registerTags = function( name, tagFn ) {
 			var key;
 			if ( typeof name === "object" ) {
-				// Object representation where property name is path and property value is value.
-				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
 				for ( key in name ) {
 					registerTags( key, name[ key ]);
 				}
 			} else {
 				// Simple single property case.
-				viewsNs.tags[ name ] = tag;
+				viewsNs.tags[ name ] = tagFn;
 			}
 			return this;
 		},
@@ -259,29 +257,38 @@ $.extend({
 // renderTag
 //===============
 
-		renderTag: function( tagName, view, encode, content, presenter ) {
-			// This is a tag call, with arguments: "tagName", view, encode, content[, params...], presenter
-			var ret,
-				tagFn = viewsNs.tags[ tagName ];
+		renderTag: function( tag, view, encode, content, tagProperties ) {
+			// This is a tag call, with arguments: "tag", view, encode, content, presenter [, params...]
+			var ret, ctx, name,
+				args = arguments,
+				presenters = viewsNs.presenters;
+				hash = tagProperties._hash,
+				tagFn = viewsNs.tags[ tag ];
 
 			if ( !tagFn ) {
 				return "";
 			}
-			if ( viewsNs.pstrs && viewsNs.pstrs[ tagName ]) {
-				// This is a presenter tag (from JsViews registerPresenter)
-				presenter = $.extend( tagFn , presenter );
-				presenter._tag = tagName;
-				tagFn = FALSE;
-			}
-
-			presenter._encode = encode;
-			presenter._view = view;
 			
 			content = content && view.tmpl.nested[ content - 1 ];
-			presenter.tmpl = presenter.tmpl || content;
-			tagFn = tagFn || viewsNs.tags.each;
-			ret = tagFn && (tagFn.apply( presenter, slice.call( arguments, 5 )));
-			return ret || (ret === undefined ? "" : ret.toString());
+			tagProperties.tmpl = tagProperties.tmpl || content || undefined;
+			// Set the tmpl property to the content of the block tag, unless set as an override property on the tag
+		
+			if ( presenters && presenters[ tag ]) {
+				ctx = extend( extend( {}, tagProperties.ctx ), tagProperties );  
+				delete ctx.ctx;  
+				delete ctx._path;  
+				delete ctx.tmpl;
+				tagProperties.ctx = ctx;  
+				tagProperties._ctor = tag + (hash ? "=" + hash.slice( 0, -1 ) : "");
+
+				tagProperties = extend( extend( {}, tagFn ), tagProperties );
+				tagFn = viewsNs.tags.each; // Use each to render the layout template against the data
+			} 
+
+			tagProperties._encode = encode;
+			tagProperties._view = view;
+			ret = tagFn.apply( tagProperties, args.length > 5 ? slice.call( args, 5 ) : [view.data] );
+			return ret || (ret === undefined ? "" : ret.toString()); // (If ret is the value 0 or false or null, will render to string) 
 		}
 	},
 
@@ -291,7 +298,7 @@ $.extend({
 
 	render: render = function( data, tmpl, context, parentView, path, tagName ) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
-		// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated context objects)
+		// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
 		var i, l, dataItem, arrayView, content, result = "";
 
 		if ( arguments.length === 2 && data.jsViews ) {
@@ -319,7 +326,7 @@ $.extend({
 
 		return viewsNs.activeViews
 			// If in activeView mode, include annotations
-			? "<!--tmpl(" + (path || "") + ") " + (tagName ? "tag:" + tagName : tmpl._name) + "-->" + result + "<!--/tmpl-->"
+			? "<!--tmpl(" + (path || "") + ") " + (tagName ? "tag=" + tagName : tmpl._name) + "-->" + result + "<!--/tmpl-->"
 			// else return just the string result
 			: result;
 	},
@@ -361,7 +368,7 @@ $.extend({
 		}
 		// Return named compiled template
 		return name
-			? "" + name !== name
+			? "" + name !== name // not type string
 				? (name._name
 					? name // already compiled
 					: $.template( null, name ))
@@ -396,9 +403,9 @@ function compile( markup ) {
 	var newNode,
 		loc = 0,
 		stack = [],
-		top = [],
-		content = top,
-		current = [,,top];
+		topNode = [],
+		content = topNode,
+		current = [,,topNode];
 
 	function pushPreceedingContent( shift ) {
 		shift -= loc;
@@ -408,10 +415,10 @@ function compile( markup ) {
 	}
 
 	function parseTag( all, isBlock, tagName, equals, code, params, useEncode, encode, closeBlock, index ) {
-		// rTag    :    #    tag              equals code        params         encode      closeBlock
+		// rTag    :    #    tagName          equals code        params         encode      closeBlock
 		// /\{\{(?:(?:(\#)?(\w+(?=[\s\}!]))|(?:(\=)|(\*)))((?:[^\}]|\}(?!\}))*?)(!(\w*))?|(?:\/([\w\$\.\[\]]+)))\}\}/g;
 
-		// Build abstract syntax tree: [ tag, params, content, encode ]
+		// Build abstract syntax tree: [ tagName, params, content, encode ]
 		var named,
 			hash = "",
 			parenDepth = 0,
@@ -480,7 +487,7 @@ function compile( markup ) {
 				tagName,
 				useEncode ? encode || "none" : "",
 				isBlock && [],
-				"{" + hash + "_path:'" + params + "'}",
+				"{" + hash + "_hash:'" +  hash + "',_path:'" + params + "'}",
 				params
 			];
 
@@ -501,7 +508,7 @@ function compile( markup ) {
 	markup = markup.replace( rEscapeQuotes, "\\$1" );
 	markup.replace( rTag, parseTag );
 	pushPreceedingContent( markup.length );
-	return buildTmplFunction( top );
+	return buildTmplFunction( topNode );
 }
 
 // Build javascript compiled template function, from AST
@@ -524,30 +531,25 @@ function buildTmplFunction( nodes ) {
 				encode = node[ 1 ],
 				content = node[ 2 ],
 				obj = node[ 3 ],
-				params = node[ 4 ];
+				params = node[ 4 ],
+				paramsOrEmptyString = params + '||"")+';
 
 			if( content ) {
 				nested.push( buildTmplFunction( content ));
 			}
 			code += tag === "="
 				? (!encode || encode === "html"
-					? "html(" + params + ")+"
+					? "html(" + paramsOrEmptyString
 					: encode === "none"
-						? (params + "+")
-						: ('enc("' + encode + '",' + params + ")+")
+						? ("(" + paramsOrEmptyString)
+						: ('enc("' + encode + '",' + paramsOrEmptyString)
 				)
 				: 'tag("' + tag + '",$view,"' + ( encode || "" ) + '",'
 					+ (content ? nested.length : '""') // For block tags, pass in the key (nested.length) to the nested content template
-					+ "," + obj + (params ? "," : "") + params + ')+';
+					+ "," + obj + (params ? "," : "") + params + ")+";
 		}
 	}
-	try {
-		ret = new Function( "$data, $view", code.slice( 0, -1) + ";return result;\n\n}catch(e){return views.err(e);}" );
-	} catch(e) {
-		ret = function() {
-			return viewsNs.err( e );
-		};
-	}
+	ret = new Function( "$data, $view", code.slice( 0, -1) + ";return result;\n\n}catch(e){return views.err(e);}" );
 	ret.nested = nested;
 	return ret;
 }
@@ -568,5 +570,4 @@ function try$( selector ) {
 	} catch( e) {}
 	return selector;
 }
-
 })( window );
