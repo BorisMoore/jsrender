@@ -1,6 +1,6 @@
 /*! JsRender v1.0pre - (jsrender.js version: does not require jQuery): http://github.com/BorisMoore/jsrender */
 /*
- * Optimized version of jQuery Templates, fosr rendering to string, using 'codeless' markup.
+ * Optimized version of jQuery Templates, for rendering to string, using 'codeless' markup.
  *
  * Copyright 2011, Boris Moore
  * Released under the MIT License.
