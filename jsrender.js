@@ -120,7 +120,7 @@ extend( $, {
 						}
 					}
 					view.onElse = undefined; // If condition satisfied, so won't run 'else'.
-					return render( view.data, presenter.tmpl, view.ctx, view);
+					return render( [view.data], presenter.tmpl, view.ctx, view);
 				};
 				return view.onElse( this, arguments );
 			},
