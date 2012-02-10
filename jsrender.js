@@ -11,7 +11,7 @@ var $, _$, JsViews, viewsNs, tmplEncode, render, rTag, registerTags, registerHel
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document,
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
-	rPath = /^(true|false|null|[\d\.]+)|(\w+|\$(view|data|ctx|(\w+)))([\w\.]*)|((['"])(?:\\\1|.)*\7)$/g,
+	rPath = /^(true|false|null|[\d\.]+)|(\w+|\$(view|data|ctx|(\w+)))((?:\.\w+|\[[\d\.]+\])*)|((['"])(?:\\\1|.)*\7)$/g,
 	rParams = /(\$?[\w\.\[\]]+)(?:(\()|\s*(===|!==|==|!=|<|>|<=|>=)\s*|\s*(\=)\s*)?|(\,\s*)|\\?(\')|\\?(\")|(\))|(\s+)/g,
 	rNewLine = /\r?\n/g,
 	rUnescapeQuotes = /\\(['"])/g,
