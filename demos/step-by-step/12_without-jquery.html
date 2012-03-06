@@ -11,39 +11,39 @@
 
 <h3>JsRender without jQuery</h3>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse="false" tmpl="sortedTemplate"}}</td>
-		<td>{{#sort Languages reverse="true"}}
+		<td>{{:title}}</td>
+		<td>{{sort languages tmpl="sortedTemplate"/}}</td>
+		<td>{{sort languages reverse=true}}
 				<div>
-					<b>{{=Name}}</b>
+					<b>{{:name}}</b>
 				</div>
 			{{/sort}}
 		</td>
 	</tr>
 </script>
 
-<script id="sortedTemplate" type="text/x-jquery-tmpl">
-	<div>{{=Name}}</div>
+<script id="sortedTemplate" type="text/x-jsrender">
+	<div>{{:name}}</div>
 </script>
 
 <div id="movieList"></div>
 
 <script type="text/javascript">
 
-	$.views.registerTags({
+	jsviews.tags({
 
 		sort: function( array ){
 			var ret = "";
-			if ( this.reverse ) {
+			if ( this.props.reverse ) {
 				// Render in reverse order
-				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( array[ i - 1 ], this.tmpl );
+				for ( var i = array.length; i; i-- ) {
+					ret += this.tmpl.render( array[ i - 1 ] );
 				}
 			} else {
 				// Render in original order
-				ret += $.render( array, this.tmpl );
+				ret += this.tmpl.render( array );
 			}
 			return ret;
 		}
@@ -52,29 +52,29 @@
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "French" }
+			title: "Meet Joe Black",
+			languages: [
+				{ name: "English" },
+				{ name: "French" }
 			]
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Languages: [
-				{ Name: "French" },
-				{ Name: "German" },
-				{ Name: "Spanish" }
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "German" },
+				{ name: "Spanish" }
 			]
 		}
 	];
 
-	$.template( "movieTemplate", document.getElementById( "movieTemplate" ).innerHTML )
-	$.template( "sortedTemplate", document.getElementById( "sortedTemplate" ).innerHTML )
+	jsviews.templates({
+		movieTemplate: document.getElementById( "movieTemplate" ).innerHTML,
+		sortedTemplate: document.getElementById( "sortedTemplate" ).innerHTML
+	});
 
 	document.getElementById( "movieList" ).innerHTML =
-		"<table><tbody class='header'><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></tbody><tbody>"
-		+ $.render( movies, "movieTemplate" )
-		+ "</tbody></table>"
+		"<table><tbody><tr class='header'><th>Title</th><th>Original order</th><th>Reverse order</th></tr>" + jsviews.render.movieTemplate( movies ) + "</tbody></table>";
 </script>
 
 </body>

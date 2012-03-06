@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -13,42 +13,42 @@
 <h3>Providing a custom tag</h3>
 
 <pre>
-<td>{{#sort Languages reverse=true}}...{{/sort}}</td>
+<td>{{sort languages reverse=true}}...{{/sort}}</td>
 
-$.views.registerTags({
+$.views.tags({
 
     sort: function( array ){
         var ret = "";
-        if ( this.reverse ) {
+        if ( this.props.reverse ) {
             // Render in reverse order
-            for ( var l = array.length, i = l; i; i-- ) {
-                ret += $.render( array[ i - 1 ], this.tmpl );
+            for ( var i = array.length; i; i-- ) {
+                ret += this.tmpl.render( array[ i - 1 ] );
             }
         } else {
             // Render in original order
-            ret += $.render( array, this.tmpl );
+            ret += this.tmpl.render( array );
         }
         return ret;
     }
 
 });
-</pre>	
+</pre>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse=false tmpl="#sortedTemplate"}}</td>
-		<td>{{#sort Languages reverse=true}}
+		<td>{{:title}}</td>
+		<td>{{sort languages tmpl="#sortedTemplate"/}}</td>
+		<td>{{sort languages reverse=true}}
 				<div>
-					<b>{{=Name}}</b>
+					<b>{{:name}}</b>
 				</div>
 			{{/sort}}
 		</td>
 	</tr>
 </script>
 
-<script id="sortedTemplate" type="text/x-jquery-tmpl">
-	<div>{{=Name}}</div>
+<script id="sortedTemplate" type="text/x-jsrender">
+	<div>{{:name}}</div>
 </script>
 
 <table><tbody class="header"><tr><th>Title</th><th>Orginal order</th><th>Reverse order</th></tr></tbody>
@@ -57,18 +57,18 @@ $.views.registerTags({
 
 <script type="text/javascript">
 
-	$.views.registerTags({
+	$.views.tags({
 
 		sort: function( array ){
 			var ret = "";
-			if ( this.reverse ) {
+			if ( this.props.reverse ) {
 				// Render in reverse order
-				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( array[ i - 1 ], this.tmpl );
+				for ( var i = array.length; i; i-- ) {
+					ret += this.tmpl.render( array[ i - 1 ] );
 				}
 			} else {
 				// Render in original order
-				ret += $.render( array, this.tmpl );
+				ret += this.tmpl.render( array );
 			}
 			return ret;
 		}
@@ -77,18 +77,18 @@ $.views.registerTags({
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "French" }
+			title: "Meet Joe Black",
+			languages: [
+				{ name: "English" },
+				{ name: "French" }
 			]
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Languages: [
-				{ Name: "French" },
-				{ Name: "German" },
-				{ Name: "Spanish" }
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "German" },
+				{ name: "Spanish" }
 			]
 		}
 	];

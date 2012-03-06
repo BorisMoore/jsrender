@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -10,17 +10,17 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Using {{#each}} to render hierarchical data - inline nested template.</h3>
+<h3>Using {{for}} to render hierarchical data - inline nested template.</h3>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{#each Languages}}
+			{{for languages}}
 				<div>
-					<em>{{=Name}}</em>
+					<em>{{:name}}</em>
 				</div>
-			{{/each}}
+			{{/for}}
 		</td>
 	</tr>
 </script>
@@ -33,25 +33,25 @@
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "French" }
+			title: "Meet Joe Black",
+			languages: [
+				{ name: "English" },
+				{ name: "French" }
 			]
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Languages: [
-				{ Name: "French" },
-				{ Name: "Mandarin" },
-				{ Name: "Spanish" }
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "Mandarin" },
+				{ name: "Spanish" }
 			]
 		},
 		{
-			Title: "The Inheritance",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "German" }
+			title: "The Inheritance",
+			languages: [
+				{ name: "English" },
+				{ name: "German" }
 			]
 		}
 	];

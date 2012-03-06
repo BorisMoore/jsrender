@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -16,11 +16,11 @@
 <h3>Registering 'helper' tags.</h3>
 
 <pre>
-{{get Languages defaultValue="No languages!"}}
+{{get languages defaultValue="No languages!"/}}
 
-{{yesNo Languages yes="Alternate languages available:" no="No alternate languages"}}
+{{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
 
-$.views.registerTags({
+$.views.tags({
 
     get: function( value ){
         return value  || this.defaultValue;
@@ -31,37 +31,37 @@ $.views.registerTags({
     }
 
 });
-</pre>	
+</pre>
 
-<script id="movieTemplate1" type="text/x-jquery-tmpl">
+<script id="movieTemplate1" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{=Languages}}
+			{{:languages}}
 		</td>
 	</tr>
 </script>
 
-<script id="movieTemplate2" type="text/x-jquery-tmpl">
+<script id="movieTemplate2" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{get Languages defaultValue="No languages!"}}
+			{{get languages defaultValue="No languages!"/}}
 		</td>
 	</tr>
 </script>
 
-<script id="movieTemplate3" type="text/x-jquery-tmpl">
+<script id="movieTemplate3" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{yesNo Languages yes="Alternate languages available:" no="No alternate languages"}}
-			<em>{{=Languages}}</em>
+			{{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
+			<em>{{:languages}}</em>
 		</td>
 	</tr>
 </script>
 
-<table><tbody class="header"><tr><th>Title</th><th>{{=path}}</th></tr></tbody>
+<table><tbody class="header"><tr><th>Title</th><th>{{:path}}</th></tr></tbody>
 	<tbody id="movieList1"></tbody>
 </table>
 
@@ -75,7 +75,7 @@ $.views.registerTags({
 
 <script type="text/javascript">
 
-	$.views.registerTags({
+	$.views.tags({
 		get: function( value ){
 			return value  || this.defaultValue;
 		},
@@ -87,18 +87,18 @@ $.views.registerTags({
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: "English and French"
+			title: "Meet Joe Black",
+			languages: "English and French"
 		},
 		{
-			Title: "Eyes Wide Shut"
+			title: "Eyes Wide Shut"
 		},
 		{
-			Title: "The Mighty"
+			title: "The Mighty"
 		},
 		{
-			Title: "City Hunter",
-			Languages: "Mandarin and Chinese"
+			title: "City Hunter",
+			languages: "Mandarin and Chinese"
 		}
 	];
 
@@ -109,7 +109,7 @@ $.views.registerTags({
 	$( "#movieList2" ).html(
 		$( "#movieTemplate2" ).render( movies )
 	);
-	
+
 	$( "#movieList3" ).html(
 		$( "#movieTemplate3" ).render( movies )
 	);

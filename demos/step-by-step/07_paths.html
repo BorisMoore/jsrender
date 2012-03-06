@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
  	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 </head>
@@ -10,26 +10,26 @@
 
 <h3>Accessing paths</h3>
 
-<script id="peopleTemplate" type="text/x-jquery-tmpl">
+<script id="peopleTemplate" type="text/x-jsrender">
 
-<b>{{=$itemNumber!}}:</b> {{=firstName!}} {{=lastName!}}:
+<b>{{:#index+1}}:</b> {{:firstName}} {{:lastName}}:
 
 <br/>
-{{each address tmpl="#addressTemplate"}}
+{{for address tmpl="#addressTemplate"/}}
 
-{{#if phones cells}}
+{{if phones cells}}
 	<div>
 		Phones:
-		{{#each phones cells}} <b>{{=$data!}}</b> ({{=$view.parent.parent.data.firstName!}}'s){{/each}}
+		{{for phones cells}} <b>{{:#data}}</b> ({{:#parent.parent.data.firstName}}'s){{/for}}
 	</div>
 {{/if}}
 <br/>
 
 <i>
-	{{=firstName!}}
+	{{:firstName}}
 
-	{{#if address.street}}
-		lives in {{=address.street!}}.
+	{{if address.street}}
+		lives in {{:address.street}}.
 	{{else}}
 		has no street address...
 	{{/if}}
@@ -38,14 +38,14 @@
 
 </script>
 
-<script id="addressTemplate" type="text/x-jquery-tmpl">
+<script id="addressTemplate" type="text/x-jsrender">
 <div>
-	{{#if street}}
-		{{=street!}}
+	{{if street}}
+		{{:street}}
 	{{else}}
 		<i>Somewhere</i> in
 	{{/if}}
-	{{=city!}}
+	{{:city}}
 </div>
 </script>
 
@@ -81,7 +81,7 @@
 		}
 	];
 
-	$.views.registerTags({
+	$.views.tags({
 		notLast: function( content ) {
 			var array = this.parent.data;
 			return array[ array.length - 1 ] === this.data ? "" : content( this );

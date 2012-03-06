@@ -3,9 +3,6 @@ h4 { font-size: inherit`; font-variant: small-caps; }
 .height { width: 100%; margin-bottom:10px; float: left; clear: both; }
 .bottom { height:400px; width: 100%; margin-bottom:10px; float: left; clear: both; }
 body > button { float: left; clear: right; margin: 3px }
-.subhead { margin: 3px 0 10px 0; font-weight:bolder; color:#116; font-family:Arial; font-size:10pt }
+.subhead { margin: 15px 0 4px 0; font-weight:bolder; color:#116; font-family:Arial; font-size:10pt }
 a { color: #55b}
-pre { font-size:10pt; font-weight:bold; }
-.inset { padding-left: 18px; }
-.box { border: 1px solid #777; padding: 5px; margin: 10px 0 30px; }
-.desc { font-style:italic; margin: 0 0 15px; }
+.result { text-align:right; }

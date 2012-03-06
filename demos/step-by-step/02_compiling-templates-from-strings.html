@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -20,23 +20,24 @@
 
 <script type="text/javascript">
 	var movies = [
-		{ Name: "The Red Violin", ReleaseYear: "1998", Director: "François Girard" },
-		{ Name: "Eyes Wide Shut", ReleaseYear: "1999", Director: "Stanley Kubrick" },
-		{ Name: "The Inheritance", ReleaseYear: "1976", Director: "Mauro Bolognini" }
+		{ name: "The Red Violin", releaseYear: "1998", director: "François Girard" },
+		{ name: "Eyes Wide Shut", releaseYear: "1999", director: "Stanley Kubrick" },
+		{ name: "The Inheritance", releaseYear: "1976", director: "Mauro Bolognini" }
 	];
 
 	/* Compile markup as named templates */
-	$.template( "titleTemplate", "<tr><td>{{=Name}}</td></tr>" );
-	$.template( "detailTemplate", "<tr><td colspan='3'>{{=Name}}</td><td>Released: {{=ReleaseYear}}</td><td>Director: {{=Director}}</td></tr>" );
+	$.templates({
+		titleTemplate: "<tr><td colspan=3>{{:name}}</td></tr>",
+		detailTemplate: "<tr><td>{{:name}}</td><td>Released: {{:releaseYear}}</td><td>director: {{:director}}</td></tr>"
+	});
 
 	var details = true;
-
 	function switchTemplates() {
 		details = !details;
 		$( this ).text( details ? "Show titles only" : "Show full details" );
 		/* Render using the other named template */
 		var templateName = details ? "detailTemplate" : "titleTemplate";
-		$( "#movieList" ).html( $.render( movies, templateName ));
+		$( "#movieList" ).html( $.render [templateName ]( movies ));
 	}
 
 	$( "#switchBtn" ).click( switchTemplates );

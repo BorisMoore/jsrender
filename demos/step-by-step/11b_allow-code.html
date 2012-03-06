@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -13,30 +13,34 @@
 <h3>Allowing code within templates: returning content</h3>
 
 <pre>
+$.templates( "movieTmpl", {
+    markup: "#movieTemplate",
+    allowCode: true
+});
+
 {{*
     if ( myexpression ) {
-        result+= ...;
+        ret += ...;
         ...
     }
 }}
 
-$.views.allowCode = true;
-</pre>	
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+</pre>
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{#each Languages}}
-				{{=Name}}{{*
+			{{for languages}}
+				{{:name}}{{*
 
-					if ( $view.itemNumber === $view.parent.data.length - 1 ) {
-						result+= " and";
-					} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
-						result+= ",";
+					if ( view.index === view.parent.data.length - 2 ) {
+						ret += " and";
+					} else if ( view.index < view.parent.data.length - 2 ) {
+						ret+= ",";
 					}
 
 				}}
-			{{/each}}
+			{{/for}}
 		</td>
 	</tr>
 </script>
@@ -49,34 +53,37 @@ $.views.allowCode = true;
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "French" }
+			title: "Meet Joe Black",
+			languages: [
+				{ name: "English" },
+				{ name: "French" }
 			],
-			Subtitles: [
-				{ Name: "English" },
-				{ Name: "French" },
-				{ Name: "Chinese" }
+			subtitles: [
+				{ name: "English" },
+				{ name: "French" },
+				{ name: "Chinese" }
 			]
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Languages: [
-				{ Name: "French" },
-				{ Name: "German" },
-				{ Name: "Spanish" }
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "German" },
+				{ name: "Spanish" }
 			],
-			Subtitles: [
-				{ Name: "English" }
+			subtitles: [
+				{ name: "English" }
 			]
 		}
 	];
 
-	$.views.allowCode = true;
+	$.templates( "movieTmpl", {
+		markup: "#movieTemplate",
+		allowCode: true
+	});
 
 	$( "#movieList" ).html(
-		$( "#movieTemplate" ).render( movies )
+		$.render.movieTmpl( movies )
 	);
 
 </script>
