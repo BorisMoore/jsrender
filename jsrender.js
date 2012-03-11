@@ -153,7 +153,7 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 		extend( tagObject.ctx, parentView.ctx);
 	}
 
-	ret = tagFn.apply( tagObject, args.length > 5 ? slice.call( args, 5 ) : [parentView.data] );
+	ret = tagFn.apply( tagObject, args.length > 5 ? slice.call( args, 5 ) : [] );
 	return ret || ( ret === undefined ? "" : ret.toString()); // (If ret is the value 0 or false or null, will render to string)
 }
 
@@ -268,7 +268,7 @@ function converters( name, converterFn ) {
 function renderContent( data, context, parentView, path, index ) {
 	// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 	// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
-	var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl,
+	var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, layout,
 		props = {},
 		swapContent = index === TRUE,
 		self = this,
@@ -288,6 +288,13 @@ function renderContent( data, context, parentView, path, index ) {
 	}
 	parentView = parentView || jsv.topView;
 	parentContext = parentView.ctx;
+	layout = tmpl.layout;
+	if ( data === parentView ) {
+		// Inherit the data from the parent view.
+		// This may be the contents of an {{if}} block
+		data = parentView.data;
+		layout = TRUE;
+	}
 
 	// Set additional context on views created here, (as modified context inherited from the parent, and be inherited by child views)
 	// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
@@ -313,7 +320,7 @@ function renderContent( data, context, parentView, path, index ) {
 	itemsWrap = context.link && sub.onRenderItems;
 
 	if ( tmpl ) {
-		if ( $.isArray( data ) && !tmpl.layout ) {
+		if ( $.isArray( data ) && !layout ) {
 			// Create a view for the array, whose child views correspond to each data item.
 			// (Note: if index and parentView are passed in along with parent view, treat as
 			// insert -e.g. from view.addViews - so parentView is already the view item for array)
@@ -328,7 +335,7 @@ function renderContent( data, context, parentView, path, index ) {
 		} else {
 			// Create a view for singleton data object.
 			newView = swapContent ? parentView : View( context, path, parentView, data, tmpl, index );
-			result += (data || tmpl.layout) ? tmpl.fn( data, newView, jsv ) : "";
+			result += (data || layout) ? tmpl.fn( data, newView, jsv ) : "";
 		}
 		parentView.topKey = newView.index;
 		return itemsWrap ? itemsWrap( result, path, newView.index, tmpl, props ) : result;
@@ -653,8 +660,7 @@ function compile( name, tmpl, parent, options ) {
 			// tmpl is already compiled, so use it, or if different name is provided, clone it
 			if ( tmplOrMarkup.fn ) {
 				if ( name && name !== tmplOrMarkup.name ) {
-					tmpl = extend( {}, tmplOrMarkup );
-					tmpl.name = name;
+					tmpl = extend( extend( {}, tmplOrMarkup ), options);
 				} else {
 					tmpl = tmplOrMarkup;
 				}
@@ -775,7 +781,10 @@ tags({
 			}
 			view.onElse = undefined; // If condition satisfied, so won't run 'else'.
 			tagObject.path = "";
-			return tagObject.renderContent( view.data );
+			return tagObject.renderContent( view );
+			// Test is satisfied, so render content, while remaining in current data context
+			// By passing the view, we inherit data context from the parent view, and the content is treated as a layout template
+			// (so if the data is an array, it will not iterate over the data
 		};
 		return view.onElse( this, arguments );
 	},
@@ -785,11 +794,15 @@ tags({
 	},
 	"for": function() {
 		var i,
+			self = this,
 			result = "",
 			args = arguments,
 			l = args.length;
+		if ( self.props.layout ) {
+			self.tmpl.layout = TRUE;
+		}
 		for ( i = 0; i < l; i++ ) {
-			result += this.renderContent( args[ i ]);
+			result += self.renderContent( args[ i ]);
 		}
 		return result;
 	},

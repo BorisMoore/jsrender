@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="index.html">Home</a><br />
+
+<h3>Using layout templates to render arrays along with headers or footers.</h3>
+
+<div class="subhead">Top-level layout:</div>
+<pre>
+$.templates( "moviesLayout", {
+	markup: "#movieTemplate",
+	layout: true
+});
+
+$( "#movieList" ).html(
+	$.render.moviesLayout( movies )
+);
+
+header
+	{{for #data}}
+		item
+	{{/for}}
+footer
+</pre>
+
+
+<div class="subhead">Nested layout:</div>
+<pre>
+{{for languages layout=true}}
+	header
+	{{for #data}}
+		item
+	{{/for}}
+	footer
+{{/for}}
+</pre>
+
+<script id="movieTemplate" type="text/x-jsrender">
+	<tbody class="header">
+		<tr><th colspan="2">{{:length}} movies available:</th></tr>
+		<tr><th>Title</th><th>Languages</th></tr>
+	</tbody>
+	<tbody>
+		{{for #data}}
+			<tr>
+				<td>{{:title}}</td>
+				<td>
+					{{for languages layout=true}}
+						<div>
+							{{if #data}}
+								<strong>{{:length}}</strong> languages available:
+							{{else}}
+								Original version only
+							{{/if}}
+
+							{{for #data}}
+								<em>{{:name}}</em>
+							{{/for}}
+						</div>
+						<div>
+							{{if #data}}
+								Additional languages also in stock
+							{{/if}}
+						</div>
+					{{/for}}
+				</td>
+			</tr>
+		{{/for}}
+</script>
+
+<table id="movieList"></table>
+
+<script type="text/javascript">
+
+	var movies = [
+		{
+			title: "Meet Joe Black"
+		},
+		{
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "Mandarin" },
+				{ name: "Spanish" }
+			]
+		},
+		{
+			title: "The Inheritance",
+			languages: [
+				{ name: "English" },
+				{ name: "Russian" }
+			]
+		}
+	];
+
+	$.templates( "moviesLayout", {
+		markup: "#movieTemplate",
+		layout: true
+	});
+
+	$( "#movieList" ).html(
+		$.render.moviesLayout( movies )
+	);
+</script>
+
+</body>
+</html>
+
+

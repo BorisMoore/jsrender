@@ -182,7 +182,7 @@ test("{{for}}", function() {
 	jsviews.templates( {
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
 		layoutTmpl: {
-			markup: "header_{{for}}{{:name}}{{/for}}_footer",
+			markup: "header_{{for #data}}{{:name}}{{/for}}_footer",
 			layout: true
 		},
 		pageTmpl: '{{for people tmpl="layoutTmpl"/}}',
@@ -191,7 +191,7 @@ test("{{for}}", function() {
 	});
 
 	equal( jsviews.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}' );
-	equal( jsviews.render.layoutTmpl( people ), "header_JoBill_footer", 'layout: true... "header_{{for}}{{:name}}{{/for}}_footer"' );
+	equal( jsviews.render.layoutTmpl( people ), "header_JoBill_footer", 'layout: true... "header_{{for #data}}{{:name}}{{/for}}_footer"' );
 	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for people tmpl="layoutTmpl"/}}' );
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
 
@@ -270,7 +270,7 @@ test("render", function() {
 	equal( tmpl1.render( person ), "A_Jo_B", 'tmpl1.render( data );' );
 	equal( jsviews.render.myTmpl8( person ), "A_Jo_B", 'jsviews.render.myTmpl8( data );' );
 
-	jsviews.templates( "myTmpl9", "A_{{for}}inner{{:name}}content{{/for}}_B" );
+	jsviews.templates( "myTmpl9", "A_{{for #data}}inner{{:name}}content{{/for}}_B" );
 	equal( jsviews.templates.myTmpl9.tmpls[0].render( person ), "innerJocontent", 'Access nested templates: jsviews.templates["myTmpl9[0]"];' );
 
 	equal( jsviews.templates( tmplString ).render( person ), "A_Jo_B", 'Compile from string: var html = jsviews.templates( tmplString ).render( data );' );
@@ -380,9 +380,9 @@ test("template encapsulation", function() {
 	equal( $.trim( jsviews.render.encapsulate1({ people: people })), "false:tostring BILLJO not2:true:tostring", 'jsviews.templates( "myTmpl", tmplObjWithNestedItems);' );
 
 	jsviews.templates({
-		willFail: "{{lower a/}}",
-		encapsulate2: {
-			markup: "{{lower a/}} {{:~concat2(a, 'b', ~not2(false))}} {{for tmpl='nestedTmpl1'/}} {{for tmpl='nestedTmpl2'/}}",
+		useLower: "{{lower a/}}",
+		tmplWithNestedResources: {
+			markup: "{{lower a/}} {{:~concat2(a, 'b', ~not2(false))}} {{for #data tmpl='nestedTmpl1'/}} {{for #data tmpl='nestedTmpl2'/}}",
 			helpers: {
 				not2: function( value ) {
 					return !value;
@@ -434,8 +434,8 @@ test("template encapsulation", function() {
 			return "contextualNot2" + !value;
 		}
 	};
-	equal( jsviews.render.encapsulate2({ a: "aVal" }), "aval aValbtrue% (double:aVal&aVal) (override outer double:AVAL|AVAL)", 'jsviews.templates( "myTmpl", tmplObjWithNestedHelpers);' );
-	equal( jsviews.render.willFail({ a: "aVal" }), "", 'jsviews.templates( "myTmpl", tmplObjWithNestedHelpers);' );
-	equal( jsviews.render.encapsulate2({ a: "aVal" }, context), "aval aValbcontextualNot2true% (double:aVal&aVal) (override outer double:contextualUpperAVAL|contextualUpperAVAL)", 'jsviews.templates( "myTmpl", tmplObjWithNestedHelpers);' );
-	equal( jsviews.templates.encapsulate2.templates.templateWithDebug.fn.toString().indexOf("debugger;"), 90, 'Can set debug=true on nested template' );
+	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }), "aval aValbtrue% (double:aVal&aVal) (override outer double:AVAL|AVAL)", 'Access nested resources from template' );
+	equal( jsviews.render.useLower({ a: "aVal" }), "", 'Cannot access nested resources from a different template' );
+	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }, context), "aval aValbcontextualNot2true% (double:aVal&aVal) (override outer double:contextualUpperAVAL|contextualUpperAVAL)", 'Resources passed in with context override nested resources' );
+	equal( jsviews.templates.tmplWithNestedResources.templates.templateWithDebug.fn.toString().indexOf("debugger;"), 90, 'Can set debug=true on nested template' );
 });

@@ -32,11 +32,15 @@
 	});
 
 	var details = true;
+
 	function switchTemplates() {
 		details = !details;
+
 		$( this ).text( details ? "Show titles only" : "Show full details" );
+
 		/* Render using the other named template */
 		var templateName = details ? "detailTemplate" : "titleTemplate";
+
 		$( "#movieList" ).html( $.render [templateName ]( movies ));
 	}
 

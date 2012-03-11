@@ -13,34 +13,44 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Registering 'helper' tags.</h3>
+<!---------------------- First Example ---------------------->
 
+<h3>Example Scenario: providing default values for data.</h3>
+
+<div class="subhead">The simplest (and best) way: Javascript expression '||':</div>
 <pre>
-{{get languages defaultValue="No languages!"/}}
-
-{{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
-
-$.views.tags({
-
-    get: function( value ){
-        return value  || this.defaultValue;
-    },
-
-    yesNo: function( value ){
-        return value ? this.yes : this.no;
-    }
-
-});
+{{:languages||'Languages unavailable'}}
 </pre>
+
+<table><tbody class="header"><tr><th>Title</th><th>{{:path}}</th></tr></tbody>
+	<tbody id="movieList1"></tbody>
+</table>
 
 <script id="movieTemplate1" type="text/x-jsrender">
 	<tr>
 		<td>{{:title}}</td>
 		<td>
-			{{:languages}}
+			{{:languages||'Languages unavailable'}}
 		</td>
 	</tr>
 </script>
+
+<!---------------------- Second Example ---------------------->
+
+<div class="subhead">Creating a special custom tag:</div>
+<pre>
+{{get languages defaultValue="No languages!"/}}
+
+$.views.tags({
+	get: function( value ){
+		return value || this.props.defaultValue;
+	}
+});
+</pre>
+
+<table><tbody class="header"><tr><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
+	<tbody id="movieList2"></tbody>
+</table>
 
 <script id="movieTemplate2" type="text/x-jsrender">
 	<tr>
@@ -50,6 +60,23 @@ $.views.tags({
 		</td>
 	</tr>
 </script>
+
+<!---------------------- Third Example ---------------------->
+
+<div class="subhead">Creating a multi-purpose utility tag:</div>
+<pre>
+{{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
+
+$.views.tags({
+    yesNo: function( value ){
+        return value ? this.props.yes : this.props.no;
+    }
+});
+</pre>
+
+<table><tbody class="header"><tr><th>Title</th><th>{{yesNo path yes="..." no="..."}}</th></tr></tbody>
+	<tbody id="movieList3"></tbody>
+</table>
 
 <script id="movieTemplate3" type="text/x-jsrender">
 	<tr>
@@ -61,27 +88,17 @@ $.views.tags({
 	</tr>
 </script>
 
-<table><tbody class="header"><tr><th>Title</th><th>{{:path}}</th></tr></tbody>
-	<tbody id="movieList1"></tbody>
-</table>
-
-<table><tbody class="header"><tr><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
-	<tbody id="movieList2"></tbody>
-</table>
-
-<table><tbody class="header"><tr><th>Title</th><th>{{yesNo path yes="..." no="..."}}</th></tr></tbody>
-	<tbody id="movieList3"></tbody>
-</table>
+<!---------------------- Code ---------------------->
 
 <script type="text/javascript">
 
 	$.views.tags({
 		get: function( value ){
-			return value  || this.defaultValue;
+			return value || this.props.defaultValue;
 		},
 
-		yesNo: function( value, hash ){
-			return value ? this.yes : this.no;
+		yesNo: function( value ){
+			return value ? this.props.yes : this.props.no;
 		}
 	});
 

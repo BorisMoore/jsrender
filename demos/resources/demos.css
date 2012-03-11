@@ -9,3 +9,4 @@ pre { font-size:10pt; font-weight:bold; }
 .inset { padding-left: 18px; }
 .box { border: 1px solid #777; padding: 5px; margin: 10px 0 30px; }
 .desc { font-style:italic; margin: 0 0 15px; }
+pre { border-left: 3px solid #aaa; padding:10px; margin-bottom: 30px;}

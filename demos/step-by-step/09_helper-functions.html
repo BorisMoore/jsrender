@@ -10,37 +10,9 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Helper functions and comparison tests</h3>
+<h3>Helper functions</h3>
 
-<script id="movieTemplate1" type="text/x-jquery-tmpl">
-	<tr>
-		<td>{{:title}}</td>
-		<td>
-			{{if ~nullOrEmpty(languages) tmpl="#messageTmpl"/}}
-		</td>
-		<td>
-			{{if languages==null tmpl="#messageTmpl"/}}
-		</td>
-	</tr>
-</script>
-
-<script id="messageTmpl" type="text/x-jquery-tmpl">
-	<b>Warning:</b> <em>No alternate languages</em>
-</script>
-
-<b>Sample 1</b>
-
-<pre>
-{{if ~nullOrEmpty(languages)}}...{{/if}}
-    ...
-{{if languages==null}}...{{/if}}
-</pre>
-
-<table><tbody class="header"><tr><th>Title</th><th>{{if ~nullOrEmpty(a)}}</th><th>{{if a==null}}</th></tr></tbody>
-	<tbody id="movieList1"></tbody>
-</table>
-
-<script id="movieTemplate2" type="text/x-jquery-tmpl">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
 		<td>{{:title}}</td>
 		<td>
@@ -51,22 +23,17 @@
 	</tr>
 </script>
 
-<b>Sample 2</b>
-
 <pre>
 {{:~format(name, "upper")}}
 
 {{if ~nextToLast(#view)}}...
 
-
 $.views.helpers({
 
     format: function( val, format ){
         ...
-    },
-
-    test: function( val, format ){
-        ...
+		return val.toUpperCase();
+		...
     },
 
     nextToLast: function( view ) {
@@ -78,16 +45,11 @@ $.views.helpers({
 </pre>
 
 <table><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
-	<tbody id="movieList2"></tbody>
+	<tbody id="movieList"></tbody>
 </table>
 
 <script type="text/javascript">
-
 	$.views.helpers({
-
-		nullOrEmpty: function( value ) {
-			return !value || !value.length;
-		},
 
 		format: function( val, format ) {
 			var ret;
@@ -108,31 +70,17 @@ $.views.helpers({
 		}
 	});
 
-	var movies = [
-		{
-			title: "Meet Joe Black",
-			languages: null
-		},
-		{
-			title: "The Mighty",
-			languages: []
-		},
-		{
+	var movie = {
 			title: "Eyes Wide Shut",
 			languages: [
 				{ name: "French" },
 				{ name: "German" },
 				{ name: "Spanish" }
 			]
-		}
-	];
+		};
 
-	$( "#movieList1" ).html(
-		$( "#movieTemplate1" ).render( movies )
-	);
-
-	$( "#movieList2" ).html(
-		$( "#movieTemplate2" ).render( movies )
+	$( "#movieList" ).html(
+		$( "#movieTemplate" ).render( movie )
 	);
 
 </script>
