@@ -33,7 +33,6 @@ var person = { name: "Jo" },
 var tmplString = "A_{{:name}}_B";
 jsviews.tags({ sort: sort });
 
-//jsviews.allowCode = true;
 module( "tagParser" );
 test("{{if}} {{else}}", function() {
 	expect(3);
@@ -179,7 +178,7 @@ test("expressions", function() {
 
 module( "{{for}}" );
 test("{{for}}", function() {
-	expect(8);
+	expect(9);
 	jsviews.templates( {
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
 		layoutTmpl: {
@@ -187,7 +186,8 @@ test("{{for}}", function() {
 			layout: true
 		},
 		pageTmpl: '{{for people tmpl="layoutTmpl"/}}',
-		simpleFor: "a{{for people}}Content{{/for}}b"
+		simpleFor: "a{{for people}}Content{{/for}}b",
+		forPrimitiveDataTypes: "a{{for people}}{{:#data}}{{/for}}b"
 	});
 
 	equal( jsviews.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}' );
@@ -199,6 +199,7 @@ test("{{for}}", function() {
 	equal( jsviews.render.simpleFor({people:[null,undefined,1]}), "aContentContentContentb", 'null or undefined members of array are also rendered' );
 	equal( jsviews.render.simpleFor({people:null}), "ab", 'null is rendered as empty string' );
 	equal( jsviews.render.simpleFor({}), "ab", 'undefined is rendered as empty string' );
+	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,true,false]}), "a01abctruefalseb", 'Primitive types render correctly, even if falsey' );
 });
 
 module( "api" );
@@ -255,14 +256,15 @@ test("templates", function() {
 });
 
 test("render", function() {
-	expect(13);
+	expect(14);
 	var tmpl1 = jsviews.templates( "myTmpl8", tmplString );
 	jsviews.templates( {
 		simple: "Content",
 		simpleLayout: {
 			markup: "Content",
 			layout: true
-		}
+		},
+		primitiveDataTypes: "{{:#data}}"
 	});
 
 	equal( tmpl1.render( person ), "A_Jo_B", 'tmpl1.render( data );' );
@@ -282,6 +284,7 @@ test("render", function() {
 	equal( jsviews.render.simpleLayout([]), "Content", 'Layout renders once, for empty array' );
 	equal( jsviews.render.simpleLayout(null), "Content", 'Layout renders once, for null' );
 	equal( jsviews.render.simpleLayout(), "Content", 'Layout renders once, for undefined' );
+	equal( jsviews.render.primitiveDataTypes([0,1,"abc","",,true,false]), "01abctruefalse", 'Primitive types render correctly, even if falsey' );
 });
 
 test("converters", function() {

@@ -171,7 +171,7 @@ function View( context, path, parentView, data, template, index ) {
 			tmpl: template,
 			path: path,
 			parent: parentView,
-			data : data||{},
+			data: data,
 			ctx: context,
 			views: $.isArray( data ) ? [] : {}
 		};
@@ -282,7 +282,6 @@ function renderContent( data, context, parentView, path, index ) {
 		path = path || self.path;
 		index = index || self.index;
 		props = self.props;
-//		data = data === undefined ? parentView.data : data;
 	} else {
 		tmpl = self.jquery && self[0] // This is a call $.fn.render
 			|| self; // This is a call from tmpl.render
@@ -323,7 +322,7 @@ function renderContent( data, context, parentView, path, index ) {
 			for ( i = 0, l = data.length; i < l; i++ ) {
 				// Create a view for each data item.
 				dataItem = data[ i ];
-				itemResult = tmpl.fn( dataItem || {}, View( context, path, newView, dataItem, tmpl, (index||0) + i ));
+				itemResult = tmpl.fn( dataItem, View( context, path, newView, dataItem, tmpl, (index||0) + i ), jsv );
 				result += itemWrap ? itemWrap( itemResult, props ) : itemResult;
 			}
 		} else {
