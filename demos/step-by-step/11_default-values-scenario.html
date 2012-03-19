@@ -22,18 +22,9 @@
 {{:languages||'Languages unavailable'}}
 </pre>
 
-<table><tbody class="header"><tr><th>Title</th><th>{{:path}}</th></tr></tbody>
+<table><tr class="header"><th>Title</th><th>{{:path}}</th></tr>
 	<tbody id="movieList1"></tbody>
 </table>
-
-<script id="movieTemplate1" type="text/x-jsrender">
-	<tr>
-		<td>{{:title}}</td>
-		<td>
-			{{:languages||'Languages unavailable'}}
-		</td>
-	</tr>
-</script>
 
 <!---------------------- Second Example ---------------------->
 
@@ -48,19 +39,6 @@ $.views.tags({
 });
 </pre>
 
-<table><tbody class="header"><tr><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
-	<tbody id="movieList2"></tbody>
-</table>
-
-<script id="movieTemplate2" type="text/x-jsrender">
-	<tr>
-		<td>{{:title}}</td>
-		<td>
-			{{get languages defaultValue="No languages!"/}}
-		</td>
-	</tr>
-</script>
-
 <!---------------------- Third Example ---------------------->
 
 <div class="subhead">Creating a multi-purpose utility tag:</div>
@@ -74,9 +52,35 @@ $.views.tags({
 });
 </pre>
 
-<table><tbody class="header"><tr><th>Title</th><th>{{yesNo path yes="..." no="..."}}</th></tr></tbody>
+<table><tr class="header"><th>Title</th><th>{{yesNo path yes="..." no="..."}}</th></tr>
 	<tbody id="movieList3"></tbody>
 </table>
+
+<!--=================== Demo ===================-->
+
+<!------------------ Templates ------------------>
+
+<table><tr class="header"><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
+	<tbody id="movieList2"></tbody>
+</table>
+
+<script id="movieTemplate1" type="text/x-jsrender">
+	<tr>
+		<td>{{:title}}</td>
+		<td>
+			{{:languages||'Languages unavailable'}}
+		</td>
+	</tr>
+</script>
+
+<script id="movieTemplate2" type="text/x-jsrender">
+	<tr>
+		<td>{{:title}}</td>
+		<td>
+			{{get languages defaultValue="No languages!"/}}
+		</td>
+	</tr>
+</script>
 
 <script id="movieTemplate3" type="text/x-jsrender">
 	<tr>
@@ -88,7 +92,7 @@ $.views.tags({
 	</tr>
 </script>
 
-<!---------------------- Code ---------------------->
+<!------------------ Script ------------------>
 
 <script type="text/javascript">
 

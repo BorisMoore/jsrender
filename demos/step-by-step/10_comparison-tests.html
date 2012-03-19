@@ -12,6 +12,14 @@
 
 <h3>Helper functions and comparison tests</h3>
 
+<pre>
+{{if !(languages && languages.length)}}...{{/if}}
+
+{{if languages==null}}...{{/if}}
+</pre>
+
+<!--================ Demo ================-->
+
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
 		<td>{{:title}}</td>
@@ -28,13 +36,7 @@
 	<b>Warning:</b> <em>No alternate languages</em>
 </script>
 
-<pre>
-{{if !(languages && languages.length)}}...{{/if}}
-
-{{if languages==null}}...{{/if}}
-</pre>
-
-<table><tbody class="header"><tr><th>Title</th><th>{{if !(languages && languages.length)}}</th><th>{{if a==null}}</th></tr></tbody>
+<table><tr class="header"><th>Title</th><th>{{if !(languages && languages.length)}}</th><th>{{if a==null}}</th></tr>
 	<tbody id="movieList"></tbody>
 </table>
 

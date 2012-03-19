@@ -6,6 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
+// informal pre beta commit counter: 0
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -60,7 +61,6 @@ var versionNumber = "v1.0pre",
 		converters: converters,
 		View: View,
 		convert: convert,
-		ctx: getContext,
 		delimiters: setDelimiters,
 		tag: renderTag
 	};
@@ -100,13 +100,17 @@ function setDelimiters( openChars, closeChars ) {
 }
 
 //=================
-// jsviews.ctx
+// View.hlp
 //=================
 
-function getContext( view, helper ) {
-	var tmplHelpers = view.tmpl.helpers || {};
-	tmplHelpers = (view.ctx[ helper ] ? view.ctx : tmplHelpers[ helper ] ? tmplHelpers : helpers[ helper ] ? helpers : {});
-	return tmplHelpers[ helper ];
+function getHelper( helper ) {
+	// Helper method called as view.hlp() from compiled template, for helper functions or template parameters ~foo
+	var view = this,
+	tmplHelpers = view.tmpl.helpers || {};
+	helper = (view.ctx[ helper ] ? view.ctx : tmplHelpers[ helper ] ? tmplHelpers : helpers[ helper ] ? helpers : {})[ helper ];
+	return typeof helper !== "function" ? helper : function() {
+		return helper.apply(view, arguments);
+	};
 }
 
 //=================
@@ -147,7 +151,7 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 
 	tagObject.isTag = TRUE;
 	tagObject.converter = converter;
-	tagObject.parent = parentView;
+	tagObject.view = parentView;
 	tagObject.renderContent = renderContent;
 	if ( parentView.ctx ) {
 		extend( tagObject.ctx, parentView.ctx);
@@ -158,7 +162,7 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 }
 
 //=================
-// View constuctor
+// View constructor
 //=================
 
 function View( context, path, parentView, data, template, index ) {
@@ -173,7 +177,8 @@ function View( context, path, parentView, data, template, index ) {
 			parent: parentView,
 			data: data,
 			ctx: context,
-			views: $.isArray( data ) ? [] : {}
+			views: $.isArray( data ) ? [] : {},
+			hlp: getHelper
 		};
 
 	if ( $.isArray( views ))  {
@@ -192,7 +197,7 @@ function View( context, path, parentView, data, template, index ) {
 // Registration
 //=================
 
-function addToStore( store, name, item, process ) {
+function addToStore( self, store, name, item, process ) {
 	// Add item to named store such as templates, helpers, converters...
 	var key, onStore;
 	if ( name && typeof name === "object" && !name.nodeType ) {
@@ -200,7 +205,7 @@ function addToStore( store, name, item, process ) {
 		for ( key in name ) {
 			store( key, name[ key ]);
 		}
-		return jsv;
+		return self;
 	}
 	if ( !name || item === undefined ) {
 		if ( process ) {
@@ -229,7 +234,7 @@ function templates( name, tmpl ) {
 
 	// When registering for {{foo a b c==d e=f}}, tagFn should be a function with the signature:
 	// function(a,b). The 'this' pointer will be a hash with properties c and e.
-	return addToStore( templates, name, tmpl, compile );
+	return addToStore( this, templates, name, tmpl, compile );
 }
 
 function tags( name, tagFn ) {
@@ -240,7 +245,7 @@ function tags( name, tagFn ) {
 
 	// When registering for {{foo a b c==d e=f}}, tagFn should be a function with the signature:
 	// function(a,b). The 'this' pointer will be a hash with properties c and e.
-	return addToStore( tags, name, tagFn );
+	return addToStore( this, tags, name, tagFn );
 }
 
 function helpers( name, helperFn ) {
@@ -249,7 +254,7 @@ function helpers( name, helperFn ) {
 	// Getter: Use var helperFn = $.views.helpers( name ) or $.views.helpers[name] or $.views.helpers.name to return the function.
 	// Remove: Use $.view.helpers( name, null ) to remove a registered helper function from $.view.helpers.
 	// Within a template, access the helper using the syntax: {{... ~myHelper(...) ...}}.
-	return addToStore( helpers, name, helperFn );
+	return addToStore( this, helpers, name, helperFn );
 }
 
 function converters( name, converterFn ) {
@@ -258,7 +263,7 @@ function converters( name, converterFn ) {
 	// Getter: Use var converterFn = $.views.converters( name ) or $.views.converters[name] or $.views.converters.name to return the converter function.
 	// Remove: Use $.view.converters( name, null ) to remove a registered converter from $.view.converters.
 	// Within a template, access the converter using the syntax: {{myConverter:...}}.
-	return addToStore( converters, name, converterFn );
+	return addToStore( this, converters, name, converterFn );
 }
 
 //=================
@@ -278,7 +283,7 @@ function renderContent( data, context, parentView, path, index ) {
 		// This is a call from renderTag
 		tmpl = self.tmpl;
 		context = context || self.ctx;
-		parentView = parentView || self.parent;
+		parentView = parentView || self.view;
 		path = path || self.path;
 		index = index || self.index;
 		props = self.props;
@@ -478,7 +483,7 @@ function tmplFn( markup, tmpl, bind ) {
 				tmplFn( markup, nestedTmpl);
 				nested.push( nestedTmpl );
 			}
-			hasHelperPath = hasHelperPath || params.indexOf( 'h(view,"' ) > -1;
+			hasHelperPath = hasHelperPath || params.indexOf( 'view.hlp("' ) > -1;
 			hasViewPath = hasViewPath || params.indexOf( "view" ) > -1;
 			code += (tag === ":"
 				? (converter === "html"
@@ -498,7 +503,6 @@ function tmplFn( markup, tmpl, bind ) {
 		+ (hasTag ? "t=j.tag," : "")
 		+ (hasConverter ? "c=j.convert," : "")
 		+ (hasEncoder ? "e=j.converters.html," : "")
-		+ (hasHelperPath ? "h=j.ctx," : "")
 		+ "ret; try{\n\n"
 		+ (tmplOptions.debug ? "debugger;" : "")
 		+ (allowCode ? 'ret=' : 'return ')
@@ -535,10 +539,10 @@ function parseParams( params, bind ) {
 		//                     val                 object    helper     view      viewProperty pathTokens   leafToken string quot
 			if ( object ) {
 				val = (helper
-					? 'h(view,"' + helper + '")'
+					? 'view.hlp("' + helper + '")'
 					: view
 						? "view"
-						:"data")
+						: "data")
 				+ (leafToken
 					? (viewProperty
 						? "." + viewProperty
@@ -595,7 +599,7 @@ function parseParams( params, bind ) {
 												: "")
 										)
 										: comma
-											? (fnCall[ parenDepth ] || syntaxError(), ",")
+											? (fnCall[ parenDepth ] || syntaxError(), ",") // We don't allow top-level literal arrays or objects
 											: (aposed = apos, quoted = quot, '"')
 			);
 		}
@@ -753,7 +757,7 @@ if ( jQuery ) {
 
 extend = $.extend;
 
-jsv.topView = { views: {}, tmpl: {}, ctx: jsv.helpers };
+jsv.topView = { views: {}, tmpl: {}, hlp: getHelper, ctx: jsv.helpers };
 
 function replacerForHtml( ch ) {
 	// Original code from Mike Samuel <msamuel@google.com>
@@ -767,7 +771,7 @@ function replacerForHtml( ch ) {
 tags({
 	"if": function() {
 		var ifTag = this,
-			view = ifTag.parent;
+			view = ifTag.view;
 
 		view.onElse = function( tagObject, args ) {
 			var i = 0,
@@ -789,7 +793,7 @@ tags({
 		return view.onElse( this, arguments );
 	},
 	"else": function() {
-		var view = this.parent;
+		var view = this.view;
 		return view.onElse ? view.onElse( this, arguments ) : "";
 	},
 	"for": function() {

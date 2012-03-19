@@ -12,31 +12,21 @@
 
 <h3>Helper functions</h3>
 
-<script id="movieTemplate" type="text/x-jsrender">
-	<tr>
-		<td>{{:title}}</td>
-		<td>
-			{{for languages}}
-				{{:~format(name, "upper")}}{{if ~nextToLast(#view)}} and {{else ~notLast(#view)}}, {{/if}}
-			{{/for}}
-		</td>
-	</tr>
-</script>
-
 <pre>
 {{:~format(name, "upper")}}
 
-{{if ~nextToLast(#view)}}...
+{{if ~nextToLast()}}...{{/if}}
 
 $.views.helpers({
 
     format: function( val, format ){
         ...
-		return val.toUpperCase();
-		...
+        return val.toUpperCase();
+        ...
     },
 
-    nextToLast: function( view ) {
+    nextToLast: function() {
+        var view = this;
         return view.index === view.parent.data.length - 2;
     },
 
@@ -44,9 +34,26 @@ $.views.helpers({
 });
 </pre>
 
-<table><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
+<!--=================== Demo ===================-->
+
+<!------------------ Templates ------------------>
+
+<script id="movieTemplate" type="text/x-jsrender">
+	<tr>
+		<td>{{:~format(title, "upper")}}</td>
+		<td>
+			{{for languages}}
+				{{:name}}{{if ~nextToLast()}} and {{else ~notLast()}}, {{/if}}
+			{{/for}}
+		</td>
+	</tr>
+</script>
+
+<table><tr class="header"><th>Title</th><th>Languages</th></tr></tbody>
 	<tbody id="movieList"></tbody>
 </table>
+
+<!------------------ Script ------------------>
 
 <script type="text/javascript">
 	$.views.helpers({
@@ -57,15 +64,17 @@ $.views.helpers({
 				case "upper":
 					return val.toUpperCase();
 				case "lower":
-					return  val.toLowerCase();
+					return val.toLowerCase();
 			}
 		},
 
-		nextToLast: function( view ) {
+		nextToLast: function() {
+			var view = this;
 			return view.index === view.parent.data.length - 2;
 		},
 
-		notLast: function( view ) {
+		notLast: function() {
+			var view = this;
 			return view.index !== view.parent.data.length - 1;
 		}
 	});
