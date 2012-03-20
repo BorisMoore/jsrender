@@ -104,7 +104,7 @@ test("types", function() {
 	equal( jsviews.templates( "{{:'abc'}}" ).render({}), "abc", "'abc'" );
 	equal( jsviews.templates( "{{:true}}" ).render({}), "true", "true" );
 	equal( jsviews.templates( "{{:false}}" ).render({}), "false", "false" );
-	equal( jsviews.templates( "{{:null}}" ).render({}), "null", "null" );
+	equal( jsviews.templates( "{{:null}}" ).render({}), "", 'null -> ""' );
 	equal( jsviews.templates( "{{:199}}" ).render({}), "199", "199" );
 	equal( jsviews.templates( "{{: 199.9 }}" ).render({}), "199.9", "| 199.9 |" );
 	equal( jsviews.templates( "{{:-33.33}}" ).render({}), "-33.33", "-33.33" );
