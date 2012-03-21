@@ -13,11 +13,12 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<!---------------------- First Example ---------------------->
-
 <h3>Example Scenario: providing default values for data.</h3>
 
+<!---------------------- First Example ---------------------->
+
 <div class="subhead">The simplest (and best) way: Javascript expression '||':</div>
+
 <pre>
 {{:languages||'Languages unavailable'}}
 </pre>
@@ -29,6 +30,7 @@
 <!---------------------- Second Example ---------------------->
 
 <div class="subhead">Creating a special custom tag:</div>
+
 <pre>
 {{get languages defaultValue="No languages!"/}}
 
@@ -39,9 +41,14 @@ $.views.tags({
 });
 </pre>
 
+<table><tr class="header"><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
+	<tbody id="movieList2"></tbody>
+</table>
+
 <!---------------------- Third Example ---------------------->
 
 <div class="subhead">Creating a multi-purpose utility tag:</div>
+
 <pre>
 {{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
 
@@ -59,10 +66,6 @@ $.views.tags({
 <!--=================== Demo ===================-->
 
 <!------------------ Templates ------------------>
-
-<table><tr class="header"><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
-	<tbody id="movieList2"></tbody>
-</table>
 
 <script id="movieTemplate1" type="text/x-jsrender">
 	<tr>

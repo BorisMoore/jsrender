@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 1
+// informal pre beta commit counter: 2
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -158,7 +158,7 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 	}
 
 	ret = tagFn.apply( tagObject, args.length > 5 ? slice.call( args, 5 ) : [] );
-	return ret || ( ret === undefined ? "" : ret.toString()); // (If ret is the value 0 or false or null, will render to string)
+	return ret || ( ret == undefined ? "" : ret.toString()); // (If ret is the value 0 or false, will render to string)
 }
 
 //=================
@@ -314,9 +314,10 @@ function renderContent( data, context, parentView, path, index ) {
 			// if no parentContext, use context, or default to {}
 			: context || {});
 
-	if ( props.link !== undefined ) {
-		// Override inherited value of link by an explicit setting in props: link=true or link=false
-		context.link = props.link;
+	if ( props.link === FALSE ) {
+		// Override inherited value of link by an explicit setting in props: link=false
+		// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
+		context.link = FALSE;
 	}
 	if ( !tmpl.fn ) {
 		tmpl = templates[ tmpl ] || templates( tmpl );
@@ -489,7 +490,7 @@ function tmplFn( markup, tmpl, bind ) {
 					? (hasEncoder = TRUE, "e(" + params)
 					: converter
 						? (hasConverter = TRUE, 'c("' + converter + '",view,' + params)
-						: (getsValue = TRUE, "((v=" + params + ')!==u?v:""')
+						: (getsValue = TRUE, "((v=" + params + ')!=u?v:""')
 				)
 				: (hasTag = TRUE, 't("' + tag + '",view,"' + (converter || "") + '",'
 					+ (content ? nested.length : '""') // For block tags, pass in the key (nested.length) to the nested content template
@@ -836,7 +837,7 @@ converters({
 	html: function( text ) {
 		// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
 		// inspired by Mike Samuel <msamuel@google.com>
-		return text !== undefined ? String( text ).replace( htmlSpecialChar, replacerForHtml ) : "";
+		return text != undefined ? String( text ).replace( htmlSpecialChar, replacerForHtml ) : "";
 	}
 });
 
