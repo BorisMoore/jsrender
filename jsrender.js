@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 2
+// informal pre beta commit counter: 3
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -19,7 +19,7 @@ var versionNumber = "v1.0pre",
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery,
 
-	rPath = /^(?:true|false|\d[\d.]*|(null)|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
+	rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
 	//                                 nil    object   helper    view  viewProperty pathTokens   leafToken     string
 
 	rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
@@ -107,7 +107,7 @@ function getHelper( helper ) {
 	// Helper method called as view.hlp() from compiled template, for helper functions or template parameters ~foo
 	var view = this,
 	tmplHelpers = view.tmpl.helpers || {};
-	helper = (view.ctx[ helper ] ? view.ctx : tmplHelpers[ helper ] ? tmplHelpers : helpers[ helper ] ? helpers : {})[ helper ];
+	helper = (view.ctx[ helper ] !== undefined ? view.ctx : tmplHelpers[ helper ] !== undefined ? tmplHelpers : helpers[ helper ] !== undefined ? helpers : {})[ helper ];
 	return typeof helper !== "function" ? helper : function() {
 		return helper.apply(view, arguments);
 	};
@@ -536,9 +536,9 @@ function parseParams( params, bind ) {
 		prn = prn || prn2 || "";
 		operator = operator || "";
 
-		function parsePath( all, nil, object, helper, view, viewProperty, pathTokens, leafToken ) {
-		// rPath = /^(?:true|false|\d[\d.]*|(null)|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
-		//                                    nil    object   helper    view  viewProperty pathTokens   leafToken     string
+		function parsePath( all, object, helper, view, viewProperty, pathTokens, leafToken ) {
+		// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
+		//                                        object   helper    view  viewProperty pathTokens   leafToken     string
 			if ( object ) {
 				var ret = (helper
 					? 'view.hlp("' + helper + '")'
@@ -559,7 +559,7 @@ function parseParams( params, bind ) {
 				}
 				return ret + (leafToken ? "." + leafToken : "");
 			}
-			return nil ? "u" : all;
+			return all;
 		}
 
 		if ( err ) {
