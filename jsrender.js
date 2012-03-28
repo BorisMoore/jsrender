@@ -6,6 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
+// informal pre beta commit counter: 3
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -18,11 +19,11 @@ var versionNumber = "v1.0pre",
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery,
 
-	rPath = /^(?:(true|false|null|\d[\d.]*)|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
-	//                   val                 object   helper    view  viewProperty pathTokens   leafToken     string
+	rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
+	//                                 nil    object   helper    view  viewProperty pathTokens   leafToken     string
 
-	rParams = /(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
-	//           lftPrn                path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
+	rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
+	//          lftPrn        lftPrn2                path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
 	// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
 
     rNewLine = /\r?\n/g,
@@ -60,7 +61,6 @@ var versionNumber = "v1.0pre",
 		converters: converters,
 		View: View,
 		convert: convert,
-		ctx: getContext,
 		delimiters: setDelimiters,
 		tag: renderTag
 	};
@@ -100,13 +100,17 @@ function setDelimiters( openChars, closeChars ) {
 }
 
 //=================
-// jsviews.ctx
+// View.hlp
 //=================
 
-function getContext( view, helper ) {
-	var tmplHelpers = view.tmpl.helpers || {};
-	tmplHelpers = (view.ctx[ helper ] ? view.ctx : tmplHelpers[ helper ] ? tmplHelpers : helpers[ helper ] ? helpers : {});
-	return tmplHelpers[ helper ];
+function getHelper( helper ) {
+	// Helper method called as view.hlp() from compiled template, for helper functions or template parameters ~foo
+	var view = this,
+	tmplHelpers = view.tmpl.helpers || {};
+	helper = (view.ctx[ helper ] !== undefined ? view.ctx : tmplHelpers[ helper ] !== undefined ? tmplHelpers : helpers[ helper ] !== undefined ? helpers : {})[ helper ];
+	return typeof helper !== "function" ? helper : function() {
+		return helper.apply(view, arguments);
+	};
 }
 
 //=================
@@ -147,18 +151,18 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 
 	tagObject.isTag = TRUE;
 	tagObject.converter = converter;
-	tagObject.parent = parentView;
+	tagObject.view = parentView;
 	tagObject.renderContent = renderContent;
 	if ( parentView.ctx ) {
 		extend( tagObject.ctx, parentView.ctx);
 	}
 
 	ret = tagFn.apply( tagObject, args.length > 5 ? slice.call( args, 5 ) : [] );
-	return ret || ( ret === undefined ? "" : ret.toString()); // (If ret is the value 0 or false or null, will render to string)
+	return ret || ( ret == undefined ? "" : ret.toString()); // (If ret is the value 0 or false, will render to string)
 }
 
 //=================
-// View constuctor
+// View constructor
 //=================
 
 function View( context, path, parentView, data, template, index ) {
@@ -173,7 +177,8 @@ function View( context, path, parentView, data, template, index ) {
 			parent: parentView,
 			data: data,
 			ctx: context,
-			views: $.isArray( data ) ? [] : {}
+			views: $.isArray( data ) ? [] : {},
+			hlp: getHelper
 		};
 
 	if ( $.isArray( views ))  {
@@ -192,7 +197,7 @@ function View( context, path, parentView, data, template, index ) {
 // Registration
 //=================
 
-function addToStore( store, name, item, process ) {
+function addToStore( self, store, name, item, process ) {
 	// Add item to named store such as templates, helpers, converters...
 	var key, onStore;
 	if ( name && typeof name === "object" && !name.nodeType ) {
@@ -200,7 +205,7 @@ function addToStore( store, name, item, process ) {
 		for ( key in name ) {
 			store( key, name[ key ]);
 		}
-		return jsv;
+		return self;
 	}
 	if ( !name || item === undefined ) {
 		if ( process ) {
@@ -229,7 +234,7 @@ function templates( name, tmpl ) {
 
 	// When registering for {{foo a b c==d e=f}}, tagFn should be a function with the signature:
 	// function(a,b). The 'this' pointer will be a hash with properties c and e.
-	return addToStore( templates, name, tmpl, compile );
+	return addToStore( this, templates, name, tmpl, compile );
 }
 
 function tags( name, tagFn ) {
@@ -240,7 +245,7 @@ function tags( name, tagFn ) {
 
 	// When registering for {{foo a b c==d e=f}}, tagFn should be a function with the signature:
 	// function(a,b). The 'this' pointer will be a hash with properties c and e.
-	return addToStore( tags, name, tagFn );
+	return addToStore( this, tags, name, tagFn );
 }
 
 function helpers( name, helperFn ) {
@@ -249,7 +254,7 @@ function helpers( name, helperFn ) {
 	// Getter: Use var helperFn = $.views.helpers( name ) or $.views.helpers[name] or $.views.helpers.name to return the function.
 	// Remove: Use $.view.helpers( name, null ) to remove a registered helper function from $.view.helpers.
 	// Within a template, access the helper using the syntax: {{... ~myHelper(...) ...}}.
-	return addToStore( helpers, name, helperFn );
+	return addToStore( this, helpers, name, helperFn );
 }
 
 function converters( name, converterFn ) {
@@ -258,7 +263,7 @@ function converters( name, converterFn ) {
 	// Getter: Use var converterFn = $.views.converters( name ) or $.views.converters[name] or $.views.converters.name to return the converter function.
 	// Remove: Use $.view.converters( name, null ) to remove a registered converter from $.view.converters.
 	// Within a template, access the converter using the syntax: {{myConverter:...}}.
-	return addToStore( converters, name, converterFn );
+	return addToStore( this, converters, name, converterFn );
 }
 
 //=================
@@ -278,7 +283,7 @@ function renderContent( data, context, parentView, path, index ) {
 		// This is a call from renderTag
 		tmpl = self.tmpl;
 		context = context || self.ctx;
-		parentView = parentView || self.parent;
+		parentView = parentView || self.view;
 		path = path || self.path;
 		index = index || self.index;
 		props = self.props;
@@ -309,9 +314,10 @@ function renderContent( data, context, parentView, path, index ) {
 			// if no parentContext, use context, or default to {}
 			: context || {});
 
-	if ( props.link !== undefined ) {
-		// Override inherited value of link by an explicit setting in props: link=true or link=false
-		context.link = props.link;
+	if ( props.link === FALSE ) {
+		// Override inherited value of link by an explicit setting in props: link=false
+		// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
+		context.link = FALSE;
 	}
 	if ( !tmpl.fn ) {
 		tmpl = templates[ tmpl ] || templates( tmpl );
@@ -357,7 +363,7 @@ function syntaxError() {
 function tmplFn( markup, tmpl, bind ) {
 	// Compile markup to AST (abtract syntax tree) then build the template function code from the AST nodes
 	// Used for compiling templates, and also by JsViews to build functions for data link expressions
-	var newNode, node, i, l, code, hasTag, hasEncoder, hasHelperPath, getsValue, hasConverter, hasViewPath, tag, converter, params, hash, nestedTmpl, allowCode,
+	var newNode, node, i, l, code, hasTag, hasEncoder, getsValue, hasConverter, hasViewPath, tag, converter, params, hash, nestedTmpl, allowCode,
 		tmplOptions = tmpl ? {
 			allowCode: allowCode = tmpl.allowCode,
 			debug: tmpl.debug
@@ -478,14 +484,13 @@ function tmplFn( markup, tmpl, bind ) {
 				tmplFn( markup, nestedTmpl);
 				nested.push( nestedTmpl );
 			}
-			hasHelperPath = hasHelperPath || params.indexOf( 'h(view,"' ) > -1;
-			hasViewPath = hasViewPath || params.indexOf( "view" ) > -1;
+			hasViewPath = hasViewPath || hash.indexOf( "view" ) > -1;
 			code += (tag === ":"
 				? (converter === "html"
 					? (hasEncoder = TRUE, "e(" + params)
 					: converter
 						? (hasConverter = TRUE, 'c("' + converter + '",view,' + params)
-						: (getsValue = TRUE, "((v=" + params + ')!==u?v:""')
+						: (getsValue = TRUE, "((v=" + params + ')!=u?v:""')
 				)
 				: (hasTag = TRUE, 't("' + tag + '",view,"' + (converter || "") + '",'
 					+ (content ? nested.length : '""') // For block tags, pass in the key (nested.length) to the nested content template
@@ -498,7 +503,6 @@ function tmplFn( markup, tmpl, bind ) {
 		+ (hasTag ? "t=j.tag," : "")
 		+ (hasConverter ? "c=j.convert," : "")
 		+ (hasEncoder ? "e=j.converters.html," : "")
-		+ (hasHelperPath ? "h=j.ctx," : "")
 		+ "ret; try{\n\n"
 		+ (tmplOptions.debug ? "debugger;" : "")
 		+ (allowCode ? 'ret=' : 'return ')
@@ -510,7 +514,7 @@ function tmplFn( markup, tmpl, bind ) {
 	// Include only the var references that are needed in the code
 	if ( tmpl ) {
 		tmpl.fn = code;
-		tmpl.useVw = hasConverter || hasHelperPath || hasViewPath || hasTag;
+		tmpl.useVw = hasConverter || hasViewPath || hasTag;
 	}
 	return code;
 }
@@ -522,20 +526,22 @@ function parseParams( params, bind ) {
 		quoted = FALSE, // boolean for string content in double quotes
 		aposed = FALSE; // or in single quotes
 
-	function parseTokens( all, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, prn2, space ) {
+	function parseTokens( all, lftPrn0, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, prn2, space ) {
 		// rParams = /(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
-		//            lftPrn                  path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
+		//            lftPrn                  path    operator err                                                eq         path2       prn    comma   lftPrn3   apos quot        rtPrn   prn2   space
 		// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+		operator = operator || "";
+		lftPrn = lftPrn || lftPrn0 || lftPrn2;
 		path = path || path2;
 		prn = prn || prn2 || "";
 		operator = operator || "";
 
-		function parsePath( all, val, object, helper, view, viewProperty, pathTokens, leafToken ) {
-		// rPath = /^(?:(true|false|null|\d[\d.]*)|([\w$]+|~([\w$]+)|#(view|data|([\w$]+))?)([\w$.]*[.[])?([\w$]*\]?)?|['"].*\9)$/g,
-		//                     val                 object    helper     view      viewProperty pathTokens   leafToken string quot
+		function parsePath( all, object, helper, view, viewProperty, pathTokens, leafToken ) {
+		// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
+		//                                        object   helper    view  viewProperty pathTokens   leafToken     string
 			if ( object ) {
-				val = (helper
-					? 'h(view,"' + helper + '")'
+				var ret = (helper
+					? 'view.hlp("' + helper + '")'
 					: view
 						? "view"
 						:"data")
@@ -549,26 +555,28 @@ function parseParams( params, bind ) {
 					: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
 
 				if ( bind && prn !== "(" ) {
-					val = "b(" + val + ',"' + leafToken + '")';
+					ret = "b(" + ret + ',"' + leafToken + '")';
 				}
-				val += leafToken ? "." + leafToken : "";
+				return ret + (leafToken ? "." + leafToken : "");
 			}
-			return val || all;
+			return all;
 		}
 
 		if ( err ) {
 			syntaxError();
 		} else {
-			return ((lftPrn = lftPrn || lftPrn2)
-				? (parenDepth++, lftPrn)
-				: "")
-			+ (aposed
+			return (aposed
 				// within single-quoted string
 				? (aposed = !apos, (aposed ? all : '"'))
 				: quoted
 					// within double-quoted string
 					? (quoted = !quot, (quoted ? all : '"'))
-					: space
+					:
+				(
+					(lftPrn
+							? (parenDepth++, lftPrn)
+							: "")
+					+ (space
 						? (parenDepth
 							? ""
 							: named
@@ -595,8 +603,11 @@ function parseParams( params, bind ) {
 												: "")
 										)
 										: comma
-											? (fnCall[ parenDepth ] || syntaxError(), ",")
+											? (fnCall[ parenDepth ] || syntaxError(), ",") // We don't allow top-level literal arrays or objects
+											: lftPrn0
+												? ""
 											: (aposed = apos, quoted = quot, '"')
+				))
 			);
 		}
 	}
@@ -758,7 +769,7 @@ if ( jQuery ) {
 
 extend = $.extend;
 
-jsv.topView = { views: {}, tmpl: {}, ctx: jsv.helpers };
+jsv.topView = { views: {}, tmpl: {}, hlp: getHelper, ctx: jsv.helpers };
 
 function replacerForHtml( ch ) {
 	// Original code from Mike Samuel <msamuel@google.com>
@@ -772,7 +783,7 @@ function replacerForHtml( ch ) {
 tags({
 	"if": function() {
 		var ifTag = this,
-			view = ifTag.parent;
+			view = ifTag.view;
 
 		view.onElse = function( tagObject, args ) {
 			var i = 0,
@@ -794,7 +805,7 @@ tags({
 		return view.onElse( this, arguments );
 	},
 	"else": function() {
-		var view = this.parent;
+		var view = this.view;
 		return view.onElse ? view.onElse( this, arguments ) : "";
 	},
 	"for": function() {
@@ -831,7 +842,7 @@ converters({
 	html: function( text ) {
 		// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
 		// inspired by Mike Samuel <msamuel@google.com>
-		return text !== undefined ? String( text ).replace( htmlSpecialChar, replacerForHtml ) : "";
+		return text != undefined ? String( text ).replace( htmlSpecialChar, replacerForHtml ) : "";
 	}
 });
 

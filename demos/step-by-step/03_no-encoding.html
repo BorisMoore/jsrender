@@ -25,15 +25,14 @@
 </ul><br />
 
 <script id="movieTemplate" type="text/x-jsrender">
-	{{if true}}<tr>
+	<tr>
 		<td>{{loc:title}}</td>
 		<td class="synopsis">{{:synopsis}}</td>
 		<td class="synopsis">{{>synopsis}}</td>
 	</tr>
-	{{/if}}
 </script>
 
-<table><tbody class="header"><tr><th>title</th><th>No Convert</th><th>HTML Encode</th></tr></tbody>
+<table><tr class="header"><th>title</th><th>No Convert</th><th>HTML Encode</th></tr>
 	<tbody id="movieList"></tbody>
 </table>
 
