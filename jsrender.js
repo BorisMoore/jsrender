@@ -544,7 +544,7 @@ function parseParams( params, bind ) {
 					? 'view.hlp("' + helper + '")'
 					: view
 						? "view"
-						:"data")
+						: "data")
 				+ (leafToken
 					? (viewProperty
 						? "." + viewProperty
@@ -606,7 +606,7 @@ function parseParams( params, bind ) {
 											? (fnCall[ parenDepth ] || syntaxError(), ",") // We don't allow top-level literal arrays or objects
 											: lftPrn0
 												? ""
-											: (aposed = apos, quoted = quot, '"')
+												: (aposed = apos, quoted = quot, '"')
 				))
 			);
 		}
