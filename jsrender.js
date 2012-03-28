@@ -177,7 +177,7 @@ function View( context, path, parentView, data, template, index ) {
 			parent: parentView,
 			data: data,
 			ctx: context,
-			views: $.isArray( data ) ? [] : {},
+			views: ( $.isArray( data ) || typeof data == 'object' ) ? [] : {},
 			hlp: getHelper
 		};
 
@@ -326,18 +326,37 @@ function renderContent( data, context, parentView, path, index ) {
 	itemsWrap = context.link && sub.onRenderItems;
 
 	if ( tmpl ) {
-		if ( $.isArray( data ) && !layout ) {
+		if ( ( $.isArray( data ) || typeof data == 'object' ) && !layout ) {
 			// Create a view for the array, whose child views correspond to each data item.
 			// (Note: if index and parentView are passed in along with parent view, treat as
 			// insert -e.g. from view.addViews - so parentView is already the view item for array)
 			newView = swapContent ? parentView : (index !== undefined && parentView) || View( context, path, parentView, data, tmpl, index );
 
-			for ( i = 0, l = data.length; i < l; i++ ) {
+			// create and use an iterator function to steps through the data variable members
+			(function( data, item_func ) {
+				// properly handle iteration of object properties
+				if ( typeof data == 'object' ) {
+					for ( i in data ) {
+						// decide if this index is an integer (that JS will treat like a string)
+						numIndex = (i*1);
+						if ( numIndex == i ) {
+							// if it is, use the integer instead
+							i = numIndex;
+						}
+						
+						item_func( data[i], i );
+					}
+				// and handle arrays
+				} else if( $.isArray( data ) ) {
+					for ( i = 0, l = data.length; i < l; i++ ) {
+						item_func( data[i], (index||0) + i );
+					}
+				}
+			})( data, function( dataItem, dataIndex ) {
 				// Create a view for each data item.
-				dataItem = data[ i ];
-				itemResult = tmpl.fn( dataItem, View( context, path, newView, dataItem, tmpl, (index||0) + i ), jsv );
+				itemResult = tmpl.fn( dataItem, View( context, path, newView, dataItem, tmpl, dataIndex ), jsv );
 				result += itemWrap ? itemWrap( itemResult, props ) : itemResult;
-			}
+			});
 		} else {
 			// Create a view for singleton data object.
 			newView = swapContent ? parentView : View( context, path, parentView, data, tmpl, index );
