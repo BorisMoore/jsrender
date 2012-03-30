@@ -498,7 +498,7 @@ function tmplFn( markup, tmpl, bind ) {
 					+ ")+";
 		}
 	}
-	code =  new Function( "data, view, j, b, u", fnDeclStr
+	var templateFullExpansion = fnDeclStr
 		+ (getsValue ? "v," : "")
 		+ (hasTag ? "t=j.tag," : "")
 		+ (hasConverter ? "c=j.convert," : "")
@@ -508,8 +508,12 @@ function tmplFn( markup, tmpl, bind ) {
 		+ (allowCode ? 'ret=' : 'return ')
 		+ code.slice( 0, -1 ) + ";\n\n"
 		+ (allowCode ? "return ret;" : "")
-		+ "}catch(e){return j.err(e);}"
-	);
+		+ "}catch(e){return j.err(e);}";
+	try {
+		code = new Function( "data, view, j, b, u", templateFullExpansion);
+	} catch (e) {
+		throw new SyntaxError(e.message + ": Template has javascript syntax error when expanded:\n\t"+templateFullExpansion);
+	}
 
 	// Include only the var references that are needed in the code
 	if ( tmpl ) {
