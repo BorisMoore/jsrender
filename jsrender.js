@@ -512,7 +512,7 @@ function tmplFn( markup, tmpl, bind ) {
 	try {
 		code = new Function( "data, view, j, b, u", templateFullExpansion);
 	} catch (e) {
-		throw new SyntaxError(e.message + ": Template has javascript syntax error when expanded:\n\t"+templateFullExpansion);
+		throw new SyntaxError((tmpl?tmpl.name+":":"")+e.message + ": Template has javascript syntax error when expanded:\n\t"+templateFullExpansion);
 	}
 
 	// Include only the var references that are needed in the code
