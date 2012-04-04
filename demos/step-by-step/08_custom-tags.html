@@ -10,12 +10,14 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Providing a custom tag</h3>
+<h3>Custom tags</h3>
 
 <pre>
-<td>{{sort languages reverse=true}}...{{/sort}}</td>
+&lt;td>{{sort languages reverse=true}}...{{/sort}}&lt;/td>
 
 $.views.tags({
+
+    // Tag to reverse-sort an array
 
     sort: function( array ){
         var ret = "";
@@ -40,12 +42,14 @@ $.views.tags({
 	<tr>
 		<td>{{:title}}</td>
 		<td>{{sort languages tmpl="#sortedTemplate"/}}</td>
-		<td>{{sort languages reverse=true}}
+		<td>
+			{{sort languages reverse=true}}
 				<div>
 					<b>{{:name}}</b>
 				</div>
 			{{/sort}}
 		</td>
+
 	</tr>
 </script>
 
@@ -53,7 +57,7 @@ $.views.tags({
 	<div>{{:name}}</div>
 </script>
 
-<table><tr class="header"><th>Title</th><th>Orginal order</th><th>Reverse order</th></tr>
+<table><tr class="header"><th>Title</th><th>Languages</th><th>Reverse order</th></tr>
 	<tbody id="movieList"></tbody>
 </table>
 
@@ -61,6 +65,7 @@ $.views.tags({
 
 	$.views.tags({
 
+		// Tag to reverse-sort an array
 		sort: function( array ){
 			var ret = "";
 			if ( this.props.reverse ) {
