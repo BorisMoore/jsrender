@@ -84,7 +84,7 @@ test("templates", function() {
 			debug:true
 		}
 	});
-	equal( $.templates.tmplFromString.fn.toString().indexOf("debugger;") + $.templates.scriptTmpl.fn.toString().indexOf("debugger;"), 152, 'Debug a template:  set debug:true on object' );
+	equal( $.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0 && $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0, true, 'Debug a template:  set debug:true on object' );
 });
 
 test("render", function() {

@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 3
+// informal pre beta commit counter: 4
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -269,6 +269,7 @@ function converters( name, converterFn ) {
 //=================
 // renderContent
 //=================
+var foo = /\{\{(?:(?:(\w+(?=[\/\s\}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^\}]|\}(?!\}))*?)(\/)?|(?:\/(\w+)))\}\}/g
 
 function renderContent( data, context, parentView, path, index ) {
 	// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
@@ -466,10 +467,10 @@ function tmplFn( markup, tmpl, bind ) {
 	for ( i = 0; i < l; i++ ) {
 		// AST nodes: [ tagName, converter, params, content, hash, contentMarkup ]
 		node = astTop[ i ];
-		if ( node[ 0 ] === "*" ) {
-			code = code.slice( 0, i ? -1 : -3 ) + ";" + node[ 1 ] + (i + 1 < l ? "ret+=" : "");
-		} else if ( "" + node === node ) { // type string
+		if ( "" + node === node ) { // type string
 			code += '"' + node + '"+';
+		} else if ( node[ 0 ] === "*" ) {
+			code = code.slice( 0, i ? -1 : -3 ) + ";" + node[ 1 ] + (i + 1 < l ? "ret+=" : "");
 		} else {
 			tag = node[ 0 ];
 			converter = node[ 1 ];
