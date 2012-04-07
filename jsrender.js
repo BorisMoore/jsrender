@@ -81,7 +81,7 @@ function setDelimiters( openChars, closeChars ) {
 	// Build regex with new delimiters
 	jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
 		= secondOpenChar
-			//          tag    (followed by / space or })   or  colon     or  html or code
+			//          tag    (followed by / space or })   or  colon or  html or code
 		+ "(?:(?:(\\w+(?=[\\/\\s" + firstCloseChar + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
 		//     params
 		+ "\\s*((?:[^" + firstCloseChar + "]|" + firstCloseChar + "(?!" + secondCloseChar + "))*?)"
