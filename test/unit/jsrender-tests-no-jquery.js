@@ -437,5 +437,5 @@ test("template encapsulation", function() {
 	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }), "aval aValbtrue% (double:aVal&aVal) (override outer double:AVAL|AVAL)", 'Access nested resources from template' );
 	equal( jsviews.render.useLower({ a: "aVal" }), "", 'Cannot access nested resources from a different template' );
 	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }, context), "aval aValbcontextualNot2true% (double:aVal&aVal) (override outer double:contextualUpperAVAL|contextualUpperAVAL)", 'Resources passed in with context override nested resources' );
-	equal( jsviews.templates.tmplWithNestedResources.templates.templateWithDebug.fn.toString().indexOf("debugger;"), 82, 'Can set debug=true on nested template' );
+	equal( jsviews.templates.tmplWithNestedResources.templates.templateWithDebug.fn.toString().indexOf("debugger;") > 0, true, 'Can set debug=true on nested template' );
 });

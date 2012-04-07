@@ -11,6 +11,15 @@
 
 <h3>JsRender without jQuery</h3>
 
+<pre>
+    jsviews.templates({
+        movieTemplate: document.getElementById( "movieTemplate" ).innerHTML,
+        ...
+    });
+
+    document.getElementById( "movieList" ).innerHTML = jsviews.render.movieTemplate( movies );
+</pre>
+
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
 		<td>{{:title}}</td>
