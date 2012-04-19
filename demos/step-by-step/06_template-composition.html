@@ -10,7 +10,7 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Using {{for}} to render hierarchical data - external template.</h3>
+<h3>Template composition. Using external templates for block tags, such as {{for}} and {{if}}.</h3>
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
@@ -20,6 +20,9 @@
 		</td>
 		<td>
 			{{for languages tmpl=tmpl/}}
+		</td>
+		<td>
+			{{for languages tmpl='#conditionalTemplate'/}}
 		</td>
 	</tr>
 </script>
@@ -36,7 +39,14 @@
 	</span>
 </script>
 
-<table><tr class="header"><th>Synopsis</th><th>Fixed Template</th><th>Template specified in data</th></tr>
+<script id="conditionalTemplate" type="text/x-jsrender">
+	{{if name.charAt(0)==='E' tmpl='#rowTemplate'}}
+	{{else tmpl='#columnTemplate'}}
+	{{/if}}
+</script>
+
+<table>
+	<thead><tr><th>Synopsis</th><th>Fixed Template</th><th>Template specified in data</th><th>Conditional Template</th></tr></thead>
 	<tbody id="movieList"></tbody>
 </table>
 
@@ -55,7 +65,7 @@
 			title: "Eyes Wide Shut",
 			languages: [
 				{ name: "French" },
-				{ name: "German" },
+				{ name: "Esperanto" },
 				{ name: "Spanish" }
 			],
 			tmpl: "#rowTemplate"

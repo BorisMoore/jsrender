@@ -83,7 +83,7 @@
 	});
 
 	document.getElementById( "movieList" ).innerHTML =
-		"<table><tbody><tr class='header'><th>Title</th><th>Original order</th><th>Reverse order</th></tr>" + jsviews.render.movieTemplate( movies ) + "</tbody></table>";
+		"<table><thead><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></thead><tbody>" + jsviews.render.movieTemplate( movies ) + "</tbody></table>";
 </script>
 
 </body>

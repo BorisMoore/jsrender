@@ -14,15 +14,16 @@
 
 <!---------------------- First Example ---------------------->
 
-<div class="subhead">Using a custom {{forFields}} tag:</div>
+<div class="subhead">Using a custom {{fields}} tag:</div>
 
 <pre>
-    {{forFields details}}
+    {{fields details}}
         &lt;b>{{:~key}}&lt;/b>: {{:#data}}
-    {{/forFields}}
+    {{/fields}}
 </pre>
 
-<table><tr class="header"><th>Title</th><th>Details</th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>Details</th></tr></thead>
 	<tbody id="movieList1"></tbody>
 </table>
 
@@ -36,7 +37,8 @@
     {{/for}}
 </pre>
 
-<table><tr class="header"><th>Title</th><th>Details</th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>Details</th></tr></thead>
 	<tbody id="movieList2"></tbody>
 </table>
 
@@ -49,11 +51,11 @@
 	<tr>
 		<td>{{:title}}</td>
 		<td>
-			{{forFields details}}
+			{{fields details}}
 				<div>
 					<b>{{:~key}}</b>: {{:#data}}
 				</div>
-			{{/forFields}}
+			{{/fields}}
 		</td>
 	</tr>
 </script>
@@ -76,7 +78,7 @@
 <script type="text/javascript">
 
 	$.views.tags({
-		forFields: function( object ) {
+		fields: function( object ) {
 			var key, 
 				ret = "";
 			for ( key in object ) {
@@ -85,7 +87,6 @@
 					ret += this.renderContent( object[ key ], { key: key });
 				}	
 			}
-			// Return the array, to be rendered used {{for ~fields(object)}}
 			return ret;
 		}
 	});
