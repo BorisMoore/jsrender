@@ -79,19 +79,19 @@
 
 	$.views.tags({
 		fields: function( object ) {
-			var key, 
+			var key,
 				ret = "";
 			for ( key in object ) {
 				if ( object.hasOwnProperty( key )) {
 					// For each property/field, render the content of the {{fields object}} tag, with "~key" as template parameter
 					ret += this.renderContent( object[ key ], { key: key });
-				}	
+				}
 			}
 			return ret;
 		}
 	});
 
-	//Define a custom getFields helper function to iterate over fields and return 
+	//Define a custom getFields helper function to iterate over fields and return
 	$.views.helpers({
 		getFields: function( object ) {
 			var key, value,
@@ -114,15 +114,15 @@
 	var movies = [
 		{
 			title: "Meet Joe Black",
-			details: { 
+			details: {
 				director: "John",
 				date: "1996",
-				language: "English" 
+				language: "English"
 			}
 		},
 		{
 			title: "Eyes Wide Shut",
-			details: { 
+			details: {
 				type: "Comedy",
 				date: "1940"
 			}
