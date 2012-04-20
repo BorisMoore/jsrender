@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<a href="../demos.html">JsRender Demos</a><br />
+
+<h3>Example Scenario: Custom tag and helper for assigning/getting local variables.</h3>
+
+<div class="box label">
+<b>Note:</b> This scenario implies understanding the processing sequence of template rendering,
+<br />and is somewhat in contradiction with the 'logicless' and declarative philosophy.
+<br />However it illustrates the power of the custom tags and helper function extensibility,
+<br />and is useful in certain advanced scenarios.
+</div>
+
+<div class="subhead">Declare <em>setvar</em> custom tag and <em>getvar</em> custom helper function</div>
+<pre>
+var vars = {};
+
+$.views.tags({
+    setvar: function(key, value) {
+        ...
+        vars[key] = value;
+        ...
+    }
+});
+
+$.views.helpers({
+    getvar: function(key) {
+        return vars[key];
+    }
+})
+</pre>
+
+<div class="subhead">Use <em>{{setvar}}</em> to assign values or rendered content to variable</div>
+<pre>
+{{setvar "summary" languages/}}
+</pre>
+
+<pre>
+{{setvar "summary"}}
+    &lt;b>Subtitles only:&lt;/b> {{:subtitles}}
+{{/setvar}}
+</pre>
+
+
+<div class="subhead">Use <em>{{:~getvar}}</em> to take values stored in the variable, and render them elsewhere in the template</div>
+<pre>
+{{:~getvar('summary')}}
+</pre>
+
+<script id="movieTemplate" type="text/x-jsrender">
+	<tr>
+		<td>{{:title}}</td>
+		<td>
+			{{if languages}}
+				{{setvar "summary" languages/}}
+				
+				Alternative languages: <em>{{:languages}}</em>.
+			{{else}}
+				{{setvar "summary"}}
+					<b>Subtitles only:</b> {{:subtitles}}
+				{{/setvar}}
+				
+				Subtitles only. See summary column: 
+			{{/if}}
+		</td>
+		<td>
+			<em>{{:title}}:</em><br/>
+			{{:~getvar('summary')}}
+		</td>
+	</tr>
+</script>
+
+<table>
+	<thead><tr><th>title</th><th>languages</th><th>summary</th></tr></thead>
+	<tbody id="movieList"></tbody>
+</table>
+
+<script type="text/javascript">
+
+	var movies = [
+		{
+			title: "Meet Joe Black",
+			languages: "English and French"
+		},
+		{
+			title: "Eyes Wide Shut",
+			subtitles: "French and Spanish"
+		},
+		{
+			title: "City Hunter",
+			languages: "Mandarin and Chinese"
+		}
+	];
+
+	(function() {
+		var vars = {};
+
+		$.views.tags({
+			setvar: function(key, value) {
+				if (value) {
+					vars[key] = value;
+				} else {
+					vars[key] = this.renderContent(this.view);
+				}
+			}
+		});
+
+		$.views.helpers({
+			getvar: function(key) {
+				return vars[key];
+			}
+		})
+	})();
+
+	$( "#movieList" ).html(
+		$( "#movieTemplate" ).render( movies )
+	);
+
+</script>
+
+</body>
+</html>

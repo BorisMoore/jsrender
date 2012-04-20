@@ -11,7 +11,7 @@
 	</style>
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../demos.html">JsRender Demos</a><br />
 
 <h3>Example Scenario: providing default values for data.</h3>
 
@@ -36,9 +36,9 @@
 {{get languages defaultValue="No languages!"/}}
 
 $.views.tags({
-	get: function( value ){
-		return value || this.props.defaultValue;
-	}
+    get: function( value ){
+        return value || this.props.defaultValue;
+    }
 });
 </pre>
 

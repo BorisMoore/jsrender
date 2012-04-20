@@ -89,8 +89,11 @@
 	test( "Handlebars", times * 500, 1, function() {
 		ret = tmpl_handlebars(movie);
 	});
-	test( "JsRender", times * 500, 1, function() {
+	test( "JsRender <em>(optimized .fn() method - for simple templates)</em>", times * 500, 1, function() {
 		ret = tmpl_JsRender.fn( movie );
+	});
+	test( "JsRender <em>(.render() method - full view-hierarchy features)</em>", times * 500, 1, function() {
+		ret = tmpl_JsRender.render( movie );
 	});
 
 	// Test html encoding perf
@@ -106,7 +109,7 @@
 	test( "Handlebars", times * 50, 1, function() {
 		ret = tmpl_handlebarsEncode( movie );
 	});
-	test( "JsRender", times * 50, 1, function() {
+	test( "JsRender <em>(optimized .fn() method)</em>", times * 50, 1, function() {
 		ret = tmpl_JsRenderEncode.fn( movie );
 	});
 
@@ -120,9 +123,6 @@
 	});
 	test( "JsRender full features - inserted in DOM", times * 5, 0, function() {
 		$( "#output" ).html( tmpl_JsRender.render( movie ));
-	});
-	test( "JsRender full features - to string", times * 100, 0, function() {
-		ret = tmpl_JsRender.render( movie );
 	});
 
 	// Test compile perf

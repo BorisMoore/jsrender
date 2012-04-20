@@ -8,7 +8,7 @@
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../demos.html">JsRender Demos</a><br />
 
 <h3>Example Scenario: Creating custom helpers to iterate through fields</h3>
 
@@ -17,9 +17,9 @@
 <div class="subhead">Using a custom {{fields}} tag:</div>
 
 <pre>
-    {{fields details}}
-        &lt;b>{{:~key}}&lt;/b>: {{:#data}}
-    {{/fields}}
+{{fields details}}
+    &lt;b>{{:~key}}&lt;/b>: {{:#data}}
+{{/fields}}
 </pre>
 
 <table>
@@ -32,9 +32,9 @@
 <div class="subhead">Using a custom ~getFields() helper function:</div>
 
 <pre>
-    {{for ~getFields(details)}}
-        &lt;b>{{:key}}&lt;/b>: {{:value}}
-    {{/for}}
+{{for ~getFields(details)}}
+    &lt;b>{{:key}}&lt;/b>: {{:value}}
+{{/for}}
 </pre>
 
 <table>
