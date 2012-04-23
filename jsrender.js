@@ -81,7 +81,7 @@ function setDelimiters( openChars, closeChars ) {
 	// Build regex with new delimiters
 	jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
 		= secondOpenChar
-			//          tag    (followed by / space or })   or  colon or  html or code
+			//          tag    (followed by / space or })   or  colon     or  html or code
 		+ "(?:(?:(\\w+(?=[\\/\\s" + firstCloseChar + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
 		//     params
 		+ "\\s*((?:[^" + firstCloseChar + "]|" + firstCloseChar + "(?!" + secondCloseChar + "))*?)"
@@ -107,10 +107,17 @@ function getHelper( helper ) {
 	// Helper method called as view.hlp() from compiled template, for helper functions or template parameters ~foo
 	var view = this,
 	tmplHelpers = view.tmpl.helpers || {};
-	helper = (view.ctx[ helper ] !== undefined ? view.ctx : tmplHelpers[ helper ] !== undefined ? tmplHelpers : helpers[ helper ] !== undefined ? helpers : {})[ helper ];
-	return typeof helper !== "function" ? helper : function() {
-		return helper.apply(view, arguments);
+	var returnedHelper = (view.ctx[ helper ] !== undefined ? view.ctx : tmplHelpers[ helper ] !== undefined ? tmplHelpers : helpers[ helper ] !== undefined ? helpers : {})[ helper ];
+	switch(typeof(returnedHelper)) {
+	case "function":
+		return function() {
+			return returnedHelper.apply(view, arguments);
 	};
+	case "undefined":
+		throw view.tmpl.name+": using an unknown helper method '"+helper+"'";
+	default:
+		return returnedHelper;
+	}
 }
 
 //=================
@@ -498,7 +505,7 @@ function tmplFn( markup, tmpl, bind ) {
 					+ ")+";
 		}
 	}
-	code =  new Function( "data, view, j, b, u", fnDeclStr
+	var templateFullExpansion = fnDeclStr
 		+ (getsValue ? "v," : "")
 		+ (hasTag ? "t=j.tag," : "")
 		+ (hasConverter ? "c=j.convert," : "")
@@ -508,8 +515,12 @@ function tmplFn( markup, tmpl, bind ) {
 		+ (allowCode ? 'ret=' : 'return ')
 		+ code.slice( 0, -1 ) + ";\n\n"
 		+ (allowCode ? "return ret;" : "")
-		+ "}catch(e){return j.err(e);}"
-	);
+		+ "}catch(e){return j.err(e);}";
+	try {
+		code = new Function( "data, view, j, b, u", templateFullExpansion);
+	} catch (e) {
+		throw new SyntaxError((tmpl?tmpl.name+":":"")+e.message + ": Template has javascript syntax error when expanded:\n\t"+templateFullExpansion);
+	}
 
 	// Include only the var references that are needed in the code
 	if ( tmpl ) {
@@ -632,7 +643,7 @@ function compile( name, tmpl, parent, options ) {
 					: !rTmplString.test( value )
 						// If value is a string and does not contain HTML or tag content, then test as selector
 						&& jQuery && jQuery( value )[0];
-						// If selector is valid and returns at least one element, get first element
+			// If selector is valid and returns at least one element, get first element
 						// If invalid, jQuery will throw. We will stay with the original string.
 			} catch(e) {}
 
@@ -642,9 +653,14 @@ function compile( name, tmpl, parent, options ) {
 				value = templates[ elem.getAttribute( tmplAttr )];
 				if ( !value ) {
 					// Not already compiled and cached, so compile and cache the name
+					if ( elem.getAttribute( 'src' ) != null ) {
+						throw name + ": template must be included in the script element. 'src' attribute to supply template is not supported. (src="+elem.getAttribute( 'src' ) +")";
+					} else {
+						templateBody = elem.innerHTML;
+					}
 					name = name || "_" + autoTmplName++;
 					elem.setAttribute( tmplAttr, name );
-					value = compile( name, elem.innerHTML, parent, options ); // Use tmpl as options
+					value = compile( name, templateBody, parent, options ); // Use tmpl as options					
 					templates[ name ] = value;
 				}
 			}
