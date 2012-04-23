@@ -498,7 +498,7 @@ function tmplFn( markup, tmpl, bind ) {
 					+ ")+";
 		}
 	}
-	code =  new Function( "data, view, j, b, u", fnDeclStr
+	var templateFullExpansion = fnDeclStr
 		+ (getsValue ? "v," : "")
 		+ (hasTag ? "t=j.tag," : "")
 		+ (hasConverter ? "c=j.convert," : "")
@@ -508,8 +508,12 @@ function tmplFn( markup, tmpl, bind ) {
 		+ (allowCode ? 'ret=' : 'return ')
 		+ code.slice( 0, -1 ) + ";\n\n"
 		+ (allowCode ? "return ret;" : "")
-		+ "}catch(e){return j.err(e);}"
-	);
+		+ "}catch(e){return j.err(e);}";
+	try {
+		code = new Function( "data, view, j, b, u", templateFullExpansion);
+	} catch (e) {
+		throw new SyntaxError((tmpl?tmpl.name+":":"")+e.message + ": Template has javascript syntax error when expanded:\n\t"+templateFullExpansion);
+	}
 
 	// Include only the var references that are needed in the code
 	if ( tmpl ) {
@@ -632,7 +636,7 @@ function compile( name, tmpl, parent, options ) {
 					: !rTmplString.test( value )
 						// If value is a string and does not contain HTML or tag content, then test as selector
 						&& jQuery && jQuery( value )[0];
-						// If selector is valid and returns at least one element, get first element
+			// If selector is valid and returns at least one element, get first element
 						// If invalid, jQuery will throw. We will stay with the original string.
 			} catch(e) {}
 
