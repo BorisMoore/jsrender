@@ -8,21 +8,22 @@
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../demos.html">JsRender Demos</a><br />
 
 <h3>Example Scenario: Creating custom helpers to iterate through fields</h3>
 
 <!---------------------- First Example ---------------------->
 
-<div class="subhead">Using a custom {{forFields}} tag:</div>
+<div class="subhead">Using a custom {{fields}} tag:</div>
 
 <pre>
-    {{forFields details}}
-        &lt;b>{{:~key}}&lt;/b>: {{:#data}}
-    {{/forFields}}
+{{fields details}}
+    &lt;b>{{:~key}}&lt;/b>: {{:#data}}
+{{/fields}}
 </pre>
 
-<table><tr class="header"><th>Title</th><th>Details</th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>Details</th></tr></thead>
 	<tbody id="movieList1"></tbody>
 </table>
 
@@ -31,12 +32,13 @@
 <div class="subhead">Using a custom ~getFields() helper function:</div>
 
 <pre>
-    {{for ~getFields(details)}}
-        &lt;b>{{:key}}&lt;/b>: {{:value}}
-    {{/for}}
+{{for ~getFields(details)}}
+    &lt;b>{{:key}}&lt;/b>: {{:value}}
+{{/for}}
 </pre>
 
-<table><tr class="header"><th>Title</th><th>Details</th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>Details</th></tr></thead>
 	<tbody id="movieList2"></tbody>
 </table>
 
@@ -49,11 +51,11 @@
 	<tr>
 		<td>{{:title}}</td>
 		<td>
-			{{forFields details}}
+			{{fields details}}
 				<div>
 					<b>{{:~key}}</b>: {{:#data}}
 				</div>
-			{{/forFields}}
+			{{/fields}}
 		</td>
 	</tr>
 </script>
@@ -76,21 +78,20 @@
 <script type="text/javascript">
 
 	$.views.tags({
-		forFields: function( object ) {
-			var key, 
+		fields: function( object ) {
+			var key,
 				ret = "";
 			for ( key in object ) {
 				if ( object.hasOwnProperty( key )) {
 					// For each property/field, render the content of the {{fields object}} tag, with "~key" as template parameter
 					ret += this.renderContent( object[ key ], { key: key });
-				}	
+				}
 			}
-			// Return the array, to be rendered used {{for ~fields(object)}}
 			return ret;
 		}
 	});
 
-	//Define a custom getFields helper function to iterate over fields and return 
+	//Define a custom getFields helper function to iterate over fields and return
 	$.views.helpers({
 		getFields: function( object ) {
 			var key, value,
@@ -113,15 +114,15 @@
 	var movies = [
 		{
 			title: "Meet Joe Black",
-			details: { 
+			details: {
 				director: "John",
 				date: "1996",
-				language: "English" 
+				language: "English"
 			}
 		},
 		{
 			title: "Eyes Wide Shut",
-			details: { 
+			details: {
 				type: "Comedy",
 				date: "1940"
 			}

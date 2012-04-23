@@ -83,14 +83,17 @@
 	test( "jQuery Template", times * 500, 1, function() {
 		ret = tmpl_jQueryTmpl($, { data: movie }).join("");
 	});
-	test( "JsRender", times * 500, 1, function() {
-		ret = tmpl_JsRender.fn( movie );
+	test( "doT", times * 500, 1, function() {
+		ret = tmpl_doT(movie);
 	});
 	test( "Handlebars", times * 500, 1, function() {
 		ret = tmpl_handlebars(movie);
 	});
-	test( "doT", times * 500, 1, function() {
-		ret = tmpl_doT(movie);
+	test( "JsRender <em>(optimized .fn() method - for simple templates)</em>", times * 500, 1, function() {
+		ret = tmpl_JsRender.fn( movie );
+	});
+	test( "JsRender <em>(.render() method - full view-hierarchy features)</em>", times * 500, 1, function() {
+		ret = tmpl_JsRender.render( movie );
 	});
 
 	// Test html encoding perf
@@ -100,29 +103,26 @@
 	test( "jQuery Template", times * 50, 1, function() {
 		ret = tmpl_jQueryTmplEncode($, { data: movie }).join("");
 	});
-	test( "JsRender", times * 50, 1, function() {
-		ret = tmpl_JsRenderEncode.fn( movie );
+	test( "doT", times * 50, 1, function() {
+		ret = tmpl_doTEncode( movie );
 	});
 	test( "Handlebars", times * 50, 1, function() {
 		ret = tmpl_handlebarsEncode( movie );
 	});
-	test( "doT", times * 50, 1, function() {
-		ret = tmpl_doTEncode( movie );
+	test( "JsRender <em>(optimized .fn() method)</em>", times * 50, 1, function() {
+		ret = tmpl_JsRenderEncode.fn( movie );
 	});
 
 	// Test full features perf
 	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
-	test( "JsRender full features - to string", times * 100, 0, function() {
-		ret = tmpl_JsRender.render( movie );
-	});
-	test( "JsRender full features - inserted in DOM", times * 5, 0, function() {
-		$( "#output" ).html( tmpl_JsRender.render( movie ));
-	});
 	test( "jQuery Template full features - inserted in DOM", times * 5, 0, function() {
 		$( "#output" ).empty();
 		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
+	});
+	test( "JsRender full features - inserted in DOM", times * 5, 0, function() {
+		$( "#output" ).html( tmpl_JsRender.render( movie ));
 	});
 
 	// Test compile perf
@@ -132,16 +132,16 @@
 	test( "jQuery Template compile", times * 5, 0, function() {
 		tmpl_jQueryTmpl = $.template( jqueryTmplTemplate );
 	});
-	test( "JsRender compile", times * 5, 0, function() {
-		tmpl_JsRender = $.templates( "test", jsRenderTemplate );
+	test( "doT compile", times * 5, 0, function() {
+		tmpl_doT = doT.template( dotTemplate );
 	});
 	test( "Handlebars compile", times * 5, 0, function() {
 		var tmpl = Handlebars.compile( handlebarsTemplateEncode );
 		// For Handlebars, make initial rendering call to do first compilation.
 		tmpl( movie );
 	});
-	test( "doT compile", times * 5, 0, function() {
-		tmpl_doT = doT.template( dotTemplate );
+	test( "JsRender compile", times * 5, 0, function() {
+		tmpl_JsRender = $.templates( "test", jsRenderTemplate );
 	});
 
 	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
