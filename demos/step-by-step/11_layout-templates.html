@@ -8,7 +8,7 @@
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../demos.html">JsRender Demos</a><br />
 
 <h3>Using layout templates to render arrays along with headers or footers.</h3>
 
@@ -44,10 +44,10 @@ footer
 <!--================ Demo ================-->
 
 <script id="movieTemplate" type="text/x-jsrender">
-	<tbody class="header">
+	<thead>
 		<tr><th colspan="2">{{:length}} movies available:</th></tr>
 		<tr><th>Title</th><th>Languages</th></tr>
-	</tbody>
+	</thead>
 	<tbody>
 		{{for #data}}
 			<tr>
@@ -74,6 +74,7 @@ footer
 				</td>
 			</tr>
 		{{/for}}
+	<tbody>
 </script>
 
 <table id="movieList"></table>
