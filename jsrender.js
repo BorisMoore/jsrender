@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 4
+// informal pre beta commit counter: 5
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -269,7 +269,6 @@ function converters( name, converterFn ) {
 //=================
 // renderContent
 //=================
-var foo = /\{\{(?:(?:(\w+(?=[\/\s\}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^\}]|\}(?!\}))*?)(\/)?|(?:\/(\w+)))\}\}/g
 
 function renderContent( data, context, parentView, path, index ) {
 	// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
@@ -631,8 +630,16 @@ function compile( name, tmpl, parent, options ) {
 		// Return the template object, if already compiled, or the markup string
 
 		if ( ("" + value === value) || value.nodeType > 0 ) {
+			try {
+				elem = value.nodeType > 0
+					? value
+					: !rTmplString.test( value )
+						// If value is a string and does not contain HTML or tag content, then test as selector
+						&& jQuery && jQuery( value )[0];
 			// If selector is valid and returns at least one element, get first element
-			elem = value.nodeType > 0 ? value : !rTmplString.test( value ) && jQuery && jQuery( value )[0];
+						// If invalid, jQuery will throw. We will stay with the original string.
+			} catch(e) {}
+
 			if ( elem && elem.type ) {
 				// It is a script element
 				// Create a name for data linking if none provided

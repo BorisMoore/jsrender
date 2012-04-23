@@ -8,7 +8,7 @@
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../demos.html">JsRender Demos</a><br />
 
 <h3>Example Scenario: Inserting "and" and "," separators between words</h3>
 
@@ -35,7 +35,8 @@
 	</tr>
 </script>
 
-<table><tr class="header"><th>Title</th><th>Languages</th></tr>
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
 	<tbody id="movieList1"></tbody>
 </table>
 
@@ -63,7 +64,8 @@
 </script>
 
 
-<table><tr class="header"><th>Title</th><th>Languages</th></tr>
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
 	<tbody id="movieList2"></tbody>
 </table>
 <br />
@@ -72,11 +74,11 @@
 
 <h3>Using "allowCode"</h3>
 
-<div class="subhead">Note: <em>The allowCode feature is powerful, but leads to poor separation of concerns, and poor maintainability.
+<div class="box label">
+<b>Note:</b> The allowCode feature is powerful, but leads to poor separation of concerns, and poor maintainability.
 <br />It is therefore only available as an opt-in feature on a per template basis.
 <br /><br />The following two examples illustrate its use, but are not the recommended approach. The built-in expression support,
-<br />custom tags, helper functions etc. provide a better solution for almost all scenarios, as in the two examples above.</em></div>
-<br />
+<br />custom tags, helper functions etc. provide a better solution for almost all scenarios, as in the two examples above.</div>
 
 <div class="subhead">Example 3: allowCode, for program flow:</div>
 
@@ -114,7 +116,8 @@ $.templates( "movieTmpl", {
 	</tr>
 </script>
 
-<table><tr class="header"><th>Title</th><th>Languages</th></tr>
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
 	<tbody id="movieList3"></tbody>
 </table>
 
@@ -155,7 +158,8 @@ $.templates( "movieTmpl", {
 	</tr>
 </script>
 
-<table><tr class="header"><th>Title</th><th>Languages</th></tr>
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
 	<tbody id="movieList4"></tbody>
 </table>
 
@@ -201,7 +205,7 @@ $.templates( "movieTmpl", {
 		}
 	];
 
-	$.templates({ 
+	$.templates({
 		movieTmpl1: "#movieTemplate1",
 		movieTmpl2: "#movieTemplate2",
 		movieTmpl3: {

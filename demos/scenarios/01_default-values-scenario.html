@@ -11,7 +11,7 @@
 	</style>
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../demos.html">JsRender Demos</a><br />
 
 <h3>Example Scenario: providing default values for data.</h3>
 
@@ -23,7 +23,8 @@
 {{:languages||'Languages unavailable'}}
 </pre>
 
-<table><tr class="header"><th>Title</th><th>{{:path}}</th></tr>
+<table>
+	<thead><tr><th>Title</th><th>{{:path}}</th></tr></thead>
 	<tbody id="movieList1"></tbody>
 </table>
 
@@ -35,13 +36,14 @@
 {{get languages defaultValue="No languages!"/}}
 
 $.views.tags({
-	get: function( value ){
-		return value || this.props.defaultValue;
-	}
+    get: function( value ){
+        return value || this.props.defaultValue;
+    }
 });
 </pre>
 
-<table><tr class="header"><th>Title</th><th>{{get path default="..."}}</th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>{{get path default="..."}}</th></tr></thead>
 	<tbody id="movieList2"></tbody>
 </table>
 
@@ -59,7 +61,8 @@ $.views.tags({
 });
 </pre>
 
-<table><tr class="header"><th>Title</th><th>{{yesNo path yes="..." no="..."}}</th></tr>
+<table>
+	<thead><tr><th>Title</th><th>{{yesNo path yes="..." no="..."}}</th></tr></thead>
 	<tbody id="movieList3"></tbody>
 </table>
 

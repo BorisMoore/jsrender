@@ -196,7 +196,7 @@ test("{{for}}", function() {
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
 
 	equal( jsviews.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string' );
-	equal( jsviews.render.simpleFor({people:[null,undefined,1]}), "aContentContentContentb", 'null or undefined members of array are also rendered' );
+	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContentContentContentContentContentb", 'Empty string, false, null or undefined members of array are also rendered' );
 	equal( jsviews.render.simpleFor({people:null}), "ab", 'null is rendered as empty string' );
 	equal( jsviews.render.simpleFor({}), "ab", 'undefined is rendered as empty string' );
 	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,true,false]}), "a01abctruefalseb", 'Primitive types render correctly, even if falsey' );
@@ -276,7 +276,7 @@ test("render", function() {
 	equal( jsviews.templates( tmplString ).render( person ), "A_Jo_B", 'Compile from string: var html = jsviews.templates( tmplString ).render( data );' );
 	equal( jsviews.render.myTmpl8( people ), "A_Jo_BA_Bill_B", 'jsviews.render.myTmpl( array );' );
 	equal( jsviews.render.simple([]), "", 'Empty array renders empty string' );
-	equal( jsviews.render.simple([null,undefined,1]), "ContentContentContent", 'null or undefined members of array are also rendered' );
+	equal( jsviews.render.simple(["",false,null,undefined,1]), "ContentContentContentContentContent", 'Empty string, false, null or undefined members of array are also rendered' );
 	equal( jsviews.render.simple(null), "", 'null renders as empty string' );
 	equal( jsviews.render.simple(), "", 'Undefined renders as empty string' );
 
