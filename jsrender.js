@@ -637,7 +637,7 @@ function compile( name, tmpl, parent, options ) {
 					: !rTmplString.test( value )
 						// If value is a string and does not contain HTML or tag content, then test as selector
 						&& jQuery && jQuery( value )[0];
-						// If selector is valid and returns at least one element, get first element
+			// If selector is valid and returns at least one element, get first element
 						// If invalid, jQuery will throw. We will stay with the original string.
 			} catch(e) {}
 
@@ -647,9 +647,14 @@ function compile( name, tmpl, parent, options ) {
 				value = templates[ elem.getAttribute( tmplAttr )];
 				if ( !value ) {
 					// Not already compiled and cached, so compile and cache the name
+					if ( elem.getAttribute( 'src' ) != null ) {
+						throw name + ": template must be included in the script element. 'src' attribute to supply template is not supported. (src="+elem.getAttribute( 'src' ) +")";
+					} else {
+						templateBody = elem.innerHTML;
+					}
 					name = name || "_" + autoTmplName++;
 					elem.setAttribute( tmplAttr, name );
-					value = compile( name, elem.innerHTML, parent, options ); // Use tmpl as options
+					value = compile( name, templateBody, parent, options ); // Use tmpl as options					
 					templates[ name ] = value;
 				}
 			}
