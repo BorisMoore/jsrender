@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 5
+// informal pre beta commit counter: 6
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -81,7 +81,7 @@ function setDelimiters( openChars, closeChars ) {
 	// Build regex with new delimiters
 	jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
 		= secondOpenChar
-			//          tag    (followed by / space or })   or  colon or  html or code
+			//          tag    (followed by / space or })   or  colon or html or code
 		+ "(?:(?:(\\w+(?=[\\/\\s" + firstCloseChar + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
 		//     params
 		+ "\\s*((?:[^" + firstCloseChar + "]|" + firstCloseChar + "(?!" + secondCloseChar + "))*?)"
@@ -356,8 +356,8 @@ function renderContent( data, context, parentView, path, index ) {
 // Generate a reusable function that will serve to render a template against data
 // (Compile AST then build template function)
 
-function syntaxError() {
-	throw "Syntax error";
+function syntaxError( message, e ) {
+	throw (e ? (e.name + ': "' + e.message + '"') : "Syntax error")  +  (message ? (" \n" + message) : "");
 }
 
 function tmplFn( markup, tmpl, bind ) {
@@ -498,7 +498,7 @@ function tmplFn( markup, tmpl, bind ) {
 					+ ")+";
 		}
 	}
-	code =  new Function( "data, view, j, b, u", fnDeclStr
+	code = fnDeclStr
 		+ (getsValue ? "v," : "")
 		+ (hasTag ? "t=j.tag," : "")
 		+ (hasConverter ? "c=j.convert," : "")
@@ -508,8 +508,13 @@ function tmplFn( markup, tmpl, bind ) {
 		+ (allowCode ? 'ret=' : 'return ')
 		+ code.slice( 0, -1 ) + ";\n\n"
 		+ (allowCode ? "return ret;" : "")
-		+ "}catch(e){return j.err(e);}"
-	);
+		+ "}catch(e){return j.err(e);}";
+
+	try {
+		code =  new Function( "data, view, j, b, u", code );
+	} catch(e) {
+		syntaxError( "Error in compiled template code:\n" + code, e );
+	}
 
 	// Include only the var references that are needed in the code
 	if ( tmpl ) {
