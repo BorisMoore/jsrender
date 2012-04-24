@@ -107,10 +107,17 @@ function getHelper( helper ) {
 	// Helper method called as view.hlp() from compiled template, for helper functions or template parameters ~foo
 	var view = this,
 	tmplHelpers = view.tmpl.helpers || {};
-	helper = (view.ctx[ helper ] !== undefined ? view.ctx : tmplHelpers[ helper ] !== undefined ? tmplHelpers : helpers[ helper ] !== undefined ? helpers : {})[ helper ];
-	return typeof helper !== "function" ? helper : function() {
-		return helper.apply(view, arguments);
-	};
+	var returnedHelper = (view.ctx[ helper ] !== undefined ? view.ctx : tmplHelpers[ helper ] !== undefined ? tmplHelpers : helpers[ helper ] !== undefined ? helpers : {})[ helper ];
+	switch(typeof(returnedHelper)) {
+	case "function":
+		return function() {
+			return returnedHelper.apply(view, arguments);
+		};
+	case "undefined":
+		throw view.tmpl.name+": using an unknown helper method '"+helper+"'";
+	default:
+		return returnedHelper;
+	}
 }
 
 //=================
@@ -637,7 +644,7 @@ function compile( name, tmpl, parent, options ) {
 					: !rTmplString.test( value )
 						// If value is a string and does not contain HTML or tag content, then test as selector
 						&& jQuery && jQuery( value )[0];
-						// If selector is valid and returns at least one element, get first element
+			// If selector is valid and returns at least one element, get first element
 						// If invalid, jQuery will throw. We will stay with the original string.
 			} catch(e) {}
 
