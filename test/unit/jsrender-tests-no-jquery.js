@@ -178,7 +178,7 @@ test("expressions", function() {
 
 module( "{{for}}" );
 test("{{for}}", function() {
-	expect(9);
+	expect(10);
 	jsviews.templates( {
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
 		layoutTmpl: {
@@ -194,6 +194,7 @@ test("{{for}}", function() {
 	equal( jsviews.render.layoutTmpl( people ), "header_JoBill_footer", 'layout: true... "header_{{for #data}}{{:name}}{{/for}}_footer"' );
 	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for people tmpl="layoutTmpl"/}}' );
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
+	equal( jsviews.templates( "{{for}}xxx{{/for}}" ).render({}), "", "no parameter - outputs empty string: {{for}}" );
 
 	equal( jsviews.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string' );
 	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContentContentContentContentContentb", 'Empty string, false, null or undefined members of array are also rendered' );

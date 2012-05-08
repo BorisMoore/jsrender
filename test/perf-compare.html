@@ -77,7 +77,7 @@
 	}
 
 	// Test render to string perf
-	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
+	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Optimized render to string</b></td></tr>");
 
 	test( "jQuery Template", times * 500, 1, function() {
@@ -97,7 +97,7 @@
 	});
 
 	// Test html encoding perf
-	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
+	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Render to string, with HTML encoding</b></td></tr>");
 
 	test( "jQuery Template", times * 50, 1, function() {
@@ -114,7 +114,7 @@
 	});
 
 	// Test full features perf
-	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
+	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
 	test( "jQuery Template full features - inserted in DOM", times * 5, 0, function() {
@@ -126,7 +126,7 @@
 	});
 
 	// Test compile perf
-	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
+	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Compile</b></td></tr>");
 
 	test( "jQuery Template compile", times * 5, 0, function() {
@@ -144,7 +144,7 @@
 		tmpl_JsRender = $.templates( "test", jsRenderTemplate );
 	});
 
-	$( "#results" ).append( "<tr><td colspan='2'>______________________________________________</td></tr>" );
+	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 
 	runNextTest();
 </script>

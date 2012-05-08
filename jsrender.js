@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 6
+// informal pre beta commit counter: 7
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -20,7 +20,7 @@ var versionNumber = "v1.0pre",
 	jQuery = window.jQuery,
 
 	rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
-	//                                 nil    object   helper    view  viewProperty pathTokens   leafToken     string
+	//                               nil   object   helper    view  viewProperty pathTokens   leafToken     string
 
 	rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
 	//          lftPrn        lftPrn2                path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
@@ -81,20 +81,17 @@ function setDelimiters( openChars, closeChars ) {
 	// Build regex with new delimiters
 	jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
 		= secondOpenChar
-			//          tag    (followed by / space or })   or  colon or html or code
+		//          tag    (followed by / space or })   or cvtr+colon or html or code
 		+ "(?:(?:(\\w+(?=[\\/\\s" + firstCloseChar + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
 		//     params
-		+ "\\s*((?:[^" + firstCloseChar + "]|" + firstCloseChar + "(?!" + secondCloseChar + "))*?)"
-		//  slash or closeBlock
-		+ "(\\/)?|(?:\\/(\\w+)))"
-	//  }}
-	+ firstCloseChar;
+		+ "\\s*((?:[^" + firstCloseChar + "]|" + firstCloseChar + "(?!" + secondCloseChar + "))*?)";
 
-	// Default rTag:    tag          converter colon  html  code     params         slash   closeBlock
-	//	    /{{(?:(?:(\w+(?=[\/\s\}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^}]|}(?!\}))*?)(\/)?|(?:\/(\w+)))}}
+	//                                         slash or closeBlock           }}
+	rTag = new RegExp( firstOpenChar + rTag + "(\\/)?|(?:\\/(\\w+)))" + firstCloseChar + secondCloseChar, "g" );
 
-	//      /{{(?:(?:(\w+(?=[\/!\s\}!]))|(?:(\w+)?(:)|(>)|(\*)))((?:[^\}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}/g;
-	rTag = new RegExp( firstOpenChar + rTag + secondCloseChar, "g" );
+	// Default rTag:    tag      converter colon html code     params            slash   closeBlock
+	//    /{{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}
+
 	rTmplString = new RegExp( "<.*>|" + openChars + ".*" + closeChars );
 	return this;
 }
@@ -130,9 +127,8 @@ function convert( converter, view, text ) {
 function renderTag( tag, parentView, converter, content, tagObject ) {
 	// Called from within compiled template function, to render a nested tag
 	// Returns the rendered tag
-	tagObject.props = tagObject.props || {};
 	var ret,
-		tmpl = tagObject.props.tmpl,
+		tmpl = tagObject.props && tagObject.props.tmpl,
 		tmplTags = parentView.tmpl.tags,
 		nestedTemplates = parentView.tmpl.templates,
 		args = arguments,
@@ -144,6 +140,7 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 	// Set the tmpl property to the content of the block tag, unless set as an override property on the tag
 	content = content && parentView.tmpl.tmpls[ content - 1 ];
 	tmpl = tmpl || content || undefined;
+
 	tagObject.tmpl =
 		"" + tmpl === tmpl // if a string
 			? nestedTemplates && nestedTemplates[ tmpl ] || templates[ tmpl ] || templates( tmpl )
@@ -153,9 +150,6 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 	tagObject.converter = converter;
 	tagObject.view = parentView;
 	tagObject.renderContent = renderContent;
-	if ( parentView.ctx ) {
-		extend( tagObject.ctx, parentView.ctx);
-	}
 
 	ret = tagFn.apply( tagObject, args.length > 5 ? slice.call( args, 5 ) : [] );
 	return ret || ( ret == undefined ? "" : ret.toString()); // (If ret is the value 0 or false, will render to string)
@@ -270,11 +264,10 @@ function converters( name, converterFn ) {
 // renderContent
 //=================
 
-function renderContent( data, context, parentView, path, index ) {
+function renderContent( data, context, path, index, parentView ) {
 	// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 	// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
-	var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, layout,
-		props = {},
+	var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, layout, onRender, props,
 		swapContent = index === TRUE,
 		self = this,
 		result = "";
@@ -282,7 +275,13 @@ function renderContent( data, context, parentView, path, index ) {
 	if ( self.isTag ) {
 		// This is a call from renderTag
 		tmpl = self.tmpl;
-		context = context || self.ctx;
+		if ( self.props && self.ctx ) {
+			extend( self.ctx, self.props );
+		}
+		if ( self.ctx && context ) {
+			context = extend( self.ctx, context );
+		}
+		context = self.ctx || context;
 		parentView = parentView || self.view;
 		path = path || self.path;
 		index = index || self.index;
@@ -303,27 +302,24 @@ function renderContent( data, context, parentView, path, index ) {
 
 	// Set additional context on views created here, (as modified context inherited from the parent, and be inherited by child views)
 	// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
+	// TODO make this reusable also for use in JsViews, for adding context passed in with the link() method.
 	context = (context && context === parentContext)
 		? parentContext
-		: (parentContext
-			// if parentContext, make copy
-			? ((parentContext = extend( {}, parentContext ), context)
-				// If context, merge context with copied parentContext
-				? extend( parentContext, context )
-				: parentContext)
-			// if no parentContext, use context, or default to {}
-			: context || {});
+		: context
+			// if context, make copy
+			// If context, merge context with copied parentContext
+			? extend( extend( {}, parentContext ), context )
+			: parentContext;
 
-	if ( props.link === FALSE ) {
+	if ( context.link === FALSE ) {
 		// Override inherited value of link by an explicit setting in props: link=false
 		// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
-		context.link = FALSE;
+		context.onRender = FALSE;
 	}
 	if ( !tmpl.fn ) {
 		tmpl = templates[ tmpl ] || templates( tmpl );
 	}
-	itemWrap = context.link && sub.onRenderItem;
-	itemsWrap = context.link && sub.onRenderItems;
+	onRender = context.onRender;
 
 	if ( tmpl ) {
 		if ( $.isArray( data ) && !layout ) {
@@ -331,12 +327,11 @@ function renderContent( data, context, parentView, path, index ) {
 			// (Note: if index and parentView are passed in along with parent view, treat as
 			// insert -e.g. from view.addViews - so parentView is already the view item for array)
 			newView = swapContent ? parentView : (index !== undefined && parentView) || View( context, path, parentView, data, tmpl, index );
-
 			for ( i = 0, l = data.length; i < l; i++ ) {
 				// Create a view for each data item.
 				dataItem = data[ i ];
 				itemResult = tmpl.fn( dataItem, View( context, path, newView, dataItem, tmpl, (index||0) + i ), jsv );
-				result += itemWrap ? itemWrap( itemResult, props ) : itemResult;
+				result += onRender ? onRender( itemResult, tmpl, props ) : itemResult;
 			}
 		} else {
 			// Create a view for singleton data object.
@@ -344,7 +339,7 @@ function renderContent( data, context, parentView, path, index ) {
 			result += (data || layout) ? tmpl.fn( data, newView, jsv ) : "";
 		}
 		parentView.topKey = newView.index;
-		return itemsWrap ? itemsWrap( result, path, newView.index, tmpl, props ) : result;
+		return onRender ? onRender( result, tmpl, props, newView.index, path ) : result;
 	}
 	return ""; // No tmpl. Could throw...
 }
@@ -394,7 +389,8 @@ function tmplFn( markup, tmpl, bind ) {
 		}
 		var hash = "",
 			passedCtx = "",
-			block = !slash && !colon; // Block tag if not self-closing and not {{:}} or {{>}} (special case)
+			// Block tag if not self-closing and not {{:}} or {{>}} (special case) and not a data-link expression (has bind parameter)
+			block = !slash && !colon && !bind;
 
 		//==== nested helper function ====
 
@@ -511,7 +507,7 @@ function tmplFn( markup, tmpl, bind ) {
 		+ "}catch(e){return j.err(e);}";
 
 	try {
-		code =  new Function( "data, view, j, b, u", code );
+		code = new Function( "data, view, j, b, u", code );
 	} catch(e) {
 		syntaxError( "Error in compiled template code:\n" + code, e );
 	}
@@ -540,29 +536,38 @@ function parseParams( params, bind ) {
 		path = path || path2;
 		prn = prn || prn2 || "";
 		operator = operator || "";
+		var bindParam = bind && prn !== "(";
 
 		function parsePath( all, object, helper, view, viewProperty, pathTokens, leafToken ) {
 		// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
 		//                                        object   helper    view  viewProperty pathTokens   leafToken     string
 			if ( object ) {
-				var ret = (helper
-					? 'view.hlp("' + helper + '")'
-					: view
-						? "view"
-						: "data")
-				+ (leafToken
-					? (viewProperty
-						? "." + viewProperty
-						: helper
-							? ""
-							: (view ? "" : "." + object)
-						) + (pathTokens || "")
-					: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
+				var leaf,
+					ret = (helper
+						? 'view.hlp("' + helper + '")'
+						: view
+							? "view"
+							: "data")
+					+ (leafToken
+						? (viewProperty
+							? "." + viewProperty
+							: helper
+								? ""
+								: (view ? "" : "." + object)
+							) + (pathTokens || "")
+						: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
 
-				if ( bind && prn !== "(" ) {
-					ret = "b(" + ret + ',"' + leafToken + '")';
+				leaf = (leafToken ? "." + leafToken : "")
+				if ( !bindParam) {
+					ret = ret + leaf;
 				}
-				return ret + (leafToken ? "." + leafToken : "");
+				ret = ret.slice( 0,9 ) === "view.data"
+					? ret.slice(5) // convert #view.data... to data...
+					: ret;
+				if ( bindParam ) {
+					ret = "b(" + ret + ',"' + leafToken + '")' + leaf;
+				}
+				return ret;
 			}
 			return all;
 		}
@@ -659,6 +664,7 @@ function compile( name, tmpl, parent, options ) {
 	}
 
 	//==== Compile the template ====
+	tmpl = tmpl || "";
 	tmplOrMarkup = tmplOrMarkupFromStr( tmpl );
 
 	// If tmpl is a template object, use it for options
@@ -822,7 +828,7 @@ tags({
 			result = "",
 			args = arguments,
 			l = args.length;
-		if ( self.props.layout ) {
+		if ( self.props && self.props.layout ) {
 			self.tmpl.layout = TRUE;
 		}
 		for ( i = 0; i < l; i++ ) {
