@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 7
+// informal pre beta commit counter: 8
 
 this.jsviews || this.jQuery && jQuery.views || (function( window, undefined ) {
 
@@ -159,11 +159,11 @@ function renderTag( tag, parentView, converter, content, tagObject ) {
 // View constructor
 //=================
 
-function View( context, path, parentView, data, template, index ) {
+function View( context, path, parentView, data, template, key ) {
 	// Constructor for view object in view hierarchy. (Augmented by JsViews if JsViews is loaded)
 	var views = parentView.views,
 //	TODO: add this, as part of smart re-linking on existing content ($.link method), or remove completely
-//			self = parentView.views[ index ];
+//			self = parentView.views[ key ];
 //			if ( !self ) { ... }
 		self = {
 			tmpl: template,
@@ -171,18 +171,26 @@ function View( context, path, parentView, data, template, index ) {
 			parent: parentView,
 			data: data,
 			ctx: context,
+			// If the data is an array, this is an 'Array View' with a views array for each child 'Instance View'
+			// If the data is not an array, this is an 'Instance View' with a views 'map' object for any child nested views
 			views: $.isArray( data ) ? [] : {},
 			hlp: getHelper
 		};
 
-	if ( $.isArray( views ))  {
+	if ( $.isArray( views ) ) {
+		// Parent is an 'Array View'. Add this view to its views array
 		views.splice(
-			self.index = index !== undefined
-				? index
-				: views.length, 0, self
-		);
+			// self.key = self.key - the index in the parent view array
+			self.key = self.index = key !== undefined
+				? key
+				: views.length,
+			0, self);
 	} else {
-		views[ self.index = "_" + autoViewKey++ ] = self;
+		// Parent is an 'Instance View'. Add this view to its views object
+		// self.key = is the key in the parent view map
+		views[ self.key = "_" + autoViewKey++ ] = self;
+		// self.index = is index of the parent
+		self.index = parentView.index;
 	}
 	return self;
 }
@@ -264,11 +272,11 @@ function converters( name, converterFn ) {
 // renderContent
 //=================
 
-function renderContent( data, context, path, index, parentView ) {
+function renderContent( data, context, path, key, parentView ) {
 	// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 	// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
 	var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, layout, onRender, props,
-		swapContent = index === TRUE,
+		swapContent = key === TRUE,
 		self = this,
 		result = "";
 
@@ -284,7 +292,7 @@ function renderContent( data, context, path, index, parentView ) {
 		context = self.ctx || context;
 		parentView = parentView || self.view;
 		path = path || self.path;
-		index = index || self.index;
+		key = key || self.key;
 		props = self.props;
 	} else {
 		tmpl = self.jquery && self[0] // This is a call $.fn.render
@@ -292,54 +300,56 @@ function renderContent( data, context, path, index, parentView ) {
 	}
 	parentView = parentView || jsv.topView;
 	parentContext = parentView.ctx;
-	layout = tmpl.layout;
-	if ( data === parentView ) {
-		// Inherit the data from the parent view.
-		// This may be the contents of an {{if}} block
-		data = parentView.data;
-		layout = TRUE;
-	}
-
-	// Set additional context on views created here, (as modified context inherited from the parent, and be inherited by child views)
-	// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
-	// TODO make this reusable also for use in JsViews, for adding context passed in with the link() method.
-	context = (context && context === parentContext)
-		? parentContext
-		: context
-			// if context, make copy
-			// If context, merge context with copied parentContext
-			? extend( extend( {}, parentContext ), context )
-			: parentContext;
-
-	if ( context.link === FALSE ) {
-		// Override inherited value of link by an explicit setting in props: link=false
-		// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
-		context.onRender = FALSE;
-	}
-	if ( !tmpl.fn ) {
-		tmpl = templates[ tmpl ] || templates( tmpl );
-	}
-	onRender = context.onRender;
-
 	if ( tmpl ) {
-		if ( $.isArray( data ) && !layout ) {
-			// Create a view for the array, whose child views correspond to each data item.
-			// (Note: if index and parentView are passed in along with parent view, treat as
-			// insert -e.g. from view.addViews - so parentView is already the view item for array)
-			newView = swapContent ? parentView : (index !== undefined && parentView) || View( context, path, parentView, data, tmpl, index );
-			for ( i = 0, l = data.length; i < l; i++ ) {
-				// Create a view for each data item.
-				dataItem = data[ i ];
-				itemResult = tmpl.fn( dataItem, View( context, path, newView, dataItem, tmpl, (index||0) + i ), jsv );
-				result += onRender ? onRender( itemResult, tmpl, props ) : itemResult;
-			}
-		} else {
-			// Create a view for singleton data object.
-			newView = swapContent ? parentView : View( context, path, parentView, data, tmpl, index );
-			result += (data || layout) ? tmpl.fn( data, newView, jsv ) : "";
+		layout = tmpl.layout;
+		if ( data === parentView ) {
+			// Inherit the data from the parent view.
+			// This may be the contents of an {{if}} block
+			data = parentView.data;
+			layout = TRUE;
 		}
-		parentView.topKey = newView.index;
-		return onRender ? onRender( result, tmpl, props, newView.index, path ) : result;
+
+		// Set additional context on views created here, (as modified context inherited from the parent, and be inherited by child views)
+		// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
+		// TODO make this reusable also for use in JsViews, for adding context passed in with the link() method.
+		context = (context && context === parentContext)
+			? parentContext
+			: context
+				// if context, make copy
+				// If context, merge context with copied parentContext
+				? extend( extend( {}, parentContext ), context )
+				: parentContext;
+
+		if ( context.link === FALSE ) {
+			// Override inherited value of link by an explicit setting in props: link=false
+			// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
+			context.onRender = FALSE;
+		}
+		if ( !tmpl.fn ) {
+			tmpl = templates[ tmpl ] || templates( tmpl );
+		}
+		onRender = context.onRender;
+
+		if ( tmpl ) {
+			if ( $.isArray( data ) && !layout ) {
+				// Create a view for the array, whose child views correspond to each data item.
+				// (Note: if key and parentView are passed in along with parent view, treat as
+				// insert -e.g. from view.addViews - so parentView is already the view item for array)
+				newView = swapContent ? parentView : (key !== undefined && parentView) || View( context, path, parentView, data, tmpl, key );
+				for ( i = 0, l = data.length; i < l; i++ ) {
+					// Create a view for each data item.
+					dataItem = data[ i ];
+					itemResult = tmpl.fn( dataItem, View( context, path, newView, dataItem, tmpl, (key||0) + i ), jsv );
+					result += onRender ? onRender( itemResult, tmpl, props ) : itemResult;
+				}
+			} else {
+				// Create a view for singleton data object.
+				newView = swapContent ? parentView : View( context, path, parentView, data, tmpl, key );
+				result += (data || layout) ? tmpl.fn( data, newView, jsv ) : "";
+			}
+			parentView.topKey = newView.key;
+			return onRender ? onRender( result, tmpl, props, newView.key, path ) : result;
+		}
 	}
 	return ""; // No tmpl. Could throw...
 }
@@ -714,7 +724,7 @@ function compile( name, tmpl, parent, options ) {
 }
 //==== /end of function compile ====
 
-function TmplObject( markup, options, parent, index ) {
+function TmplObject( markup, options, parent, key ) {
 	// Template object constructor
 
 	// nested helper function
@@ -737,8 +747,8 @@ function TmplObject( markup, options, parent, index ) {
 			tmpl.templates = extend( extend( {}, parent.templates ), options.templates );
 		}
 		tmpl.parent = parent;
-		tmpl.name = parent.name + "[" + index + "]";
-		tmpl.index = index;
+		tmpl.name = parent.name + "[" + key + "]";
+		tmpl.key = key;
 	}
 
 	extend( tmpl, options );

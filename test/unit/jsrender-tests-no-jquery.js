@@ -257,7 +257,7 @@ test("templates", function() {
 });
 
 test("render", function() {
-	expect(14);
+	expect(17);
 	var tmpl1 = jsviews.templates( "myTmpl8", tmplString );
 	jsviews.templates( {
 		simple: "Content",
@@ -273,6 +273,22 @@ test("render", function() {
 
 	jsviews.templates( "myTmpl9", "A_{{for #data}}inner{{:name}}content{{/for}}_B" );
 	equal( jsviews.templates.myTmpl9.tmpls[0].render( person ), "innerJocontent", 'Access nested templates: jsviews.templates["myTmpl9[0]"];' );
+
+	jsviews.templates( "myTmpl10", "top index:{{:#index}}|{{for 1}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#index}}|{{else}}nested else index:{{:#index}}|{{/if}}{{/for}}" );
+	equal( jsviews.render.myTmpl10(people), "top index:0|nested index:0|nested if index:0|top index:1|nested index:1|nested else index:1|",
+										'#index gives the integer index even in nested blocks' );
+	jsviews.templates( "myTmpl11", "top index:{{:#index}}|{{for people}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#index}}|{{else}}nested else index:{{:#index}}|{{/if}}{{/for}}" );
+
+	equal( jsviews.render.myTmpl11({ people: people }), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
+										'#index gives the integer index even in nested blocks' );
+
+	jsviews.helpers({ myKeyIsCorrect: function() {
+		return this.parent.views[this.key] === this;
+	}});
+	jsviews.templates( "myTmpl12", "top key:{{:~myKeyIsCorrect()}}|{{for people}}nested {{:~myKeyIsCorrect()}}|{{if #index===0}}nested if {{:~myKeyIsCorrect()}}|{{else}}nested else {{:~myKeyIsCorrect()}}|{{/if}}{{/for}}" );
+
+	equal( jsviews.render.myTmpl12({ people: people }), "top key:true|nested true|nested if true|nested true|nested else true|",
+										'#key gives the key of this view in the parent views collection/object' );
 
 	equal( jsviews.templates( tmplString ).render( person ), "A_Jo_B", 'Compile from string: var html = jsviews.templates( tmplString ).render( data );' );
 	equal( jsviews.render.myTmpl8( people ), "A_Jo_BA_Bill_B", 'jsviews.render.myTmpl( array );' );
