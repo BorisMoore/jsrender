@@ -187,11 +187,11 @@ test("{{for}}", function() {
 		},
 		pageTmpl: '{{for people tmpl="layoutTmpl"/}}',
 		simpleFor: "a{{for people}}Content{{/for}}b",
-		forPrimitiveDataTypes: "a{{for people}}{{:#data}}{{/for}}b"
+		forPrimitiveDataTypes: "a{{for people}}|{{:#data}}{{/for}}b"
 	});
 
 	equal( jsviews.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}' );
-	equal( jsviews.render.layoutTmpl( people ), "header_JoBill_footer", 'layout: true... "header_{{for #data}}{{:name}}{{/for}}_footer"' );
+	equal( jsviews.render.layoutTmpl( people ), "header_JoBill_footer", 'layout: true... "header_{{for}}{{:name}}{{/for}}_footer"' );
 	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for people tmpl="layoutTmpl"/}}' );
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
 	equal( jsviews.templates( "{{for}}xxx{{/for}}" ).render({}), "", "no parameter - outputs empty string: {{for}}" );
@@ -200,7 +200,7 @@ test("{{for}}", function() {
 	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContentContentContentContentContentb", 'Empty string, false, null or undefined members of array are also rendered' );
 	equal( jsviews.render.simpleFor({people:null}), "ab", 'null is rendered as empty string' );
 	equal( jsviews.render.simpleFor({}), "ab", 'undefined is rendered as empty string' );
-	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,true,false]}), "a01abctruefalseb", 'Primitive types render correctly, even if falsey' );
+	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,true,false]}), "a|0|1|abc|||true|falseb", 'Primitive types render correctly, even if falsey' );
 });
 
 module( "api" );
@@ -265,13 +265,13 @@ test("render", function() {
 			markup: "Content",
 			layout: true
 		},
-		primitiveDataTypes: "{{:#data}}"
+		primitiveDataTypes: "|{{:#data}}"
 	});
 
 	equal( tmpl1.render( person ), "A_Jo_B", 'tmpl1.render( data );' );
 	equal( jsviews.render.myTmpl8( person ), "A_Jo_B", 'jsviews.render.myTmpl8( data );' );
 
-	jsviews.templates( "myTmpl9", "A_{{for #data}}inner{{:name}}content{{/for}}_B" );
+	jsviews.templates( "myTmpl9", "A_{{for}}inner{{:name}}content{{/for}}_B" );
 	equal( jsviews.templates.myTmpl9.tmpls[0].render( person ), "innerJocontent", 'Access nested templates: jsviews.templates["myTmpl9[0]"];' );
 
 	jsviews.templates( "myTmpl10", "top index:{{:#index}}|{{for 1}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#index}}|{{else}}nested else index:{{:#index}}|{{/if}}{{/for}}" );
@@ -294,14 +294,14 @@ test("render", function() {
 	equal( jsviews.render.myTmpl8( people ), "A_Jo_BA_Bill_B", 'jsviews.render.myTmpl( array );' );
 	equal( jsviews.render.simple([]), "", 'Empty array renders empty string' );
 	equal( jsviews.render.simple(["",false,null,undefined,1]), "ContentContentContentContentContent", 'Empty string, false, null or undefined members of array are also rendered' );
-	equal( jsviews.render.simple(null), "", 'null renders as empty string' );
-	equal( jsviews.render.simple(), "", 'Undefined renders as empty string' );
+	equal( jsviews.render.simple(null), "", 'null renders empty string' );
+	equal( jsviews.render.simple(), "", 'Undefined renders empty string' );
 
 	equal( jsviews.render.simpleLayout([null,undefined,1]), "Content", 'Layout renders once, for array' );
 	equal( jsviews.render.simpleLayout([]), "Content", 'Layout renders once, for empty array' );
 	equal( jsviews.render.simpleLayout(null), "Content", 'Layout renders once, for null' );
 	equal( jsviews.render.simpleLayout(), "Content", 'Layout renders once, for undefined' );
-	equal( jsviews.render.primitiveDataTypes([0,1,"abc","",,true,false]), "01abctruefalse", 'Primitive types render correctly, even if falsey' );
+	equal( jsviews.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey' );
 });
 
 test("converters", function() {

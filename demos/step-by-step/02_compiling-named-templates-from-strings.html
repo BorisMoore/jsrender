@@ -10,7 +10,7 @@
 <body>
 <a href="../demos.html">JsRender Demos</a><br />
 
-<h3>Compiling templates from strings</h3>
+<h3>Compiling named templates from strings</h3>
 
 <button id="switchBtn">Show full details</button><br/>
 <br />
@@ -34,14 +34,19 @@
 	var details = true;
 
 	function switchTemplates() {
+		var html;
+
 		details = !details;
 
-		$( this ).text( details ? "Show titles only" : "Show full details" );
-
 		/* Render using the other named template */
-		var templateName = details ? "detailTemplate" : "titleTemplate";
-
-		$( "#movieList" ).html( $.render [ templateName ]( movies ));
+		if ( details ) {
+			$( this ).text( "Show titles only" );
+			html = $.render.detailTemplate( movies );
+		} else {
+			$( this ).text( "Show full details" );
+			html = $.render.titleTemplate( movies );
+		}
+		$( "#movieList" ).html( html );
 	}
 
 	$( "#switchBtn" ).click( switchTemplates );
