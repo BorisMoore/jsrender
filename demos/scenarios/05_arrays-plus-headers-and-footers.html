@@ -10,34 +10,33 @@
 <body>
 <a href="../demos.html">JsRender Demos</a><br />
 
-<h3>Using layout templates to render arrays along with headers or footers.</h3>
+<h3>To pass an array to a "layout template" - which includes headers or footers,<br />
+as well as the rendered items - wrap the array in an array...</h3>
 
 <div class="subhead">Top-level layout:</div>
 <pre>
-$.templates( "moviesLayout", {
-	markup: "#movieTemplate",
-	layout: true
-});
-
 $( "#movieList" ).html(
-	$.render.moviesLayout( movies )
+    // Wrap movies array in an array
+    $("#movieTemplate").render( [movies] )
 );
 
-header
-	{{for #data}}
-		item
-	{{/for}}
-footer
+Template:
+
+   header
+   {{for #data}}
+      item
+   {{/for}}
+   footer
 </pre>
 
 <div class="subhead">Nested layout:</div>
 <pre>
-{{for languages layout=true}}
-	header
-	{{for #data}}
-		item
-	{{/for}}
-	footer
+{{for [languages]}}
+    header
+    {{for #data}}
+        item
+    {{/for}}
+    footer
 {{/for}}
 </pre>
 
@@ -53,17 +52,16 @@ footer
 			<tr>
 				<td>{{:title}}</td>
 				<td>
-					{{for languages layout=true}}
+					{{for [languages]}}
 						<div>
 							{{if #data}}
 								<strong>{{:length}}</strong> languages available:
+								{{for #data}}
+									<em>{{:name}}</em>
+								{{/for}}
 							{{else}}
 								Original version only
 							{{/if}}
-
-							{{for #data}}
-								<em>{{:name}}</em>
-							{{/for}}
 						</div>
 						<div>
 							{{if #data}}
@@ -101,14 +99,9 @@ footer
 			]
 		}
 	];
-
-	$.templates( "moviesLayout", {
-		markup: "#movieTemplate",
-		layout: true
-	});
-
 	$( "#movieList" ).html(
-		$.render.moviesLayout( movies )
+		// Wrap movies array in an array
+		$( "#movieTemplate" ).render( [movies] )
 	);
 </script>
 

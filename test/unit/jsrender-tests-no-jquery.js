@@ -8,7 +8,7 @@ function compileTmpl( template ) {
 	}
 }
 
-function sort( array ){
+function sort( array ) {
 	var ret = "";
 	if ( this.props.reverse ) {
 		// Render in reverse order
@@ -44,25 +44,25 @@ test("{{if}} {{else}}", function() {
 module( "{{if}}" );
 test("{{if}}", function() {
 	expect(4);
-	equal( jsviews.templates( "A_{{if true}}yes{{/if}}_B" ).render({}), "A_yes_B", "{{if a}}: a" );
-	equal( jsviews.templates( "A_{{if false}}yes{{/if}}_B" ).render({}), "A__B", "{{if a}}: !a" );
-	equal( jsviews.templates( "A_{{if true}}{{/if}}_B" ).render({}), "A__B", "{{if a}}: empty: a" );
-	equal( jsviews.templates( "A_{{if false}}{{/if}}_B" ).render({}), "A__B", "{{if a}}: empty: !a" );
+	equal( jsviews.templates( "A_{{if true}}yes{{/if}}_B" ).render(), "A_yes_B", "{{if a}}: a" );
+	equal( jsviews.templates( "A_{{if false}}yes{{/if}}_B" ).render(), "A__B", "{{if a}}: !a" );
+	equal( jsviews.templates( "A_{{if true}}{{/if}}_B" ).render(), "A__B", "{{if a}}: empty: a" );
+	equal( jsviews.templates( "A_{{if false}}{{/if}}_B" ).render(), "A__B", "{{if a}}: empty: !a" );
 });
 
 test("{{if}} {{else}}", function() {
 	expect(5);
-	equal( jsviews.templates( "A_{{if true}}yes{{else}}no{{/if}}_B" ).render({}), "A_yes_B", "{{if a}} {{else}}: a" );
-	equal( jsviews.templates( "A_{{if false}}yes{{else}}no{{/if}}_B" ).render({}), "A_no_B", "{{if a}} {{else}}: !a" );
-	equal( jsviews.templates( "A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B" ).render({}), "A_yes_B", "{{if a}} {{else b}} {{else}}: a" );
-	equal( jsviews.templates( "A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B" ).render({}), "A_or_B", "{{if a}} {{else b}} {{else}}: b" );
-	equal( jsviews.templates( "A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B" ).render({}), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b" );
+	equal( jsviews.templates( "A_{{if true}}yes{{else}}no{{/if}}_B" ).render(), "A_yes_B", "{{if a}} {{else}}: a" );
+	equal( jsviews.templates( "A_{{if false}}yes{{else}}no{{/if}}_B" ).render(), "A_no_B", "{{if a}} {{else}}: !a" );
+	equal( jsviews.templates( "A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B" ).render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a" );
+	equal( jsviews.templates( "A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B" ).render(), "A_or_B", "{{if a}} {{else b}} {{else}}: b" );
+	equal( jsviews.templates( "A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B" ).render(), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b" );
 });
 
 test("{{if}} {{else}} external templates", function() {
 	expect(2);
-	equal( jsviews.templates( "A_{{if true tmpl='yes<br/>'/}}_B" ).render({}), "A_yes<br/>_B", "{{if a tmpl=foo/}}: a" );
-	equal( jsviews.templates( "A_{{if false tmpl='yes<br/>'}}{{else false tmpl='or<br/>'}}{{else tmpl='no<br/>'}}{{/if}}_B" ).render({}), "A_no<br/>_B", "{{if a tmpl=foo}}{{else b tmpl=bar}}{{else tmpl=baz}}: !a!b" );
+	equal( jsviews.templates( "A_{{if true tmpl='yes<br/>'/}}_B" ).render(), "A_yes<br/>_B", "{{if a tmpl=foo/}}: a" );
+	equal( jsviews.templates( "A_{{if false tmpl='yes<br/>'}}{{else false tmpl='or<br/>'}}{{else tmpl='no<br/>'}}{{/if}}_B" ).render(), "A_no<br/>_B", "{{if a tmpl=foo}}{{else b tmpl=bar}}{{else tmpl=baz}}: !a!b" );
 });
 
 module( "{{:}}" );
@@ -90,7 +90,7 @@ test("paths", function() {
 	equal( jsviews.templates( '{{:a["x - _*!"]}}').render({ a: { "x - _*!": "aName"} }), "aName", 'a["x - _*!"]');
 	equal( jsviews.templates( "{{:a.b[1].d}}" ).render({ a: { b: [0, { d: "dVal"}]} }), "dVal", "a.b[1].d");
 	equal( jsviews.templates( "{{:a.b[1].d}}" ).render({ a: { b: {1:{ d: "dVal" }}}}), "dVal", "a.b[1].d" );
-	equal( jsviews.templates( "{{:a.b[~incr(1-1)].d}}" ).render({ a: { b: {1:{ d: "dVal" }}}}, { incr:function(val){ return val + 1; }}), "dVal", "a.b[~incr(1-1)].d" );
+	equal( jsviews.templates( "{{:a.b[~incr(1-1)].d}}" ).render({ a: { b: {1:{ d: "dVal" }}}}, { incr:function(val) { return val + 1; }}), "dVal", "a.b[~incr(1-1)].d" );
 	equal( jsviews.templates( "{{:a.b.c.d}}" ).render({ a: { b: {'c':{ d: "dVal" }}}}), "dVal", "a.b.c.d" );
 	equal( jsviews.templates( "{{:a[0]}}" ).render({ a: [ "bVal" ]}), "bVal", "a[0]" );
 	equal( jsviews.templates( "{{:a.b[1][0].msg}}" ).render({ a: { b: [22,[{ msg: " yes - that's right. "}]] }}), " yes - that's right. ", "a.b[1][0].msg" );
@@ -101,49 +101,49 @@ test("paths", function() {
 
 test("types", function() {
 	expect(10);
-	equal( jsviews.templates( "{{:'abc'}}" ).render({}), "abc", "'abc'" );
-	equal( jsviews.templates( "{{:true}}" ).render({}), "true", "true" );
-	equal( jsviews.templates( "{{:false}}" ).render({}), "false", "false" );
-	equal( jsviews.templates( "{{:null}}" ).render({}), "", 'null -> ""' );
-	equal( jsviews.templates( "{{:199}}" ).render({}), "199", "199" );
-	equal( jsviews.templates( "{{: 199.9 }}" ).render({}), "199.9", "| 199.9 |" );
-	equal( jsviews.templates( "{{:-33.33}}" ).render({}), "-33.33", "-33.33" );
-	equal( jsviews.templates( "{{: -33.33 }}" ).render({}), "-33.33", "| -33.33 |" );
-	equal( jsviews.templates( "{{:-33.33 - 2.2}}" ).render({}), "-35.53", "-33.33 - 2.2" );
+	equal( jsviews.templates( "{{:'abc'}}" ).render(), "abc", "'abc'" );
+	equal( jsviews.templates( "{{:true}}" ).render(), "true", "true" );
+	equal( jsviews.templates( "{{:false}}" ).render(), "false", "false" );
+	equal( jsviews.templates( "{{:null}}" ).render(), "", 'null -> ""' );
+	equal( jsviews.templates( "{{:199}}" ).render(), "199", "199" );
+	equal( jsviews.templates( "{{: 199.9 }}" ).render(), "199.9", "| 199.9 |" );
+	equal( jsviews.templates( "{{:-33.33}}" ).render(), "-33.33", "-33.33" );
+	equal( jsviews.templates( "{{: -33.33 }}" ).render(), "-33.33", "| -33.33 |" );
+	equal( jsviews.templates( "{{:-33.33 - 2.2}}" ).render(), "-35.53", "-33.33 - 2.2" );
 	equal( jsviews.templates( "{{:notdefined}}" ).render({}), "", "notdefined" );
 });
 
 test("comparisons", function() {
 	expect(22);
-	equal( jsviews.templates( "{{:1<2}}" ).render({}), "true", "1<2" );
-	equal( jsviews.templates( "{{:2<1}}" ).render({}), "false", "2<1" );
-	equal( jsviews.templates( "{{:5===5}}" ).render({}), "true", "5===5" );
-	equal( jsviews.templates( "{{:0==''}}" ).render({}), "true", "0==''" );
-	equal( jsviews.templates( "{{:'ab'=='ab'}}" ).render({}), "true", "'ab'=='ab'" );
-	equal( jsviews.templates( "{{:2>1}}" ).render({}), "true", "2>1" );
-	equal( jsviews.templates( "{{:2 == 2}}" ).render({}), "true", "2 == 2" );
-	equal( jsviews.templates( "{{:2<=2}}" ).render({}), "true", "2<=2" );
-	equal( jsviews.templates( "{{:'ab'<'ac'}}" ).render({}), "true", "'ab'<'ac'" );
-	equal( jsviews.templates( "{{:3>=3}}" ).render({}), "true", "3 =3" );
-	equal( jsviews.templates( "{{:3>=2}}" ).render({}), "true", "3>=2" );
-	equal( jsviews.templates( "{{:3>=4}}" ).render({}), "false", "3>=4" );
-	equal( jsviews.templates( "{{:3 !== 2}}" ).render({}), "true", "3 !== 2" );
-	equal( jsviews.templates( "{{:3 != 2}}" ).render({}), "true", "3 != 2" );
-	equal( jsviews.templates( "{{:0 !== null}}" ).render({}), "true", "0 !== null" );
-	equal( jsviews.templates( "{{:(3 >= 4)}}" ).render({}), "false", "3>=4" );
-	equal( jsviews.templates( "{{:3 >= 4}}" ).render({}), "false", "3>=4" );
-	equal( jsviews.templates( "{{:(3>=4)}}" ).render({}), "false", "3>=4" );
-	equal( jsviews.templates( "{{:(3 < 4)}}" ).render({}), "true", "3>=4" );
-	equal( jsviews.templates( "{{:3 < 4}}" ).render({}), "true", "3>=4" );
-	equal( jsviews.templates( "{{:(3<4)}}" ).render({}), "true", "3>=4" );
-	equal( jsviews.templates( "{{:0 != null}}" ).render({}), "true", "0 != null" );
+	equal( jsviews.templates( "{{:1<2}}" ).render(), "true", "1<2" );
+	equal( jsviews.templates( "{{:2<1}}" ).render(), "false", "2<1" );
+	equal( jsviews.templates( "{{:5===5}}" ).render(), "true", "5===5" );
+	equal( jsviews.templates( "{{:0==''}}" ).render(), "true", "0==''" );
+	equal( jsviews.templates( "{{:'ab'=='ab'}}" ).render(), "true", "'ab'=='ab'" );
+	equal( jsviews.templates( "{{:2>1}}" ).render(), "true", "2>1" );
+	equal( jsviews.templates( "{{:2 == 2}}" ).render(), "true", "2 == 2" );
+	equal( jsviews.templates( "{{:2<=2}}" ).render(), "true", "2<=2" );
+	equal( jsviews.templates( "{{:'ab'<'ac'}}" ).render(), "true", "'ab'<'ac'" );
+	equal( jsviews.templates( "{{:3>=3}}" ).render(), "true", "3 =3" );
+	equal( jsviews.templates( "{{:3>=2}}" ).render(), "true", "3>=2" );
+	equal( jsviews.templates( "{{:3>=4}}" ).render(), "false", "3>=4" );
+	equal( jsviews.templates( "{{:3 !== 2}}" ).render(), "true", "3 !== 2" );
+	equal( jsviews.templates( "{{:3 != 2}}" ).render(), "true", "3 != 2" );
+	equal( jsviews.templates( "{{:0 !== null}}" ).render(), "true", "0 !== null" );
+	equal( jsviews.templates( "{{:(3 >= 4)}}" ).render(), "false", "3>=4" );
+	equal( jsviews.templates( "{{:3 >= 4}}" ).render(), "false", "3>=4" );
+	equal( jsviews.templates( "{{:(3>=4)}}" ).render(), "false", "3>=4" );
+	equal( jsviews.templates( "{{:(3 < 4)}}" ).render(), "true", "3>=4" );
+	equal( jsviews.templates( "{{:3 < 4}}" ).render(), "true", "3>=4" );
+	equal( jsviews.templates( "{{:(3<4)}}" ).render(), "true", "3>=4" );
+	equal( jsviews.templates( "{{:0 != null}}" ).render(), "true", "0 != null" );
 });
 
 test("array access", function() {
 	equal( jsviews.templates( "{{:a[1]}}" ).render({ a: ["a0","a1"] }), "a1", "a[1]" );
 	equal( jsviews.templates( "{{:a[1+1]+5}}" ).render({ a: [11,22,33] }), "38", "a[1+1]+5)" );
-	equal( jsviews.templates( "{{:a[~incr(1)]+5}}" ).render({ a: [11,22,33] }, { incr:function(val){ return val + 1; }}), "38", "a[~incr(1)]+5" );
-	equal( jsviews.templates( "{{:true && (a[0] || 'default')}}" ).render({ a: [0,22,33] }, { incr:function(val){ return val + 1; }}), "default", "true && (a[0] || 'default')" );
+	equal( jsviews.templates( "{{:a[~incr(1)]+5}}" ).render({ a: [11,22,33] }, { incr:function(val) { return val + 1; }}), "38", "a[~incr(1)]+5" );
+	equal( jsviews.templates( "{{:true && (a[0] || 'default')}}" ).render({ a: [0,22,33] }, { incr:function(val) { return val + 1; }}), "default", "true && (a[0] || 'default')" );
 });
 
 test("context", function() {
@@ -178,29 +178,31 @@ test("expressions", function() {
 
 module( "{{for}}" );
 test("{{for}}", function() {
-	expect(10);
+	expect(15);
 	jsviews.templates( {
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
-		layoutTmpl: {
-			markup: "header_{{for #data}}{{:name}}{{/for}}_footer",
-			layout: true
-		},
-		pageTmpl: '{{for people tmpl="layoutTmpl"/}}',
-		simpleFor: "a{{for people}}Content{{/for}}b",
+		templateForArray: "header_{{for #data}}{{:name}}{{/for}}_footer",
+		pageTmpl: '{{for [people] tmpl="templateForArray"/}}',
+		simpleFor: "a{{for people}}Content{{:#data}}|{{/for}}b",
 		forPrimitiveDataTypes: "a{{for people}}|{{:#data}}{{/for}}b"
 	});
 
 	equal( jsviews.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}' );
-	equal( jsviews.render.layoutTmpl( people ), "header_JoBill_footer", 'layout: true... "header_{{for}}{{:name}}{{/for}}_footer"' );
-	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for people tmpl="layoutTmpl"/}}' );
+	equal( jsviews.render.templateForArray( [people] ), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array' );
+	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}' );
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
-	equal( jsviews.templates( "{{for}}xxx{{/for}}" ).render({}), "", "no parameter - outputs empty string: {{for}}" );
+	equal( jsviews.templates( "{{for}}xxx{{:#data===~undefined}}{{/for}}" ).render(), "xxxtrue", "no parameter - renders once with #data undefined: {{for}}" );
+	equal( jsviews.templates( "{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}" ).render({}), "xxxtrue", "missingProperty - renders once with #data undefined: {{for missingProperty}}" );
+	equal( jsviews.templates( "{{for null}}xxx{{:#data===null}}{{/for}}" ).render(), "xxxtrue", "null - renders once with #data null: {{for null}}" );
+	equal( jsviews.templates( "{{for false}}xxx{{:#data}}{{/for}}" ).render(), "xxxfalse", "false - renders once with #data false: {{for false}}" );
+	equal( jsviews.templates( "{{for 0}}xxx{{:#data}}{{/for}}" ).render(), "xxx0", "0 - renders once with #data false: {{for 0}}" );
+	equal( jsviews.templates( "{{for ''}}xxx{{:#data===''}}{{/for}}" ).render(), "xxxtrue", "'' - renders once with #data false: {{for ''}}" );
 
 	equal( jsviews.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string' );
-	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContentContentContentContentContentb", 'Empty string, false, null or undefined members of array are also rendered' );
-	equal( jsviews.render.simpleFor({people:null}), "ab", 'null is rendered as empty string' );
-	equal( jsviews.render.simpleFor({}), "ab", 'undefined is rendered as empty string' );
-	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,true,false]}), "a|0|1|abc|||true|falseb", 'Primitive types render correctly, even if falsey' );
+	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContent|Contentfalse|Content|Content|Content1|b", 'Empty string, false, null or undefined members of array are also rendered' );
+	equal( jsviews.render.simpleFor({people:null}), "aContent|b", 'null is rendered once with #data null' );
+	equal( jsviews.render.simpleFor({}), "aContent|b", 'if #data is undefined, renders once with #data undefined' );
+	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,null,true,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey' );
 });
 
 module( "api" );
@@ -247,24 +249,21 @@ test("templates", function() {
 
 	equal( jsviews.templates( "", tmpl ) === tmpl, true, 'jsviews.templates( tmpl ) returns tmpl' );
 
-	equal( jsviews.templates( "" ).render({}), "", 'jsviews.templates( "" ) is a template with empty string as content' );
+	equal( jsviews.templates( "" ).render(), "", 'jsviews.templates( "" ) is a template with empty string as content' );
 
 	jsviews.templates( "myEmptyTmpl", "" );
-	equal( jsviews.templates.myEmptyTmpl.render({}), "", 'jsviews.templates( "myEmptyTmpl", "" ) is a template with empty string as content' );
+	equal( jsviews.templates.myEmptyTmpl.render(), "", 'jsviews.templates( "myEmptyTmpl", "" ) is a template with empty string as content' );
 
 	jsviews.templates( "myTmpl", null );
 	equal( jsviews.templates.myTmpl, undefined, 'Remove a named template:  jsviews.templates( "myTmpl", null );' );
 });
 
 test("render", function() {
-	expect(17);
+	expect(18);
 	var tmpl1 = jsviews.templates( "myTmpl8", tmplString );
 	jsviews.templates( {
-		simple: "Content",
-		simpleLayout: {
-			markup: "Content",
-			layout: true
-		},
+		simple: "Content{{:#data}}|",
+		templateForArray: "Content{{for #data}}{{:#index}}{{/for}}",
 		primitiveDataTypes: "|{{:#data}}"
 	});
 
@@ -293,14 +292,15 @@ test("render", function() {
 	equal( jsviews.templates( tmplString ).render( person ), "A_Jo_B", 'Compile from string: var html = jsviews.templates( tmplString ).render( data );' );
 	equal( jsviews.render.myTmpl8( people ), "A_Jo_BA_Bill_B", 'jsviews.render.myTmpl( array );' );
 	equal( jsviews.render.simple([]), "", 'Empty array renders empty string' );
-	equal( jsviews.render.simple(["",false,null,undefined,1]), "ContentContentContentContentContent", 'Empty string, false, null or undefined members of array are also rendered' );
-	equal( jsviews.render.simple(null), "", 'null renders empty string' );
-	equal( jsviews.render.simple(), "", 'Undefined renders empty string' );
+	equal( jsviews.render.simple(["",false,null,undefined,1]), "Content|Contentfalse|Content|Content|Content1|", 'Empty string, false, null or undefined members of array are also rendered' );
+	equal( jsviews.render.simple(null), "Content|", 'null renders once with #data null' );
+	equal( jsviews.render.simple(), "Content|", 'Undefined renders once with #data undefined' );
+	equal( jsviews.render.simple(false), "Contentfalse|", 'false renders once with #data false' );
+	equal( jsviews.render.simple(0), "Content0|", '0 renders once with #data 0' );
+	equal( jsviews.render.simple(""), "Content|", '"" renders once with #data ""' );
 
-	equal( jsviews.render.simpleLayout([null,undefined,1]), "Content", 'Layout renders once, for array' );
-	equal( jsviews.render.simpleLayout([]), "Content", 'Layout renders once, for empty array' );
-	equal( jsviews.render.simpleLayout(null), "Content", 'Layout renders once, for null' );
-	equal( jsviews.render.simpleLayout(), "Content", 'Layout renders once, for undefined' );
+	equal( jsviews.render.templateForArray([[null,undefined,1]]), "Content012", 'Can render a template against an array, and render once only, by wrapping array in an array' );
+	equal( jsviews.render.templateForArray([[]]), "Content", 'Can render a template against an empty array, and render once only, by wrapping array in an array' );
 	equal( jsviews.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey' );
 });
 

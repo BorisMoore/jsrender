@@ -36,7 +36,7 @@
 {{get languages defaultValue="No languages!"/}}
 
 $.views.tags({
-    get: function( value ){
+    get: function( value ) {
         return value || this.props.defaultValue;
     }
 });
@@ -55,7 +55,7 @@ $.views.tags({
 {{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
 
 $.views.tags({
-    yesNo: function( value ){
+    yesNo: function( value ) {
         return value ? this.props.yes : this.props.no;
     }
 });
@@ -103,11 +103,11 @@ $.views.tags({
 <script type="text/javascript">
 
 	$.views.tags({
-		get: function( value ){
+		get: function( value ) {
 			return value || this.props.defaultValue;
 		},
 
-		yesNo: function( value ){
+		yesNo: function( value ) {
 			return value ? this.props.yes : this.props.no;
 		}
 	});

@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 9
+// informal pre beta commit counter: 10
 
 this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 
@@ -276,7 +276,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 	function renderContent(data, context, path, key, parentView, onRender) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 		// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
-		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, layout, onRender, props, swapContent,
+		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, onRender, props, swapContent, isLayout,
 		self = this,
 		result = "";
 		if (key === TRUE) {
@@ -304,12 +304,12 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		parentView = parentView || jsv.topView;
 		parentContext = parentView.ctx;
 		if (tmpl) {
-			layout = tmpl.layout;
 			if (data === parentView) {
 				// Inherit the data from the parent view.
 				// This may be the contents of an {{if}} block
+				// Set isLayout = true so we don't iterated the if block if the data is an array.
 				data = parentView.data;
-				layout = TRUE;
+				isLayout = TRUE;
 			}
 
 			// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
@@ -329,7 +329,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 			onRender = onRender || parentView._onRender;
 
 			if (tmpl) {
-				if ($.isArray(data) && !layout) {
+				if ($.isArray(data) && !isLayout) {
 					// Create a view for the array, whose child views correspond to each data item.
 					// (Note: if key and parentView are passed in along with parent view, treat as
 					// insert -e.g. from view.addViews - so parentView is already the view item for array)
@@ -344,7 +344,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 					// Create a view for singleton data object.
 					newView = swapContent ? parentView : View(context, path, parentView, data, tmpl, key, onRender);
 					newView._onRender = onRender;
-					result += (data || layout) ? tmpl.fn(data, newView, jsv) : "";
+					result += tmpl.fn(data, newView, jsv);
 				}
 				parentView.topKey = newView.key;
 				return onRender ? onRender(result, tmpl, props, newView.key, path) : result;
@@ -837,8 +837,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 			result = "",
 			args = arguments,
 			l = args.length;
-			if (self.props && self.props.layout) {
-				self.tmpl.layout = TRUE;
+			if (l === 0) {
+				// If no parameters, render once, with #data undefined
+				l = 1;
 			}
 			for (i = 0; i < l; i++) {
 				result += self.renderContent(args[i]);
