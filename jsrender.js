@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 10
+// informal pre beta commit counter: 11
 
 this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 
@@ -14,56 +14,56 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 
 	var versionNumber = "v1.0pre",
 
-	$, rTag, rTmplString, extend,
-	sub = {},
-	FALSE = false, TRUE = true,
-	jQuery = window.jQuery,
+		$, rTag, rTmplString, extend,
+		sub = {},
+		FALSE = false, TRUE = true,
+		jQuery = window.jQuery,
 
-	rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
-	//                               nil   object   helper    view  viewProperty pathTokens   leafToken     string
+		rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
+		//                               nil   object   helper    view  viewProperty pathTokens   leafToken     string
 
-	rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
-	//          lftPrn        lftPrn2                path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
-	// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+		rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
+		//          lftPrn        lftPrn2                path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
+		// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
 
-	rNewLine = /\r?\n/g,
-	rUnescapeQuotes = /\\(['"])/g,
-	rEscapeQuotes = /\\?(['"])/g,
-	rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
+		rNewLine = /\r?\n/g,
+		rUnescapeQuotes = /\\(['"])/g,
+		rEscapeQuotes = /\\?(['"])/g,
+		rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
 
-	autoViewKey = 0,
-	autoTmplName = 0,
-	escapeMapForHtml = {
-		"&": "&amp;",
-		"<": "&lt;",
-		">": "&gt;"
-	},
-	tmplAttr = "data-jsv-tmpl",
-	fnDeclStr = "var j=j||" + (jQuery ? "jQuery." : "js") + "views,",
-	htmlSpecialChar = /[\x00"&'<>]/g,
-	slice = Array.prototype.slice,
-
-	render = {},
-
-	// jsviews object ($.views if jQuery is loaded)
-	jsv = {
-		jsviews: versionNumber,
-		sub: sub, // subscription, e.g. JsViews integration
-		debugMode: TRUE,
-		err: function(e) {
-			return jsv.debugMode ? ("<br/><b>Error:</b> <em> " + (e.message || e) + ". </em>") : '""';
+		autoViewKey = 0,
+		autoTmplName = 0,
+		escapeMapForHtml = {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;"
 		},
-		tmplFn: tmplFn,
-		render: render,
-		templates: templates,
-		tags: tags,
-		helpers: helpers,
-		converters: converters,
-		View: View,
-		convert: convert,
-		delimiters: setDelimiters,
-		tag: renderTag
-	};
+		tmplAttr = "data-jsv-tmpl",
+		fnDeclStr = "var j=j||" + (jQuery ? "jQuery." : "js") + "views,",
+		htmlSpecialChar = /[\x00"&'<>]/g,
+		slice = Array.prototype.slice,
+
+		render = {},
+
+		// jsviews object ($.views if jQuery is loaded)
+		jsv = {
+			jsviews: versionNumber,
+			sub: sub, // subscription, e.g. JsViews integration
+			debugMode: TRUE,
+			err: function(e) {
+				return jsv.debugMode ? ("<br/><b>Error:</b> <em> " + (e.message || e) + ". </em>") : '""';
+			},
+			tmplFn: tmplFn,
+			render: render,
+			templates: templates,
+			tags: tags,
+			helpers: helpers,
+			converters: converters,
+			View: View,
+			convert: convert,
+			delimiters: setDelimiters,
+			tag: renderTag
+		};
 
 	//========================== Top-level functions ==========================
 
@@ -75,9 +75,10 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		// Set the tag opening and closing delimiters. Default is "{{" and "}}"
 		// openChar, closeChars: opening and closing strings, each with two characters
 		var firstOpenChar = "\\" + openChars.charAt(0), // Escape the characters - since they could be regex special characters
-		secondOpenChar = "\\" + openChars.charAt(1),
-		firstCloseChar = "\\" + closeChars.charAt(0),
-		secondCloseChar = "\\" + closeChars.charAt(1);
+			secondOpenChar = "\\" + openChars.charAt(1),
+			firstCloseChar = "\\" + closeChars.charAt(0),
+			secondCloseChar = "\\" + closeChars.charAt(1);
+
 		// Build regex with new delimiters
 		jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
 		= secondOpenChar
@@ -103,7 +104,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 	function getHelper(helper) {
 		// Helper method called as view._hlp() from compiled template, for helper functions or template parameters ~foo
 		var view = this,
-	tmplHelpers = view.tmpl.helpers || {};
+			tmplHelpers = view.tmpl.helpers || {};
+
 		helper = (view.ctx[helper] !== undefined ? view.ctx : tmplHelpers[helper] !== undefined ? tmplHelpers : helpers[helper] !== undefined ? helpers : {})[helper];
 		return typeof helper !== "function" ? helper : function() {
 			return helper.apply(view, arguments);
@@ -128,11 +130,11 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		// Called from within compiled template function, to render a nested tag
 		// Returns the rendered tag
 		var ret,
-		tmpl = tagObject.props && tagObject.props.tmpl,
-		tmplTags = parentView.tmpl.tags,
-		nestedTemplates = parentView.tmpl.templates,
-		args = arguments,
-		tagFn = tmplTags && tmplTags[tag] || tags[tag];
+			tmpl = tagObject.props && tagObject.props.tmpl,
+			tmplTags = parentView.tmpl.tags,
+			nestedTemplates = parentView.tmpl.templates,
+			args = arguments,
+			tagFn = tmplTags && tmplTags[tag] || tags[tag];
 
 		if (!tagFn) {
 			return "";
@@ -159,26 +161,24 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 	// View constructor
 	//=================
 
-	function View(context, path, parentView, data, template, key, onRender) {
+	function View(context, path, parentView, data, template, key, onRender, isArray) {
 		// Constructor for view object in view hierarchy. (Augmented by JsViews if JsViews is loaded)
 		var views = parentView.views,
-		//	TODO: add this, as part of smart re-linking on existing content ($.link method), or remove completely
-		//			self = parentView.views[ key ];
-		//			if ( !self ) { ... }
-		self = {
-			tmpl: template,
-			path: path,
-			parent: parentView,
-			data: data,
-			ctx: context,
-			// If the data is an array, this is an 'Array View' with a views array for each child 'Instance View'
-			// If the data is not an array, this is an 'Instance View' with a views 'map' object for any child nested views
-			views: $.isArray(data) ? [] : {},
-			_hlp: getHelper,
-			_onRender: onRender
-		};
+			self = {
+				tmpl: template,
+				path: path,
+				parent: parentView,
+				data: data,
+				ctx: context,
+				// If the data is an array, this is an 'Array View' with a views array for each child 'Instance View'
+				// If the data is not an array, this is an 'Instance View' with a views 'map' object for any child nested views
+				views: isArray ? [] : {},
+				isArray: isArray, // is an 'Array View' owning a data array, with child views for each item
+				_hlp: getHelper,
+				_onRender: onRender
+			};
 
-		if ($.isArray(views)) {
+		if (parentView.isArray) {
 			// Parent is an 'Array View'. Add this view to its views array
 			views.splice(
 			// self.key = self.key - the index in the parent view array
@@ -277,8 +277,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 		// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
 		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, onRender, props, swapContent, isLayout,
-		self = this,
-		result = "";
+			self = this,
+			result = "";
+
 		if (key === TRUE) {
 			swapContent = TRUE;
 			key = 0;
@@ -307,14 +308,14 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 			if (data === parentView) {
 				// Inherit the data from the parent view.
 				// This may be the contents of an {{if}} block
-				// Set isLayout = true so we don't iterated the if block if the data is an array.
+				// Set isLayout = true so we don't iterate the if block if the data is an array.
 				data = parentView.data;
 				isLayout = TRUE;
 			}
 
 			// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
 			// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
-			// TODO make this reusable also for use in JsViews, for adding context passed in with the link() method.
+			// TODO could make this a reusable helper for merging context.
 			context = (context && context === parentContext)
 				? parentContext
 				: context
@@ -333,7 +334,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 					// Create a view for the array, whose child views correspond to each data item.
 					// (Note: if key and parentView are passed in along with parent view, treat as
 					// insert -e.g. from view.addViews - so parentView is already the view item for array)
-					newView = swapContent ? parentView : (key !== undefined && parentView) || View(context, path, parentView, data, tmpl, key, onRender);
+					newView = swapContent ? parentView : (key !== undefined && parentView) || View(context, path, parentView, data, tmpl, key, onRender, TRUE);
 					for (i = 0, l = data.length; i < l; i++) {
 						// Create a view for each data item.
 						dataItem = data[i];
@@ -368,17 +369,17 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		// Compile markup to AST (abtract syntax tree) then build the template function code from the AST nodes
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
 		var newNode, node, i, l, code, hasTag, hasEncoder, getsValue, hasConverter, hasViewPath, tag, converter, params, hash, nestedTmpl, allowCode,
-		tmplOptions = tmpl ? {
-			allowCode: allowCode = tmpl.allowCode,
-			debug: tmpl.debug
-		} : {},
-		nested = tmpl && tmpl.tmpls,
-		astTop = [],
-		loc = 0,
-		stack = [],
-		content = astTop,
-		current = [, , , astTop],
-		nestedIndex = 0;
+			tmplOptions = tmpl ? {
+				allowCode: allowCode = tmpl.allowCode,
+				debug: tmpl.debug
+			} : {},
+			nested = tmpl && tmpl.tmpls,
+			astTop = [],
+			loc = 0,
+			stack = [],
+			content = astTop,
+			current = [, , , astTop],
+			nestedIndex = 0;
 
 		//==== nested functions ====
 		function pushPreceedingContent(shift) {
@@ -397,9 +398,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 				converter = "html";
 			}
 			var hash = "",
-			passedCtx = "",
-			// Block tag if not self-closing and not {{:}} or {{>}} (special case) and not a data-link expression (has bind parameter)
-			block = !slash && !colon && !bind;
+				passedCtx = "",
+				// Block tag if not self-closing and not {{:}} or {{>}} (special case) and not a data-link expression (has bind parameter)
+				block = !slash && !colon && !bind;
 
 			//==== nested helper function ====
 
@@ -531,10 +532,10 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 
 	function parseParams(params, bind) {
 		var named,
-		fnCall = {},
-		parenDepth = 0,
-		quoted = FALSE, // boolean for string content in double quotes
-		aposed = FALSE; // or in single quotes
+			fnCall = {},
+			parenDepth = 0,
+			quoted = FALSE, // boolean for string content in double quotes
+			aposed = FALSE; // or in single quotes
 
 		function parseTokens(all, lftPrn0, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, prn2, space) {
 			// rParams = /(?:([([])\s*)?(?:([#~]?[\w$.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
@@ -552,19 +553,19 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 				//                                        object   helper    view  viewProperty pathTokens   leafToken     string
 				if (object) {
 					var leaf,
-					ret = (helper
-						? 'view._hlp("' + helper + '")'
-						: view
-							? "view"
-							: "data")
-					+ (leafToken
-						? (viewProperty
-							? "." + viewProperty
-							: helper
-								? ""
-								: (view ? "" : "." + object)
-							) + (pathTokens || "")
-						: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
+						ret = (helper
+							? 'view._hlp("' + helper + '")'
+							: view
+								? "view"
+								: "data")
+						+ (leafToken
+							? (viewProperty
+								? "." + viewProperty
+								: helper
+									? ""
+									: (view ? "" : "." + object)
+								) + (pathTokens || "")
+							: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
 
 					leaf = (leafToken ? "." + leafToken : "")
 					if (!bindParam) {
@@ -655,7 +656,11 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 					// If invalid, jQuery will throw. We will stay with the original string.
 				} catch (e) { }
 
-				if (elem && elem.type) {
+				if (elem) {
+					if (!elem.type) {
+						// If elem is not a script element, return undefined
+						return;
+					}
 					// It is a script element
 					// Create a name for data linking if none provided
 					value = templates[elem.getAttribute(tmplAttr)];
@@ -669,7 +674,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 				}
 				return value;
 			}
-			// If value is not a string or dom element, return undefined
+			// If value is not a string, return undefined
 		}
 
 		//==== Compile the template ====
@@ -741,6 +746,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 			links: [],
 			render: renderContent
 		};
+
 		if (parent) {
 			if (parent.templates) {
 				tmpl.templates = extend(extend({}, parent.templates), options.templates);
@@ -806,11 +812,11 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 	tags({
 		"if": function() {
 			var ifTag = this,
-			view = ifTag.view;
+				view = ifTag.view;
 
 			view.onElse = function(tagObject, args) {
 				var i = 0,
-				l = args.length;
+					l = args.length;
 
 				while (l && !args[i++]) {
 					// Only render content if args.length === 0 (i.e. this is an else with no condition) or if a condition argument is truey
@@ -833,10 +839,11 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		},
 		"for": function() {
 			var i,
-			self = this,
-			result = "",
-			args = arguments,
-			l = args.length;
+				self = this,
+				result = "",
+				args = arguments,
+				l = args.length;
+
 			if (l === 0) {
 				// If no parameters, render once, with #data undefined
 				l = 1;
@@ -845,9 +852,6 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 				result += self.renderContent(args[i]);
 			}
 			return result;
-		},
-		"=": function(value) {
-			return value;
 		},
 		"*": function(value) {
 			return value;
