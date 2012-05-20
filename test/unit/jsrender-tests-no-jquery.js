@@ -166,7 +166,7 @@ test("values", function() {
 });
 
 test("expressions", function() {
-	expect(7);
+	expect(8);
 	equal( compileTmpl( "{{:a++}}" ), "error:Syntax error", "a++" );
 	equal( compileTmpl( "{{:(a,b)}}" ), "error:Syntax error", "(a,b)" );
 	equal( jsviews.templates( "{{: a+2}}" ).render({ a: 2, b: false }), "4", "a+2");
@@ -174,6 +174,7 @@ test("expressions", function() {
 	equal( jsviews.templates( "{{:(a||-1) + (b||-1) }}" ).render({ a: 2, b: 0 }), "1", "a||-1");
 	equal( jsviews.templates( "{{:3*b()*!a*4/3}}" ).render({ a: false, b: function () { return 3; }}), "12", "3*b()*!a*4/3");
 	equal( jsviews.templates( "{{:a%b}}" ).render({ a: 30, b: 16}), "14", "a%b");
+	equal( jsviews.templates( "A_{{if v1 && v2 && v3 && v4}}no{{else !v1 && v2 || v3 && v4}}yes{{/if}}_B" ).render({v1:true,v2:false,v3:2,v4:"foo"}), "A_yes_B", "x && y || z");
 });
 
 module( "{{for}}" );

@@ -6,9 +6,9 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 11
+// informal pre beta commit counter: 13
 
-this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
+this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	//========================== Top-level vars ==========================
 
@@ -17,7 +17,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		$, rTag, rTmplString, extend,
 		sub = {},
 		FALSE = false, TRUE = true,
-		jQuery = window.jQuery,
+		jQuery = global.jQuery,
 
 		rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.]*?)(?:[.[]([\w$]+)\]?)?|(['"]).*\8)$/g,
 		//                               nil   object   helper    view  viewProperty pathTokens   leafToken     string
@@ -781,7 +781,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(window, undefined) {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is not loaded.
 
-		$ = window.jsviews = jsv;
+		$ = global.jsviews = jsv;
 		$.extend = function(target, source) {
 			var name;
 			target = target || {};
