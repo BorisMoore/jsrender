@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 13
+// informal pre beta commit counter: 14
 
 this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
@@ -15,7 +15,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	var versionNumber = "v1.0pre",
 
 		$, rTag, rTmplString, extend,
-		sub = {},
+		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", sub = {},
 		FALSE = false, TRUE = true,
 		jQuery = global.jQuery,
 
@@ -74,27 +74,29 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	function setDelimiters(openChars, closeChars) {
 		// Set the tag opening and closing delimiters. Default is "{{" and "}}"
 		// openChar, closeChars: opening and closing strings, each with two characters
-		var firstOpenChar = "\\" + openChars.charAt(0), // Escape the characters - since they could be regex special characters
-			secondOpenChar = "\\" + openChars.charAt(1),
-			firstCloseChar = "\\" + closeChars.charAt(0),
-			secondCloseChar = "\\" + closeChars.charAt(1);
 
-		// Build regex with new delimiters
-		jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
-		= secondOpenChar
-		//          tag    (followed by / space or })   or cvtr+colon or html or code
-		+ "(?:(?:(\\w+(?=[\\/\\s" + firstCloseChar + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
-		//     params
-		+ "\\s*((?:[^" + firstCloseChar + "]|" + firstCloseChar + "(?!" + secondCloseChar + "))*?)";
+		if (!jsv.rTag || arguments.length) {
+			delimOpenChar0 = openChars ? "\\" + openChars.charAt(0) : delimOpenChar0; // Escape the characters - since they could be regex special characters
+			delimOpenChar1 = openChars ? "\\" + openChars.charAt(1) : delimOpenChar1;
+			delimCloseChar0 = closeChars ? "\\" + closeChars.charAt(0) : delimCloseChar0;
+			delimCloseChar1 = closeChars ? "\\" + closeChars.charAt(0) : delimCloseChar1;
 
-		//                                         slash or closeBlock           }}
-		rTag = new RegExp(firstOpenChar + rTag + "(\\/)?|(?:\\/(\\w+)))" + firstCloseChar + secondCloseChar, "g");
+			// Build regex with new delimiters
+			jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
+				//          tag    (followed by / space or })   or cvtr+colon or html or code
+				= "(?:(?:(\\w+(?=[\\/\\s" + delimCloseChar0 + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
+				//     params
+				+ "\\s*((?:[^" + delimCloseChar0 + "]|" + delimCloseChar0 + "(?!" + delimCloseChar1 + "))*?)";
 
-		// Default rTag:    tag      converter colon html code     params            slash   closeBlock
-		//    /{{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}
+			//                                         slash or closeBlock           }}
+			rTag = new RegExp(delimOpenChar0 + delimOpenChar1 + rTag + "(\\/)?|(?:\\/(\\w+)))" + delimCloseChar0 + delimCloseChar1, "g");
 
-		rTmplString = new RegExp("<.*>|" + openChars + ".*" + closeChars);
-		return this;
+			// Default rTag:    tag      converter colon html code     params            slash   closeBlock
+			//    /{{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}
+
+			rTmplString = new RegExp("<.*>|" + openChars + ".*" + closeChars);
+		}
+		return [delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1];
 	}
 
 	//=================
@@ -614,7 +616,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 										: operator)
 								)
 								: operator
-									? all
+									? operator
 									: rtPrn
 				// function
 										? ((fnCall[parenDepth--] = FALSE, rtPrn)
@@ -803,8 +805,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	function replacerForHtml(ch) {
 		// Original code from Mike Samuel <msamuel@google.com>
 		return escapeMapForHtml[ch]
-		// Intentional assignment that caches the result of encoding ch.
-		|| (escapeMapForHtml[ch] = "&#" + ch.charCodeAt(0) + ";");
+			// Intentional assignment that caches the result of encoding ch.
+			|| (escapeMapForHtml[ch] = "&#" + ch.charCodeAt(0) + ";");
 	}
 
 	//========================== Register tags ==========================
@@ -875,6 +877,6 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	});
 
 	//========================== Define default delimiters ==========================
-	setDelimiters("{{", "}}");
+	setDelimiters();
 
 })(this);
