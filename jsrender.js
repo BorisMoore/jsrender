@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 14
+// informal pre beta commit counter: 15
 
 this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
@@ -50,21 +50,20 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			jsviews: versionNumber,
 			sub: sub, // subscription, e.g. JsViews integration
 			debugMode: TRUE,
-			err: function(e) {
-				return jsv.debugMode ? ("<br/><b>Error:</b> <em> " + (e.message || e) + ". </em>") : '""';
-			},
-			tmplFn: tmplFn,
 			render: render,
 			templates: templates,
 			tags: tags,
 			helpers: helpers,
 			converters: converters,
 			View: View,
-			convert: convert,
 			delimiters: setDelimiters,
-			tag: renderTag
+			_convert: convert,
+			_err: function(e) {
+				return jsv.debugMode ? ("<br/><b>Error:</b> <em> " + (e.message || e) + ". </em>") : '""';
+			},
+			_tmplFn: tmplFn,
+			_tag: renderTag
 		};
-
 	//========================== Top-level functions ==========================
 
 	//===================
@@ -118,8 +117,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	// jsviews.convert
 	//=================
 
-	function convert(converter, view, text) {
-		var tmplConverters = view.tmpl.converters;
+	function convert(converter, view, tmpl, text) {
+		var tmplConverters = tmpl.converters;
 		converter = tmplConverters && tmplConverters[converter] || converters[converter];
 		return converter ? converter.call(view, text) : text;
 	}
@@ -128,13 +127,13 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	// jsviews.tag
 	//=================
 
-	function renderTag(tag, parentView, converter, content, tagObject) {
+	function renderTag(tag, parentView, parentTmpl, converter, content, tagObject) {
 		// Called from within compiled template function, to render a nested tag
 		// Returns the rendered tag
 		var ret,
+			tmplTags = parentTmpl.tags,
+			nestedTemplates = parentTmpl.templates, 
 			tmpl = tagObject.props && tagObject.props.tmpl,
-			tmplTags = parentView.tmpl.tags,
-			nestedTemplates = parentView.tmpl.templates,
 			args = arguments,
 			tagFn = tmplTags && tmplTags[tag] || tags[tag];
 
@@ -142,7 +141,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			return "";
 		}
 		// Set the tmpl property to the content of the block tag, unless set as an override property on the tag
-		content = content && parentView.tmpl.tmpls[content - 1];
+		content = content && parentTmpl.tmpls[content - 1];
 		tmpl = tmpl || content || undefined;
 
 		tagObject.tmpl =
@@ -155,7 +154,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		tagObject.view = parentView;
 		tagObject.renderContent = renderContent;
 
-		ret = tagFn.apply(tagObject, args.length > 5 ? slice.call(args, 5) : []);
+		ret = tagFn.apply(tagObject, args.length > 6 ? slice.call(args, 6) : []);
 		return ret || (ret == undefined ? "" : ret.toString()); // (If ret is the value 0 or false, will render to string)
 	}
 
@@ -165,7 +164,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	function View(context, path, parentView, data, template, key, onRender, isArray) {
 		// Constructor for view object in view hierarchy. (Augmented by JsViews if JsViews is loaded)
-		var views = parentView.views,
+		var views,
 			self = {
 				tmpl: template,
 				path: path,
@@ -180,20 +179,23 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				_onRender: onRender
 			};
 
-		if (parentView.isArray) {
-			// Parent is an 'Array View'. Add this view to its views array
-			views.splice(
-			// self.key = self.key - the index in the parent view array
-			self.key = self.index = key !== undefined
-				? key
-				: views.length,
-			0, self);
-		} else {
-			// Parent is an 'Instance View'. Add this view to its views object
-			// self.key = is the key in the parent view map
-			views[self.key = "_" + autoViewKey++] = self;
-			// self.index = is index of the parent
-			self.index = parentView.index;
+		if (parentView) {
+			views = parentView.views;
+			if (parentView.isArray) {
+				// Parent is an 'Array View'. Add this view to its views array
+				views.splice(
+				// self.key = self.key - the index in the parent view array
+				self.key = self.index = key !== undefined
+					? key
+					: views.length,
+				0, self);
+			} else {
+				// Parent is an 'Instance View'. Add this view to its views object
+				// self.key = is the key in the parent view map
+				views[self.key = "_" + autoViewKey++] = self;
+				// self.index = is index of the parent
+				self.index = parentView.index;
+			}
 		}
 		return self;
 	}
@@ -301,35 +303,34 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			key = key || self.key;
 			props = self.props;
 		} else {
-			tmpl = self.jquery && self[0] // This is a call $.fn.render
+			tmpl = self.jquery && self[0] // This is a call from $(selector).render
 			|| self; // This is a call from tmpl.render
 		}
-		parentView = parentView || jsv.topView;
-		parentContext = parentView.ctx;
 		if (tmpl) {
-			if (data === parentView) {
-				// Inherit the data from the parent view.
-				// This may be the contents of an {{if}} block
-				// Set isLayout = true so we don't iterate the if block if the data is an array.
-				data = parentView.data;
-				isLayout = TRUE;
+			if (parentView) {
+				parentContext = parentView.ctx;
+				if (data === parentView) {
+					// Inherit the data from the parent view.
+					// This may be the contents of an {{if}} block
+					// Set isLayout = true so we don't iterate the if block if the data is an array.
+					data = parentView.data;
+					isLayout = TRUE;
+				}
+				onRender = onRender || parentView._onRender;
+			} else {
+				parentContext = jsv.helpers;
 			}
 
 			// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
 			// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
 			// TODO could make this a reusable helper for merging context.
-			context = (context && context === parentContext)
-				? parentContext
-				: context
-			// If context, merge context with copied parentContext
-					? extend(extend({}, parentContext), context)
-					: parentContext;
+			context = (context && context !== parentContext)
+				? extend(extend({}, parentContext), context)
+				: parentContext;
 
 			if (!tmpl.fn) {
 				tmpl = templates[tmpl] || templates(tmpl);
 			}
-
-			onRender = onRender || parentView._onRender;
 
 			if (tmpl) {
 				if ($.isArray(data) && !isLayout) {
@@ -349,7 +350,6 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 					newView._onRender = onRender;
 					result += tmpl.fn(data, newView, jsv);
 				}
-				parentView.topKey = newView.key;
 				return onRender ? onRender(result, tmpl, props, newView.key, path) : result;
 			}
 		}
@@ -497,10 +497,10 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				? (converter === "html"
 					? (hasEncoder = TRUE, "e(" + params)
 					: converter
-						? (hasConverter = TRUE, 'c("' + converter + '",view,' + params)
+						? (hasConverter = TRUE, 'c("' + converter + '",view,this,' + params)
 						: (getsValue = TRUE, "((v=" + params + ')!=u?v:""')
 				)
-				: (hasTag = TRUE, 't("' + tag + '",view,"' + (converter || "") + '",'
+				: (hasTag = TRUE, 't("' + tag + '",view,this,"' + (converter || "") + '",'
 					+ (content ? nested.length : '""') // For block tags, pass in the key (nested.length) to the nested content template
 					+ "," + hash + (params ? "," : "") + params))
 					+ ")+";
@@ -508,15 +508,15 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		}
 		code = fnDeclStr
 		+ (getsValue ? "v," : "")
-		+ (hasTag ? "t=j.tag," : "")
-		+ (hasConverter ? "c=j.convert," : "")
+		+ (hasTag ? "t=j._tag," : "")
+		+ (hasConverter ? "c=j._convert," : "")
 		+ (hasEncoder ? "e=j.converters.html," : "")
 		+ "ret; try{\n\n"
 		+ (tmplOptions.debug ? "debugger;" : "")
 		+ (allowCode ? 'ret=' : 'return ')
 		+ code.slice(0, -1) + ";\n\n"
 		+ (allowCode ? "return ret;" : "")
-		+ "}catch(e){return j.err(e);}";
+		+ "}catch(e){return j._err(e);}";
 
 		try {
 			code = new Function("data, view, j, b, u", code);
@@ -527,7 +527,6 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		// Include only the var references that are needed in the code
 		if (tmpl) {
 			tmpl.fn = code;
-			tmpl.useVw = hasConverter || hasViewPath || hasTag;
 		}
 		return code;
 	}
@@ -799,8 +798,6 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	}
 
 	extend = $.extend;
-
-	jsv.topView = { views: {}, tmpl: {}, _hlp: getHelper, ctx: jsv.helpers };
 
 	function replacerForHtml(ch) {
 		// Original code from Mike Samuel <msamuel@google.com>

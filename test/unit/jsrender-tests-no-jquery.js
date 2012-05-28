@@ -285,9 +285,9 @@ test("render", function() {
 	jsviews.helpers({ myKeyIsCorrect: function() {
 		return this.parent.views[this.key] === this;
 	}});
-	jsviews.templates( "myTmpl12", "top key:{{:~myKeyIsCorrect()}}|{{for people}}nested {{:~myKeyIsCorrect()}}|{{if #index===0}}nested if {{:~myKeyIsCorrect()}}|{{else}}nested else {{:~myKeyIsCorrect()}}|{{/if}}{{/for}}" );
+	jsviews.templates( "myTmpl12", "{{for people}}nested {{:~myKeyIsCorrect()}}|{{if #index===0}}nested if {{:~myKeyIsCorrect()}}|{{else}}nested else {{:~myKeyIsCorrect()}}|{{/if}}{{/for}}" );
 
-	equal( jsviews.render.myTmpl12({ people: people }), "top key:true|nested true|nested if true|nested true|nested else true|",
+	equal( jsviews.render.myTmpl12({ people: people }), "nested true|nested if true|nested true|nested else true|",
 										'#key gives the key of this view in the parent views collection/object' );
 
 	equal( jsviews.templates( tmplString ).render( person ), "A_Jo_B", 'Compile from string: var html = jsviews.templates( tmplString ).render( data );' );

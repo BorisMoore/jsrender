@@ -113,6 +113,10 @@
 		ret = tmpl_JsRenderEncode.fn( movie );
 	});
 
+	test( "JsRender <em>(.render() method - full view-hierarchy features)</em>", times * 50, 1, function() {
+		ret = tmpl_JsRenderEncode.render( movie );
+	});
+
 	// Test full features perf
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
