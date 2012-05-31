@@ -28,8 +28,8 @@
 	];
 
 	/* Compile markup as template objects */
-	var titleTemplate = $.templates( "<tr><td colspan=3>{{:name}}</td></tr>" ),
-		detailTemplate = $.templates( "<tr><td>{{:name}}</td><td>Released: {{:releaseYear}}</td><td>director: {{:director}}</td></tr>" ),
+	var titleTemplate = $.templates( "<tr><td colspan=3>{{>name}}</td></tr>" ),
+		detailTemplate = $.templates( "<tr><td>{{>name}}</td><td>Released: {{>releaseYear}}</td><td>director: {{>director}}</td></tr>" ),
 		details = true;
 
 	function switchTemplates() {

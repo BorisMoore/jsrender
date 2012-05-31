@@ -20,11 +20,11 @@
 <div class="subhead">The simplest (and best) way: Javascript expression '||':</div>
 
 <pre>
-{{:languages||'Languages unavailable'}}
+{{>languages||'Languages unavailable'}}
 </pre>
 
 <table>
-	<thead><tr><th>Title</th><th>{{:path}}</th></tr></thead>
+	<thead><tr><th>Title</th><th>{{>path}}</th></tr></thead>
 	<tbody id="movieList1"></tbody>
 </table>
 
@@ -72,16 +72,16 @@ $.views.tags({
 
 <script id="movieTemplate1" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
-			{{:languages||'Languages unavailable'}}
+			{{>languages||'Languages unavailable'}}
 		</td>
 	</tr>
 </script>
 
 <script id="movieTemplate2" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{get languages defaultValue="No languages!"/}}
 		</td>
@@ -90,10 +90,10 @@ $.views.tags({
 
 <script id="movieTemplate3" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{yesNo languages yes="Alternate languages available:" no="No alternate languages"/}}
-			<em>{{:languages}}</em>
+			<em>{{>languages}}</em>
 		</td>
 	</tr>
 </script>

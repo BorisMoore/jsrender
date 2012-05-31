@@ -22,11 +22,11 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>{{sort languages tmpl="sortedTemplate"/}}</td>
 		<td>{{sort languages reverse=true}}
 				<div>
-					<b>{{:name}}</b>
+					<b>{{>name}}</b>
 				</div>
 			{{/sort}}
 		</td>
@@ -34,7 +34,7 @@
 </script>
 
 <script id="sortedTemplate" type="text/x-jsrender">
-	<div>{{:name}}</div>
+	<div>{{>name}}</div>
 </script>
 
 <div id="movieList"></div>

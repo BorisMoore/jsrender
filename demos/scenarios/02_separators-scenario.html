@@ -26,10 +26,10 @@
 
 <script id="movieTemplate1" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages ~count=languages.length}}
-				{{:name}}{{if #index === ~count-2}} and {{else #index < ~count-2}}, {{/if}}
+				{{>name}}{{if #index === ~count-2}} and {{else #index < ~count-2}}, {{/if}}
 			{{/for}}
 		</td>
 	</tr>
@@ -54,10 +54,10 @@
 
 <script id="movieTemplate2" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages}}
-				{{:name}}{{if ~nextToLast()}} and {{else ~notLast()}}, {{/if}}
+				{{>name}}{{if ~nextToLast()}} and {{else ~notLast()}}, {{/if}}
 			{{/for}}
 		</td>
 	</tr>
@@ -99,10 +99,10 @@ $.templates( "movieTmpl", {
 
 <script id="movieTemplate3" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages}}
-				{{:name}}{{*
+				{{>name}}{{*
 
 					if ( view.index === view.parent.data.length - 2 ) {
 
@@ -141,10 +141,10 @@ $.templates( "movieTmpl", {
 
 <script id="movieTemplate4" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages}}
-				{{:name}}{{*
+				{{>name}}{{*
 
 					if ( view.index === view.parent.data.length - 2 ) {
 						ret += " and";

@@ -23,6 +23,10 @@
 <li>{{html:value}} Converts using built-in HTML encoder. (Better security, but slight perf cost)</li>
 <li>{{>value}} Alternative syntax for built-in HTML encoder.</li>
 </ul><br />
+<div class="box label">
+<b>Note:</b> A common use for converters is to protect against injection attacks from untrusted data.
+<br />It is generally best to use <b>{{> }}</b> when rendering data within element content, if the data is not intended to provide markup for insertion in the DOM.
+<br />In the context of HTML attributes, other encoders can easily be registered, such as an attribute encoder, <b>{{attr: }}</b>.</div>
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>

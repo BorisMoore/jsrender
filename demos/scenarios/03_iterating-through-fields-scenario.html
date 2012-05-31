@@ -18,7 +18,7 @@
 
 <pre>
 {{fields details}}
-    &lt;b>{{:~key}}&lt;/b>: {{:#data}}
+    &lt;b>{{>~key}}&lt;/b>: {{>#data}}
 {{/fields}}
 </pre>
 
@@ -33,7 +33,7 @@
 
 <pre>
 {{for ~getFields(details)}}
-    &lt;b>{{:key}}&lt;/b>: {{:value}}
+    &lt;b>{{>key}}&lt;/b>: {{>value}}
 {{/for}}
 </pre>
 
@@ -49,11 +49,11 @@
 
 <script id="movieTemplate1" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{fields details}}
 				<div>
-					<b>{{:~key}}</b>: {{:#data}}
+					<b>{{>~key}}</b>: {{>#data}}
 				</div>
 			{{/fields}}
 		</td>
@@ -62,11 +62,11 @@
 
 <script id="movieTemplate2" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for ~getFields(details)}}
 				<div>
-					<b>{{:key}}</b>: {{:value}}
+					<b>{{>key}}</b>: {{>value}}
 				</div>
 			{{/for}}
 		</td>

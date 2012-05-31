@@ -13,7 +13,7 @@
 <h3>Helper functions</h3>
 
 <pre>
-{{:~format(name, "upper")}}
+{{>~format(name, "upper")}}
 
 $.views.helpers({
 
@@ -33,10 +33,10 @@ $.views.helpers({
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{:~format(title, "upper")}}</td>
+		<td>{{>~format(title, "upper")}}</td>
 		<td>
 			{{for languages}}
-				{{:~format(name, "lower")}}
+				{{>~format(name, "lower")}}
 			{{/for}}
 		</td>
 	</tr>

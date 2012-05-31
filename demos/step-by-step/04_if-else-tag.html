@@ -14,12 +14,12 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{if languages}}
-				Alternative languages: <em>{{:languages}}</em>.
+				Alternative languages: <em>{{>languages}}</em>.
 			{{else subtitles}}
-				Original language only... <br/>subtitles in <em>{{:subtitles}}</em>.
+				Original language only... <br/>subtitles in <em>{{>subtitles}}</em>.
 			{{else}}
 				Original version only, without subtitles.
 			{{/if}}

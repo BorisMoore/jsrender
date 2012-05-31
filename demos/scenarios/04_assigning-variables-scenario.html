@@ -45,7 +45,7 @@ $.views.helpers({
 
 <pre>
 {{setvar "summary"}}
-    &lt;b>Subtitles only:&lt;/b> {{:subtitles}}
+    &lt;b>Subtitles only:&lt;/b> {{>subtitles}}
 {{/setvar}}
 </pre>
 
@@ -57,15 +57,15 @@ $.views.helpers({
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{if languages}}
 				{{setvar "summary" languages/}}
 				
-				Alternative languages: <em>{{:languages}}</em>.
+				Alternative languages: <em>{{>languages}}</em>.
 			{{else}}
 				{{setvar "summary"}}
-					<b>Subtitles only:</b> {{:subtitles}}
+					<b>Subtitles only:</b> {{>subtitles}}
 				{{/setvar}}
 				
 				Subtitles only. See summary column: 

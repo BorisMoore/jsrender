@@ -27,8 +27,8 @@
 
 	/* Compile markup as named templates */
 	$.templates({
-		titleTemplate: "<tr><td colspan=3>{{:name}}</td></tr>",
-		detailTemplate: "<tr><td>{{:name}}</td><td>Released: {{:releaseYear}}</td><td>director: {{:director}}</td></tr>"
+		titleTemplate: "<tr><td colspan=3>{{>name}}</td></tr>",
+		detailTemplate: "<tr><td>{{>name}}</td><td>Released: {{>releaseYear}}</td><td>director: {{>director}}</td></tr>"
 	});
 
 	var details = true;

@@ -14,7 +14,7 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages tmpl="#columnTemplate"/}}
 		</td>
@@ -29,13 +29,13 @@
 
 <script id="columnTemplate" type="text/x-jsrender">
 	<div>
-		<em>{{:name}}</em>
+		<em>{{>name}}</em>
 	</div>
 </script>
 
 <script id="rowTemplate" type="text/x-jsrender">
 	<span>
-		<b>{{:name}}</b>
+		<b>{{>name}}</b>
 	</span>
 </script>
 

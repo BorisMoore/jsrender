@@ -12,7 +12,7 @@
 
 <script id="peopleTemplate" type="text/x-jsrender">
 
-<b>{{:#index+1}}:</b> {{:firstName}} {{:lastName}}:
+<b>{{:#index+1}}:</b> {{>firstName}} {{>lastName}}:
 
 <br/>
 {{for address tmpl="#addressTemplate"/}}
@@ -20,16 +20,16 @@
 {{if phones cells}}
 	<div>
 		Phones:
-		{{for phones cells}} <b>{{:#data}}</b> ({{:#parent.parent.data.firstName}}'s){{/for}}
+		{{for phones cells}} <b>{{>#data}}</b> ({{>#parent.parent.data.firstName}}'s){{/for}}
 	</div>
 {{/if}}
 <br/>
 
 <i>
-	{{:firstName}}
+	{{>firstName}}
 
 	{{if address.street}}
-		lives in {{:address.street}}.
+		lives in {{>address.street}}.
 	{{else}}
 		has no street address...
 	{{/if}}
@@ -41,11 +41,11 @@
 <script id="addressTemplate" type="text/x-jsrender">
 <div>
 	{{if street}}
-		{{:street}}
+		{{>street}}
 	{{else}}
 		<i>Somewhere</i> in
 	{{/if}}
-	{{:city}}
+	{{>city}}
 </div>
 </script>
 

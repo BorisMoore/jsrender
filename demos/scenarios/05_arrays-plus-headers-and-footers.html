@@ -50,14 +50,14 @@ Template:
 	<tbody>
 		{{for #data}}
 			<tr>
-				<td>{{:title}}</td>
+				<td>{{>title}}</td>
 				<td>
 					{{for [languages]}}
 						<div>
 							{{if #data}}
 								<strong>{{:length}}</strong> languages available:
 								{{for #data}}
-									<em>{{:name}}</em>
+									<em>{{>name}}</em>
 								{{/for}}
 							{{else}}
 								Original version only
