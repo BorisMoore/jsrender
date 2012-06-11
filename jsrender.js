@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 16
+// informal pre beta commit counter: 17
 
 this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
@@ -189,7 +189,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			} else {
 				// Parent is an 'Array View'. Add this view to its views array
 				views.splice(
-				// self.key = self.key - the index in the parent view array
+				// self.key = self.index - the index in the parent view array
 				self.key = self.index = key !== undefined
 					? key
 					: views.length,
@@ -234,12 +234,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	function templates(name, tmpl) {
 		// Register templates
-		// Setter: Use $.view.tags( name, tagFn ) or $.view.tags({ name: tagFn, ... }) to add additional tags to the registered tags collection.
-		// Getter: Use var tagFn = $.views.tags( name ) or $.views.tags[name] or $.views.tags.name to return the function for the registered tag.
-		// Remove: Use $.view.tags( name, null ) to remove a registered tag from $.view.tags.
-
-		// When registering for {{foo a b c==d e=f}}, tagFn should be a function with the signature:
-		// function(a,b). The 'this' pointer will be a hash with properties c and e.
+		// Setter: Use $.templates( name, tagFn ) or $.templates({ name: tagFn, ... }) to add additional templates to the registered templates collection.
+		// Getter: Use var tagFn = $.templates( name ) or $.templates[name] or $.templates.name to return the object for the registered template.
+		// Remove: Use $.templates( name, null ) to remove a registered template from $.templates.
 		return addToStore(this, templates, name, tmpl, compile);
 	}
 
@@ -278,8 +275,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	function renderContent(data, context, path, key, parentView, onRender) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
-		// tagName parameter for internal use only. Used for rendering templates registered as tags (which may have associated presenter objects)
-		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, onRender, props, swapContent, isLayout,
+		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, props, swapContent, isLayout,
 			self = this,
 			result = "";
 
@@ -301,6 +297,13 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			path = path || self.path;
 			key = key || self.key;
 			props = self.props;
+			if ( props && props.link === FALSE ) {
+				// link=false setting on block tag
+				// We will override inherited value of link by the explicit setting link=false taken from props
+				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
+				context =  context || {};
+				context.link = FALSE;
+			}
 		} else {
 			tmpl = self.jquery && self[0] // This is a call from $(selector).render
 			|| self; // This is a call from tmpl.render
@@ -332,6 +335,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			}
 
 			if (tmpl) {
+				onRender = context.link !== FALSE && onRender; // If link===false, do not call onRender, so no data-linking annotations
 				if ($.isArray(data) && !isLayout) {
 					// Create a view for the array, whose child views correspond to each data item.
 					// (Note: if key and parentView are passed in along with parent view, treat as
