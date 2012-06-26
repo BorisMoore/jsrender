@@ -51,12 +51,14 @@ test("{{if}}", function() {
 });
 
 test("{{if}} {{else}}", function() {
-	expect(5);
+	expect(7);
 	equal( jsviews.templates( "A_{{if true}}yes{{else}}no{{/if}}_B" ).render(), "A_yes_B", "{{if a}} {{else}}: a" );
 	equal( jsviews.templates( "A_{{if false}}yes{{else}}no{{/if}}_B" ).render(), "A_no_B", "{{if a}} {{else}}: !a" );
 	equal( jsviews.templates( "A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B" ).render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a" );
 	equal( jsviews.templates( "A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B" ).render(), "A_or_B", "{{if a}} {{else b}} {{else}}: b" );
 	equal( jsviews.templates( "A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B" ).render(), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b" );
+	equal( jsviews.templates( "A_{{if false}}<div title='yes'{{else}}<div title='no'{{/if}}>x</div>_B" ).render(), "A_<div title='no'>x</div>_B", "{{if}} and {{else}} work across HTML tags" );
+	equal( jsviews.templates( "A_<div title='{{if true}}yes'{{else}}no'{{/if}}>x</div>_B" ).render(), "A_<div title='yes'>x</div>_B", "{{if}} and {{else}} work across quoted strings" );
 });
 
 test("{{if}} {{else}} external templates", function() {
@@ -80,13 +82,14 @@ test("convert", function() {
 });
 
 test("paths", function() {
-	expect(16);
+	expect(17);
 	equal( jsviews.templates( "{{:a}}" ).render({ a: "aVal" }), "aVal", "a" );
 	equal( jsviews.templates( "{{:a.b}}" ).render({ a: { b: "bVal" }}), "bVal", "a.b" );
 	equal( jsviews.templates( "{{:a.b.c}}" ).render({ a: { b: { c: "cVal" }}}), "cVal", "a.b.c" );
 	equal( jsviews.templates( "{{:a.name}}" ).render({ a: { name: "aName" }} ), "aName", "a.name" );
 	equal( jsviews.templates( "{{:a['name']}}" ).render({ a: { name: "aName"} } ), "aName", "a['name']");
 	equal( jsviews.templates( "{{:a['x - _*!']}}" ).render({ a: { "x - _*!": "aName"} } ), "aName", "a['x - _*!']");
+	equal( jsviews.templates( "{{:#data['x - _*!']}}" ).render({ "x - _*!": "aName"} ), "aName", "#data['x - _*!']");
 	equal( jsviews.templates( '{{:a["x - _*!"]}}').render({ a: { "x - _*!": "aName"} }), "aName", 'a["x - _*!"]');
 	equal( jsviews.templates( "{{:a.b[1].d}}" ).render({ a: { b: [0, { d: "dVal"}]} }), "dVal", "a.b[1].d");
 	equal( jsviews.templates( "{{:a.b[1].d}}" ).render({ a: { b: {1:{ d: "dVal" }}}}), "dVal", "a.b[1].d" );

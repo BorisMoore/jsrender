@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 17
+// informal pre beta commit counter: 18
 
 this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
@@ -129,16 +129,22 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	function renderTag(tag, parentView, parentTmpl, converter, content, tagObject) {
 		// Called from within compiled template function, to render a nested tag
 		// Returns the rendered tag
-		var ret,
+		var ret, prop,
 			tmplTags = parentTmpl.tags,
-			nestedTemplates = parentTmpl.templates, 
-			tmpl = tagObject.props && tagObject.props.tmpl,
+			nestedTemplates = parentTmpl.templates,
+			props = tagObject.props = tagObject.props || {},
+			tmpl = props.tmpl,
 			args = arguments,
 			tagFn = tmplTags && tmplTags[tag] || tags[tag];
 
 		if (!tagFn) {
 			return "";
 		}
+		if (tmpl) {
+			// We don't want to expose tmpl as a prop to view context
+			delete props.tmpl;
+		}
+
 		// Set the tmpl property to the content of the block tag, unless set as an override property on the tag
 		content = content && parentTmpl.tmpls[content - 1];
 		tmpl = tmpl || content || undefined;
@@ -173,7 +179,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				// If the data is an array, this is an 'Array View' with a views array for each child 'Instance View'
 				// If the data is not an array, this is an 'Instance View' with a views 'map' object for any child nested views
 				views: isArray ? [] : {},
-				_useKey: isArray ? 0 : 1, // non zero if is not an 'Array View' (owning a data array), use this as next key for adding to child views map
+				// _useKey is non zero if is not an 'Array View' (owning a data array). Uuse this as next key for adding to child views map
+				_useKey: isArray ? 0 : 1,
 				_hlp: getHelper,
 				_onRender: onRender
 			};
@@ -273,9 +280,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	// renderContent
 	//=================
 
-	function renderContent(data, context, path, key, parentView, onRender) {
+	function renderContent(data, context, parentView, key, isLayout, path, onRender) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
-		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, props, swapContent, isLayout,
+		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, props, hasProp, swapContent, isLayout, mergedCtx,
 			self = this,
 			result = "";
 
@@ -286,24 +293,35 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		if (self.isTag) {
 			// This is a call from renderTag
 			tmpl = self.tmpl;
-			if (self.props && self.ctx) {
-				extend(self.ctx, self.props);
+			props = self.props;
+			// self.props is an object with the named parameters on the tag, such as foo: {{tag foo=expression...}}
+			if ( props && props.link ) {
+				// We will override inherited value of link by the explicit setting link=false taken from props
+				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
+				delete props.link;
+				// Note: if link was set to false, then the prop.link prop is still there (with value: false), and will be added to ctx.
 			}
-			if (self.ctx && context) {
-				context = extend(self.ctx, context);
+			for (hasProp in props) { break; } // Find out if there are any props
+			if (context || self.ctx || hasProp) {
+				// We need to create an augmented context for the view(s) we are about to render
+				mergedCtx = {};
+				if (hasProp) {
+					// self.props is an object with the named parameters on the tag, such as foo: {{tag foo=expression link=false...}}
+					extend(mergedCtx, props);
+				}
+				if (self.ctx) {
+					// self.ctx is an object with the contextual template parameters on the tag, such as ~foo: {{tag ~foo=expression...}}
+					extend(mergedCtx, self.ctx);
+				}
+				if (context) {
+					// This is a context object passed programmatically from the tag function
+					extend(mergedCtx, context);
+				}
 			}
-			context = self.ctx || context;
+			context = mergedCtx;
 			parentView = parentView || self.view;
 			path = path || self.path;
 			key = key || self.key;
-			props = self.props;
-			if ( props && props.link === FALSE ) {
-				// link=false setting on block tag
-				// We will override inherited value of link by the explicit setting link=false taken from props
-				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
-				context =  context || {};
-				context.link = FALSE;
-			}
 		} else {
 			tmpl = self.jquery && self[0] // This is a call from $(selector).render
 			|| self; // This is a call from tmpl.render
