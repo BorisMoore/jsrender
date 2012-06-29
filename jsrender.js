@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 18
+// informal pre beta commit counter: 19
 
 this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
@@ -58,11 +58,17 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			delimiters: setDelimiters,
 			_convert: convert,
 			_err: function(e) {
-				return jsv.debugMode ? ("<br/><b>Error:</b> <em> " + (e.message || e) + ". </em>") : '""';
+				return jsv.debugMode ? ("Error: " + (e.message || e)) + ". " : '""';
 			},
 			_tmplFn: tmplFn,
-			_tag: renderTag
+			_tag: renderTag,
+			Error: function(message) { // Error exception type for JsViews/JsRender
+				this.name = "JsRender Error",
+				this.message = message || "JsRender error"
+			}
 		};
+
+		(jsv.Error.prototype = new Error()).constructor = jsv.Error;
 	//========================== Top-level functions ==========================
 
 	//===================
@@ -92,7 +98,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			// Default rTag:    tag      converter colon html code     params            slash   closeBlock
 			//    /{{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}
 
-			rTmplString = new RegExp("<.*>|" + openChars + ".*" + closeChars);
+			rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + delimOpenChar0 + delimOpenChar1 + ".*" + delimCloseChar0 + delimCloseChar1);
+			// rTmplString looks for html tags or { or } char not preceeded by \\, or JsRender tags {{xxx}}. Each of these strings are considered NOT to be jQuery selectors
 		}
 		return [delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1];
 	}
@@ -117,9 +124,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	//=================
 
 	function convert(converter, view, tmpl, text) {
-		var tmplConverters = tmpl.converters;
-		converter = tmplConverters && tmplConverters[converter] || converters[converter];
-		return converter ? converter.call(view, text) : text;
+		var tmplConverter = tmpl.converters;
+		tmplConverter = tmplConverter && tmplConverter[converter] || converters[converter];
+		return tmplConverter ? tmplConverter.call(view, text) : (error("Unknown converter: {{"+ converter + ":"), text);
 	}
 
 	//=================
@@ -129,7 +136,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	function renderTag(tag, parentView, parentTmpl, converter, content, tagObject) {
 		// Called from within compiled template function, to render a nested tag
 		// Returns the rendered tag
-		var ret, prop,
+		var ret,
 			tmplTags = parentTmpl.tags,
 			nestedTemplates = parentTmpl.templates,
 			props = tagObject.props = tagObject.props || {},
@@ -138,10 +145,11 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			tagFn = tmplTags && tmplTags[tag] || tags[tag];
 
 		if (!tagFn) {
+			error("Unknown tag: {{"+ tag + "}}");
 			return "";
 		}
 		if (tmpl) {
-			// We don't want to expose tmpl as a prop to view context
+			// We don't want to expose tmpl as a prop to view context in rendered content
 			delete props.tmpl;
 		}
 
@@ -150,9 +158,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		tmpl = tmpl || content || undefined;
 
 		tagObject.tmpl =
-		"" + tmpl === tmpl // if a string
-			? nestedTemplates && nestedTemplates[tmpl] || templates[tmpl] || templates(tmpl)
-			: tmpl;
+			"" + tmpl === tmpl // if a string
+				? nestedTemplates && nestedTemplates[tmpl] || templates[tmpl] || templates(tmpl)
+				: tmpl;
 
 		tagObject.isTag = TRUE;
 		tagObject.converter = converter;
@@ -282,7 +290,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	function renderContent(data, context, parentView, key, isLayout, path, onRender) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
-		var i, l, dataItem, newView, itemWrap, itemsWrap, itemResult, parentContext, tmpl, props, hasProp, swapContent, isLayout, mergedCtx,
+		var i, l, dataItem, newView, itemResult, parentContext, tmpl, props, hasProp, swapContent, isLayout, mergedCtx,
 			self = this,
 			result = "";
 
@@ -323,8 +331,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			path = path || self.path;
 			key = key || self.key;
 		} else {
-			tmpl = self.jquery && self[0] // This is a call from $(selector).render
-			|| self; // This is a call from tmpl.render
+			tmpl = self.jquery && (self[0] || error('Unknown template: "' + self.selector + '"')) // This is a call from $(selector).render
+				|| self;
 		}
 		if (tmpl) {
 			if (parentView) {
@@ -374,7 +382,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				return onRender ? onRender(result, tmpl, props, newView.key, path) : result;
 			}
 		}
-		return ""; // No tmpl. Could throw...
+		error("No template found");
+		return "";
 	}
 
 	//===========================
@@ -384,8 +393,14 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	// Generate a reusable function that will serve to render a template against data
 	// (Compile AST then build template function)
 
-	function syntaxError(message, e) {
-		throw (e ? (e.name + ': "' + e.message + '"') : "Syntax error") + (message ? (" \n" + message) : "");
+	function error(message) {
+		if (jsv.debugMode) {
+			throw new jsv.Error(message);
+		}
+	}
+
+	function syntaxError(message) {
+		error("Syntax error\n" + message);
 	}
 
 	function tmplFn(markup, tmpl, bind) {
@@ -412,6 +427,10 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			}
 		}
 
+		function blockTagCheck(tagName) {
+			tagName && syntaxError('Unmatched or missing tag: "{{/' + tagName + '}}" in template:\n' + markup);
+		}
+
 		function parseTag(all, tagName, converter, colon, html, code, params, slash, closeBlock, index) {
 			//                  tag           converter colon  html  code     params         slash   closeBlock
 			//      /{{(?:(?:(\w+(?=[\/!\s\}!]))|(?:(\w+)?(:)|(?:(>)|(\*)))((?:[^\}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}/g;
@@ -420,7 +439,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				colon = ":";
 				converter = "html";
 			}
-			var hash = "",
+			var current0,
+				hash = "",
 				passedCtx = "",
 				// Block tag if not self-closing and not {{:}} or {{>}} (special case) and not a data-link expression (has bind parameter)
 				block = !slash && !colon && !bind;
@@ -468,15 +488,12 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				}
 				content.push(newNode);
 			} else if (closeBlock) {
-				//if ( closeBlock !== current[ 0 ]) {
-				//	throw "unmatched close tag: /" + closeBlock + ". Expected /" + current[ 0 ];
-				//}
+				current0 = current[0];
+				blockTagCheck(closeBlock !== current0 && !(closeBlock === "if" && current0 === "else") && current0); 
 				current[5] = markup.substring(current[5], index); // contentMarkup for block tag
 				current = stack.pop();
 			}
-			if (!current) {
-				throw "Expected block tag";
-			}
+			blockTagCheck(!current && closeBlock);
 			content = current[3];
 		}
 		//==== /end of nested functions ====
@@ -485,6 +502,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 		// Build the AST (abstract syntax tree) under astTop
 		markup.replace(rTag, parseTag);
+		blockTagCheck(stack[0] && stack[0][3].pop()[0]);
 
 		pushPreceedingContent(markup.length);
 
@@ -542,7 +560,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		try {
 			code = new Function("data, view, j, b, u", code);
 		} catch (e) {
-			syntaxError("Error in compiled template code:\n" + code, e);
+			syntaxError("Compiled template code:\n\n" + code, e);
 		}
 
 		// Include only the var references that are needed in the code
@@ -605,7 +623,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 			}
 
 			if (err) {
-				syntaxError();
+				syntaxError(params);
 			} else {
 				return (aposed
 				// within single-quoted string
@@ -627,7 +645,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 						)
 						: eq
 				// named param
-							? (parenDepth && syntaxError(), named = TRUE, '\b' + path + ':')
+							? (parenDepth && syntaxError(params), named = TRUE, '\b' + path + ':')
 							: path
 				// path
 								? (path.replace(rPath, parsePath)
@@ -645,7 +663,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 												: "")
 										)
 										: comma
-											? (fnCall[parenDepth] || syntaxError(), ",") // We don't allow top-level literal arrays or objects
+											? (fnCall[parenDepth] || syntaxError(params), ",") // We don't allow top-level literal arrays or objects
 											: lftPrn0
 												? ""
 												: (aposed = apos, quoted = quot, '"')
@@ -839,7 +857,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 					l = args.length;
 
 				while (l && !args[i++]) {
-					// Only render content if args.length === 0 (i.e. this is an else with no condition) or if a condition argument is truey
+					// Only render content if args.length === 0 (i.e. this is an else) or if a condition argument is truey
 					if (i === l) {
 						return "";
 					}
@@ -855,7 +873,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		},
 		"else": function() {
 			var view = this.view;
-			return view.onElse ? view.onElse(this, arguments) : "";
+			return view.onElse ? view.onElse( this, arguments ) : "";
 		},
 		"for": function() {
 			var i,

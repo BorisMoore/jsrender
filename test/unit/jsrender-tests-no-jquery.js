@@ -4,7 +4,7 @@ function compileTmpl( template ) {
 		return typeof jsviews.templates( template ).fn === "function" ? "compiled" : "failed compile";
 	}
 	catch(e) {
-		return "error:" + e;
+		return e.message;
 	}
 }
 
@@ -38,7 +38,7 @@ test("{{if}} {{else}}", function() {
 	expect(3);
 	equal( compileTmpl( "A_{{if true}}{{/if}}_B" ), "compiled", "Empty if block: {{if}}{{/if}}" );
 	equal( compileTmpl( "A_{{if true}}yes{{/if}}_B" ), "compiled", "{{if}}...{{/if}}" );
-	equal( compileTmpl( "A_{{if true/}}yes{{/if}}_B" ), "error:Expected block tag", "Mismatching block tags: {{if/}} {{/if}}" );
+	equal( compileTmpl( "A_{{if true/}}yes{{/if}}_B" ), "Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\nA_{{if true/}}yes{{/if}}_B");
 });
 
 module( "{{if}}" );
@@ -170,8 +170,8 @@ test("values", function() {
 
 test("expressions", function() {
 	expect(8);
-	equal( compileTmpl( "{{:a++}}" ), "error:Syntax error", "a++" );
-	equal( compileTmpl( "{{:(a,b)}}" ), "error:Syntax error", "(a,b)" );
+	equal( compileTmpl( "{{:a++}}" ), "Syntax error\na++", "a++" );
+	equal( compileTmpl( "{{:(a,b)}}" ), "Syntax error\n(a,b)", "(a,b)" );
 	equal( jsviews.templates( "{{: a+2}}" ).render({ a: 2, b: false }), "4", "a+2");
 	equal( jsviews.templates( "{{: b?'yes':'no' }}" ).render({ a: 2, b: false }), "no", "b?'yes':'no'");
 	equal( jsviews.templates( "{{:(a||-1) + (b||-1) }}" ).render({ a: 2, b: 0 }), "1", "a||-1");
@@ -195,7 +195,7 @@ test("{{for}}", function() {
 	equal( jsviews.render.templateForArray( [people] ), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array' );
 	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}' );
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
-	equal( jsviews.templates( "{{for}}xxx{{:#data===~undefined}}{{/for}}" ).render(), "xxxtrue", "no parameter - renders once with #data undefined: {{for}}" );
+	equal( jsviews.templates( "{{for}}xxx{{:#data===~test}}{{/for}}" ).render({},{test:undefined}), "xxxtrue", "no parameter - renders once with #data undefined: {{for}}" );
 	equal( jsviews.templates( "{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}" ).render({}), "xxxtrue", "missingProperty - renders once with #data undefined: {{for missingProperty}}" );
 	equal( jsviews.templates( "{{for null}}xxx{{:#data===null}}{{/for}}" ).render(), "xxxtrue", "null - renders once with #data null: {{for null}}" );
 	equal( jsviews.templates( "{{for false}}xxx{{:#data}}{{/for}}" ).render(), "xxxfalse", "false - renders once with #data false: {{for false}}" );
@@ -456,7 +456,7 @@ test("template encapsulation", function() {
 		}
 	};
 	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }), "aval aValbtrue% (double:aVal&aVal) (override outer double:AVAL|AVAL)", 'Access nested resources from template' );
-	equal( jsviews.render.useLower({ a: "aVal" }), "", 'Cannot access nested resources from a different template' );
+	equal( jsviews.render.useLower({ a: "aVal" }), "Error: Unknown tag: {{lower}}. ", 'Cannot access nested resources from a different template' );
 	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }, context), "aval aValbcontextualNot2true% (double:aVal&aVal) (override outer double:contextualUpperAVAL|contextualUpperAVAL)", 'Resources passed in with context override nested resources' );
 	equal( jsviews.templates.tmplWithNestedResources.templates.templateWithDebug.fn.toString().indexOf("debugger;") > 0, true, 'Can set debug=true on nested template' );
 });
