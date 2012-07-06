@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 19
+// informal pre beta commit counter: 20
 
 this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
@@ -14,8 +14,9 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	var versionNumber = "v1.0pre",
 
-		$, rTag, rTmplString, extend,
-		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", sub = {},
+		$, rTag, rTmplString, $extend,
+		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}",
+		$viewsSub = {},
 		FALSE = false, TRUE = true,
 		jQuery = global.jQuery,
 
@@ -42,51 +43,54 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		htmlSpecialChar = /[\x00"&'<>]/g,
 		slice = Array.prototype.slice,
 
-		render = {},
+		$render = {},
 
 		// jsviews object ($.views if jQuery is loaded)
-		jsv = {
+		$views = {
 			jsviews: versionNumber,
-			sub: sub, // subscription, e.g. JsViews integration
+			sub: $viewsSub, // subscription, e.g. JsViews integration
 			debugMode: TRUE,
-			render: render,
-			templates: templates,
-			tags: tags,
-			helpers: helpers,
-			converters: converters,
+			render: $render,
+			templates: $templates,
+			tags: $viewsTags,
+			helpers: $viewsHelpers,
+			converters: $viewsConverters,
+			delimiters: $viewsDelimiters,
 			View: View,
-			delimiters: setDelimiters,
 			_convert: convert,
 			_err: function(e) {
-				return jsv.debugMode ? ("Error: " + (e.message || e)) + ". " : '""';
+				return $views.debugMode ? ("Error: " + (e.message || e)) + ". " : '""';
 			},
 			_tmplFn: tmplFn,
 			_tag: renderTag,
-			Error: function(message) { // Error exception type for JsViews/JsRender
-				this.name = "JsRender Error",
-				this.message = message || "JsRender error"
-			}
+			error: error,
+			Error: JsViewsError
 		};
 
-		(jsv.Error.prototype = new Error()).constructor = jsv.Error;
+		function JsViewsError(message) { // Error exception type for JsViews/JsRender
+			this.name = "JsRender Error",
+			this.message = message || "JsRender error"
+		}
+
+		(JsViewsError.prototype = new Error()).constructor = JsViewsError;
 	//========================== Top-level functions ==========================
 
 	//===================
 	// jsviews.delimiters
 	//===================
 
-	function setDelimiters(openChars, closeChars) {
+	function $viewsDelimiters(openChars, closeChars) {
 		// Set the tag opening and closing delimiters. Default is "{{" and "}}"
 		// openChar, closeChars: opening and closing strings, each with two characters
 
-		if (!jsv.rTag || arguments.length) {
+		if (!$views.rTag || arguments.length) {
 			delimOpenChar0 = openChars ? "\\" + openChars.charAt(0) : delimOpenChar0; // Escape the characters - since they could be regex special characters
 			delimOpenChar1 = openChars ? "\\" + openChars.charAt(1) : delimOpenChar1;
 			delimCloseChar0 = closeChars ? "\\" + closeChars.charAt(0) : delimCloseChar0;
 			delimCloseChar1 = closeChars ? "\\" + closeChars.charAt(0) : delimCloseChar1;
 
 			// Build regex with new delimiters
-			jsv.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
+			$views.rTag = rTag // make rTag available to JsViews (or other components) for parsing binding expressions
 				//          tag    (followed by / space or })   or cvtr+colon or html or code
 				= "(?:(?:(\\w+(?=[\\/\\s" + delimCloseChar0 + "]))|(?:(\\w+)?(:)|(>)|(\\*)))"
 				//     params
@@ -113,36 +117,44 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		var view = this,
 			tmplHelpers = view.tmpl.helpers || {};
 
-		helper = (view.ctx[helper] !== undefined ? view.ctx : tmplHelpers[helper] !== undefined ? tmplHelpers : helpers[helper] !== undefined ? helpers : {})[helper];
+		helper = (
+			view.ctx[helper] !== undefined
+				? view.ctx
+				: tmplHelpers[helper] !== undefined
+					? tmplHelpers
+					: $viewsHelpers[helper] !== undefined
+						? $viewsHelpers
+						: {}
+		)[helper];
 		return typeof helper !== "function" ? helper : function() {
 			return helper.apply(view, arguments);
 		};
 	}
 
 	//=================
-	// jsviews.convert
+	// jsviews._convert
 	//=================
 
 	function convert(converter, view, tmpl, text) {
 		var tmplConverter = tmpl.converters;
-		tmplConverter = tmplConverter && tmplConverter[converter] || converters[converter];
+		tmplConverter = tmplConverter && tmplConverter[converter] || $viewsConverters[converter];
 		return tmplConverter ? tmplConverter.call(view, text) : (error("Unknown converter: {{"+ converter + ":"), text);
 	}
 
 	//=================
-	// jsviews.tag
+	// jsviews._tag
 	//=================
 
-	function renderTag(tag, parentView, parentTmpl, converter, content, tagObject) {
+	function renderTag(tag, parentView, parentTmpl, converter, content, tagInstance) {
 		// Called from within compiled template function, to render a nested tag
 		// Returns the rendered tag
 		var ret,
 			tmplTags = parentTmpl.tags,
 			nestedTemplates = parentTmpl.templates,
-			props = tagObject.props = tagObject.props || {},
+			props = tagInstance.props = tagInstance.props || {},
 			tmpl = props.tmpl,
-			args = arguments,
-			tagFn = tmplTags && tmplTags[tag] || tags[tag];
+			args = arguments.length > 6 ? slice.call(arguments, 6) : [],
+			tagFn = tmplTags && tmplTags[tag] || $viewsTags[tag];
 
 		if (!tagFn) {
 			error("Unknown tag: {{"+ tag + "}}");
@@ -157,17 +169,17 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		content = content && parentTmpl.tmpls[content - 1];
 		tmpl = tmpl || content || undefined;
 
-		tagObject.tmpl =
+		tagInstance.tmpl =
 			"" + tmpl === tmpl // if a string
-				? nestedTemplates && nestedTemplates[tmpl] || templates[tmpl] || templates(tmpl)
+				? nestedTemplates && nestedTemplates[tmpl] || $templates[tmpl] || $templates(tmpl)
 				: tmpl;
 
-		tagObject.isTag = TRUE;
-		tagObject.converter = converter;
-		tagObject.view = parentView;
-		tagObject.renderContent = renderContent;
+		tagInstance.isTag = TRUE;
+		tagInstance.converter = converter;
+		tagInstance.view = parentView;
+		tagInstance.renderContent = renderContent;
 
-		ret = tagFn.apply(tagObject, args.length > 6 ? slice.call(args, 6) : []);
+		ret = tagFn.apply(tagInstance, args);
 		return ret || (ret == undefined ? "" : ret.toString()); // (If ret is the value 0 or false, will render to string)
 	}
 
@@ -240,48 +252,48 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				store[name] = item;
 			}
 		}
-		if (onStore = sub.onStoreItem) {
+		if (onStore = $viewsSub.onStoreItem) {
 			// e.g. JsViews integration
 			onStore(store, name, item, process);
 		}
 		return item;
 	}
 
-	function templates(name, tmpl) {
+	function $templates(name, tmpl) {
 		// Register templates
-		// Setter: Use $.templates( name, tagFn ) or $.templates({ name: tagFn, ... }) to add additional templates to the registered templates collection.
-		// Getter: Use var tagFn = $.templates( name ) or $.templates[name] or $.templates.name to return the object for the registered template.
+		// Setter: Use $.templates( name, tmpl ) or $.templates({ name: tmpl, ... }) to add additional templates to the registered templates collection.
+		// Getter: Use var tmpl = $.templates( name ) or $.templates[name] or $.templates.name to return the object for the registered template.
 		// Remove: Use $.templates( name, null ) to remove a registered template from $.templates.
-		return addToStore(this, templates, name, tmpl, compile);
+		return addToStore(this, $templates, name, tmpl, compile);
 	}
 
-	function tags(name, tagFn) {
+	function $viewsTags(name, tagFn) {
 		// Register template tags
 		// Setter: Use $.view.tags( name, tagFn ) or $.view.tags({ name: tagFn, ... }) to add additional tags to the registered tags collection.
-		// Getter: Use var tagFn = $.views.tags( name ) or $.views.tags[name] or $.views.tags.name to return the function for the registered tag.
+		// Getter: Use var tagFn = $.views.tags( name ) or $.views.tags[name] or $.views.tags.name to return the object for the registered tag.
 		// Remove: Use $.view.tags( name, null ) to remove a registered tag from $.view.tags.
 
-		// When registering for {{foo a b c==d e=f}}, tagFn should be a function with the signature:
+		// When registering for {{foo a b c==d e=f}}, tag should be a function with the signature:
 		// function(a,b). The 'this' pointer will be a hash with properties c and e.
-		return addToStore(this, tags, name, tagFn);
+		return addToStore(this, $viewsTags, name, tagFn);
 	}
 
-	function helpers(name, helperFn) {
+	function $viewsHelpers(name, helperFn) {
 		// Register helper functions for use in templates (or in data-link expressions if JsViews is loaded)
 		// Setter: Use $.view.helpers( name, helperFn ) or $.view.helpers({ name: helperFn, ... }) to add additional helpers to the registered helpers collection.
 		// Getter: Use var helperFn = $.views.helpers( name ) or $.views.helpers[name] or $.views.helpers.name to return the function.
 		// Remove: Use $.view.helpers( name, null ) to remove a registered helper function from $.view.helpers.
 		// Within a template, access the helper using the syntax: {{... ~myHelper(...) ...}}.
-		return addToStore(this, helpers, name, helperFn);
+		return addToStore(this, $viewsHelpers, name, helperFn);
 	}
 
-	function converters(name, converterFn) {
+	function $viewsConverters(name, converterFn) {
 		// Register converter functions for use in templates (or in data-link expressions if JsViews is loaded)
 		// Setter: Use $.view.converters( name, converterFn ) or $.view.converters({ name: converterFn, ... }) to add additional converters to the registered converters collection.
 		// Getter: Use var converterFn = $.views.converters( name ) or $.views.converters[name] or $.views.converters.name to return the converter function.
 		// Remove: Use $.view.converters( name, null ) to remove a registered converter from $.view.converters.
 		// Within a template, access the converter using the syntax: {{myConverter:...}}.
-		return addToStore(this, converters, name, converterFn);
+		return addToStore(this, $viewsConverters, name, converterFn);
 	}
 
 	//=================
@@ -290,7 +302,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	function renderContent(data, context, parentView, key, isLayout, path, onRender) {
 		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
-		var i, l, dataItem, newView, itemResult, parentContext, tmpl, props, hasProp, swapContent, isLayout, mergedCtx,
+		var i, l, dataItem, newView, itemResult, parentContext, tmpl, props, swapContent, mergedCtx,
 			self = this,
 			result = "";
 
@@ -301,32 +313,27 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		if (self.isTag) {
 			// This is a call from renderTag
 			tmpl = self.tmpl;
-			props = self.props;
-			// self.props is an object with the named parameters on the tag, such as foo: {{tag foo=expression...}}
-			if ( props && props.link ) {
-				// We will override inherited value of link by the explicit setting link=false taken from props
-				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
-				delete props.link;
-				// Note: if link was set to false, then the prop.link prop is still there (with value: false), and will be added to ctx.
-			}
-			for (hasProp in props) { break; } // Find out if there are any props
-			if (context || self.ctx || hasProp) {
+			if (context || self.ctx) {// || hasProp) {
 				// We need to create an augmented context for the view(s) we are about to render
 				mergedCtx = {};
-				if (hasProp) {
-					// self.props is an object with the named parameters on the tag, such as foo: {{tag foo=expression link=false...}}
-					extend(mergedCtx, props);
-				}
 				if (self.ctx) {
 					// self.ctx is an object with the contextual template parameters on the tag, such as ~foo: {{tag ~foo=expression...}}
-					extend(mergedCtx, self.ctx);
+					$extend(mergedCtx, self.ctx);
 				}
 				if (context) {
 					// This is a context object passed programmatically from the tag function
-					extend(mergedCtx, context);
+					$extend(mergedCtx, context);
 				}
 			}
 			context = mergedCtx;
+			props = self.props;
+			if ( props && props.link === FALSE ) {
+				// link=false setting on block tag
+				// We will override inherited value of link by the explicit setting link=false taken from props
+				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
+				context =  context || {};
+				context.link = FALSE;
+			}
 			parentView = parentView || self.view;
 			path = path || self.path;
 			key = key || self.key;
@@ -346,18 +353,18 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				}
 				onRender = onRender || parentView._onRender;
 			} else {
-				parentContext = jsv.helpers;
+				parentContext = $viewsHelpers;
 			}
 
 			// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
-			// Note: If no jQuery, extend does not support chained copies - so limit extend() to two parameters
+			// Note: If no jQuery, $extend does not support chained copies - so limit $extend() to two parameters
 			// TODO could make this a reusable helper for merging context.
 			context = (context && context !== parentContext)
-				? extend(extend({}, parentContext), context)
+				? $extend($extend({}, parentContext), context)
 				: parentContext;
 
 			if (!tmpl.fn) {
-				tmpl = templates[tmpl] || templates(tmpl);
+				tmpl = $templates[tmpl] || $templates(tmpl);
 			}
 
 			if (tmpl) {
@@ -370,14 +377,14 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 					for (i = 0, l = data.length; i < l; i++) {
 						// Create a view for each data item.
 						dataItem = data[i];
-						itemResult = tmpl.fn(dataItem, View(context, path, newView, dataItem, tmpl, (key || 0) + i, onRender), jsv);
+						itemResult = tmpl.fn(dataItem, View(context, path, newView, dataItem, tmpl, (key || 0) + i, onRender), $views);
 						result += onRender ? onRender(itemResult, tmpl, props) : itemResult;
 					}
 				} else {
 					// Create a view for singleton data object.
 					newView = swapContent ? parentView : View(context, path, parentView, data, tmpl, key, onRender);
 					newView._onRender = onRender;
-					result += tmpl.fn(data, newView, jsv);
+					result += tmpl.fn(data, newView, $views);
 				}
 				return onRender ? onRender(result, tmpl, props, newView.key, path) : result;
 			}
@@ -394,8 +401,8 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	// (Compile AST then build template function)
 
 	function error(message) {
-		if (jsv.debugMode) {
-			throw new jsv.Error(message);
+		if ($views.debugMode) {
+			throw new $views.Error(message);
 		}
 	}
 
@@ -403,21 +410,18 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		error("Syntax error\n" + message);
 	}
 
+
 	function tmplFn(markup, tmpl, bind) {
 		// Compile markup to AST (abtract syntax tree) then build the template function code from the AST nodes
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
-		var newNode, node, i, l, code, hasTag, hasEncoder, getsValue, hasConverter, hasViewPath, tag, converter, params, hash, nestedTmpl, allowCode,
-			tmplOptions = tmpl ? {
-				allowCode: allowCode = tmpl.allowCode,
-				debug: tmpl.debug
-			} : {},
-			nested = tmpl && tmpl.tmpls,
+
+		var newNode,
+			allowCode = tmpl && tmpl.allowCode,
 			astTop = [],
 			loc = 0,
 			stack = [],
 			content = astTop,
-			current = [, , , astTop],
-			nestedIndex = 0;
+			current = [, , , astTop];
 
 		//==== nested functions ====
 		function pushPreceedingContent(shift) {
@@ -434,7 +438,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		function parseTag(all, tagName, converter, colon, html, code, params, slash, closeBlock, index) {
 			//                  tag           converter colon  html  code     params         slash   closeBlock
 			//      /{{(?:(?:(\w+(?=[\/!\s\}!]))|(?:(\w+)?(:)|(?:(>)|(\*)))((?:[^\}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}/g;
-			// Build abstract syntax tree (AST): [ tagName, converter, params, content, hash, contentMarkup ]
+			// Build abstract syntax tree (AST): [ tagName, converter, params, content, hash, contentMarkup, link ]
 			if (html) {
 				colon = ":";
 				converter = "html";
@@ -462,31 +466,31 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 					block = TRUE;
 				}
 				params = (params
-				? parseParams(params, bind)
-					.replace(rBuildHash, function(all, isCtx, keyValue) {
-						if (isCtx) {
-							passedCtx += keyValue + ",";
-						} else {
-							hash += keyValue + ",";
-						}
-						return "";
-					})
-				: "");
+					? parseParams(params, bind)
+						.replace(rBuildHash, function(all, isCtx, keyValue) {
+							if (isCtx) {
+								passedCtx += keyValue + ",";
+							} else {
+								hash += keyValue + ",";
+							}
+							return "";
+						})
+					: "");
 				hash = hash.slice(0, -1);
 				params = params.slice(0, -1);
 				newNode = [
-				tagName,
-				converter || "",
-				params,
-				block && [],
-				"{" + (hash ? ("props:{" + hash + "},") : "") + "path:'" + params + "'" + (passedCtx ? ",ctx:{" + passedCtx.slice(0, -1) + "}" : "") + "}"
-			];
+						tagName,
+						converter || "",
+						params,
+						block && [],
+						"{" + (hash ? ("props:{" + hash + "},") : "") + "path:'" + params + "'" + (passedCtx ? ",ctx:{" + passedCtx.slice(0, -1) + "}" : "") + "}"
+					];
+				content.push(newNode);
 				if (block) {
 					stack.push(current);
 					current = newNode;
 					current[5] = loc; // Store current location of open tag, to be able to add contentMarkup when we reach closing tag
 				}
-				content.push(newNode);
 			} else if (closeBlock) {
 				current0 = current[0];
 				blockTagCheck(closeBlock !== current0 && !(closeBlock === "if" && current0 === "else") && current0); 
@@ -499,50 +503,66 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		//==== /end of nested functions ====
 
 		markup = markup.replace(rEscapeQuotes, "\\$1");
+		blockTagCheck(stack[0] && stack[0][3].pop()[0]);
 
 		// Build the AST (abstract syntax tree) under astTop
 		markup.replace(rTag, parseTag);
-		blockTagCheck(stack[0] && stack[0][3].pop()[0]);
 
 		pushPreceedingContent(markup.length);
+		return  buildCode(astTop, tmpl);
+	}
 
-		// Use the AST (astTop) to build the template function
-		l = astTop.length;
+	function buildCode(ast, tmpl) {
+		// Build the template function code from the AST nodes, and set as property on the passed in template object
+		// Used for compiling templates, and also by JsViews to build functions for data link expressions
+		var node, i, l, code, hasTag, hasEncoder, getsValue, hasConverter, hasViewPath, tag, converter, params, hash, nestedTmpl, allowCode, content,
+			tmplOptions = tmpl ? {
+				allowCode: allowCode = tmpl.allowCode,
+				debug: tmpl.debug
+			} : {},
+			nested = tmpl && tmpl.tmpls,
+			nestedIndex = 0;
+
+		// Use the AST (ast) to build the template function
+		l = ast.length;
 		code = (l ? "" : '"";');
 
 		for (i = 0; i < l; i++) {
-			// AST nodes: [ tagName, converter, params, content, hash, contentMarkup ]
-			node = astTop[i];
+			// AST nodes: [ tagName, converter, params, content, hash, contentMarkup, link ]
+			node = ast[i];
 			if ("" + node === node) { // type string
 				code += '"' + node + '"+';
-			} else if (node[0] === "*") {
-				code = code.slice(0, i ? -1 : -3) + ";" + node[1] + (i + 1 < l ? "ret+=" : "");
 			} else {
 				tag = node[0];
-				converter = node[1];
-				params = node[2];
-				content = node[3];
-				hash = node[4];
-				markup = node[5];
-				if (content) {
-					// Create template object for nested template
-					nestedTmpl = TmplObject(markup, tmplOptions, tmpl, nestedIndex++);
-					// Compile to AST and then to compiled function
-					tmplFn(markup, nestedTmpl);
-					nested.push(nestedTmpl);
+				if (tag === "*") {
+					code = code.slice(0, i ? -1 : -3) + ";" + node[1] + (i + 1 < l ? "ret+=" : "");
+				} else {
+					converter = node[1];
+					params = node[2];
+					content = node[3];
+					hash = node[4];
+					markup = node[5];
+
+					if (content) {
+						// Create template object for nested template
+						nestedTmpl = TmplObject(markup, tmplOptions, tmpl, nestedIndex++);
+						// Compile to AST and then to compiled function
+						buildCode(node[3], nestedTmpl);
+						nested.push(nestedTmpl);
+					}
+					hasViewPath = hasViewPath || hash.indexOf("view") > -1;
+					code += (tag === ":"
+					? (converter === "html"
+						? (hasEncoder = TRUE, "e(" + params)
+						: converter
+							? (hasConverter = TRUE, 'c("' + converter + '",view,this,' + params)
+							: (getsValue = TRUE, "((v=" + params + ')!=u?v:""')
+					)
+					: (hasTag = TRUE, 't("' + tag + '",view,this,"' + (converter || "") + '",'
+						+ (content ? nested.length : '""') // For block tags, pass in the key (nested.length) to the nested content template
+						+ "," + hash + (params ? "," : "") + params))
+						+ ")+";
 				}
-				hasViewPath = hasViewPath || hash.indexOf("view") > -1;
-				code += (tag === ":"
-				? (converter === "html"
-					? (hasEncoder = TRUE, "e(" + params)
-					: converter
-						? (hasConverter = TRUE, 'c("' + converter + '",view,this,' + params)
-						: (getsValue = TRUE, "((v=" + params + ')!=u?v:""')
-				)
-				: (hasTag = TRUE, 't("' + tag + '",view,this,"' + (converter || "") + '",'
-					+ (content ? nested.length : '""') // For block tags, pass in the key (nested.length) to the nested content template
-					+ "," + hash + (params ? "," : "") + params))
-					+ ")+";
 			}
 		}
 		code = fnDeclStr
@@ -569,6 +589,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		}
 		return code;
 	}
+
 
 	function parseParams(params, bind) {
 		var named,
@@ -703,13 +724,13 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 					}
 					// It is a script element
 					// Create a name for data linking if none provided
-					value = templates[elem.getAttribute(tmplAttr)];
+					value = $templates[elem.getAttribute(tmplAttr)];
 					if (!value) {
 						// Not already compiled and cached, so compile and cache the name
 						name = name || "_" + autoTmplName++;
 						elem.setAttribute(tmplAttr, name);
 						value = compile(name, elem.innerHTML, parent, options); // Use tmpl as options
-						templates[name] = value;
+						$templates[name] = value;
 					}
 				}
 				return value;
@@ -736,7 +757,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		}
 		if (tmplOrMarkup !== undefined) {
 			if (name && !parent) {
-				render[name] = function() {
+				$render[name] = function() {
 					return tmpl.render.apply(tmpl, arguments);
 				};
 			}
@@ -744,7 +765,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 				// tmpl is already compiled, so use it, or if different name is provided, clone it
 				if (tmplOrMarkup.fn) {
 					if (name && name !== tmplOrMarkup.name) {
-						tmpl = extend(extend({}, tmplOrMarkup), options);
+						tmpl = $extend($extend({}, tmplOrMarkup), options);
 					} else {
 						tmpl = tmplOrMarkup;
 					}
@@ -775,7 +796,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		function extendStore(storeName) {
 			if (parent[storeName]) {
 				// Include parent items except if overridden by item of same name in options
-				tmpl[storeName] = extend(extend({}, parent[storeName]), options[storeName]);
+				tmpl[storeName] = $extend($extend({}, parent[storeName]), options[storeName]);
 			}
 		}
 
@@ -789,14 +810,14 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 		if (parent) {
 			if (parent.templates) {
-				tmpl.templates = extend(extend({}, parent.templates), options.templates);
+				tmpl.templates = $extend($extend({}, parent.templates), options.templates);
 			}
 			tmpl.parent = parent;
 			tmpl.name = parent.name + "[" + key + "]";
 			tmpl.key = key;
 		}
 
-		extend(tmpl, options);
+		$extend(tmpl, options);
 		if (parent) {
 			extendStore("templates");
 			extendStore("tags");
@@ -812,16 +833,16 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is loaded, so make $ the jQuery object
 		$ = jQuery;
-		$.templates = templates;
-		$.render = render;
-		$.views = jsv;
+		$.templates = $templates;
+		$.render = $render;
+		$.views = $views;
 		$.fn.render = renderContent;
 
 	} else {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is not loaded.
 
-		$ = global.jsviews = jsv;
+		$ = global.jsviews = $views;
 		$.extend = function(target, source) {
 			var name;
 			target = target || {};
@@ -836,7 +857,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		};
 	}
 
-	extend = $.extend;
+	$extend = $.extend;
 
 	function replacerForHtml(ch) {
 		// Original code from Mike Samuel <msamuel@google.com>
@@ -847,24 +868,24 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	//========================== Register tags ==========================
 
-	tags({
+	$viewsTags({
 		"if": function() {
 			var ifTag = this,
 				view = ifTag.view;
 
-			view.onElse = function(tagObject, args) {
+			view.onElse = function(tagInstance, args) {
 				var i = 0,
 					l = args.length;
 
 				while (l && !args[i++]) {
-					// Only render content if args.length === 0 (i.e. this is an else) or if a condition argument is truey
+					// Only render content if args.length === 0 (i.e. this is an else with no condition) or if a condition argument is truey
 					if (i === l) {
 						return "";
 					}
 				}
 				view.onElse = undefined; // If condition satisfied, so won't run 'else'.
-				tagObject.path = "";
-				return tagObject.renderContent(view);
+				tagInstance.path = "";
+				return tagInstance.renderContent(view);
 				// Test is satisfied, so render content, while remaining in current data context
 				// By passing the view, we inherit data context from the parent view, and the content is treated as a layout template
 				// (so if the data is an array, it will not iterate over the data
@@ -873,7 +894,7 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 		},
 		"else": function() {
 			var view = this.view;
-			return view.onElse ? view.onElse( this, arguments ) : "";
+			return view.onElse ? view.onElse(this, arguments) : "";
 		},
 		"for": function() {
 			var i,
@@ -898,13 +919,13 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 
 	//========================== Register global helpers ==========================
 
-	//	helpers({ // Global helper functions
+	//	$viewsHelpers({ // Global helper functions
 	//		// TODO add any useful built-in helper functions
 	//	});
 
 	//========================== Register converters ==========================
 
-	converters({
+	$viewsConverters({
 		html: function(text) {
 			// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
 			// inspired by Mike Samuel <msamuel@google.com>
@@ -913,6 +934,6 @@ this.jsviews || this.jQuery && jQuery.views || (function(global, undefined) {
 	});
 
 	//========================== Define default delimiters ==========================
-	setDelimiters();
+	$viewsDelimiters();
 
 })(this);
