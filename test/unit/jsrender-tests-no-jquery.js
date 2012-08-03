@@ -216,7 +216,8 @@ test("templates", function() {
 	equal( tmpl.render( person ), "A_Jo_B", 'Compile from string: var tmpl = jsviews.templates( tmplString );' );
 
 	var fnToString = tmpl.fn.toString();
-	equal( jsviews.templates( "", tmplString ).fn.toString() === fnToString && jsviews.templates( null, tmplString ).fn.toString() === fnToString && jsviews.templates( undefined, tmplString ).fn.toString() === fnToString, true, 'if name is "", null, or undefined, then jsviews.templates( name, tmplString ) = jsviews.templates( tmplString );' );
+	equal( jsviews.templates( "", tmplString ).fn.toString() === fnToString && jsviews.templates( null, tmplString ).fn.toString() === fnToString && jsviews.templates( undefined, tmplString ).fn.toString() === fnToString, true, 
+	'if name is "", null, or undefined, then jsviews.templates( name, tmplString ) = jsviews.templates( tmplString );' );
 
 	jsviews.templates( "myTmpl", tmplString );
 	equal( jsviews.render.myTmpl( person ), "A_Jo_B", 'Compile and register named template: jsviews.templates( "myTmpl", tmplString );' );
@@ -320,7 +321,7 @@ test("converters", function() {
 	equal(locFn === loc && jsviews.converters.loc === loc && jsviews.converters.loc2 === loc, true, 'locFunction === jsviews.converters.loc === jsviews.converters.loc2' );
 
 	jsviews.converters({ loc2: null});
-	equal(jsviews.converters("loc2"), undefined, 'jsviews.converters({ loc2: null }) to remove registered converter' );
+	equal(jsviews.converters.loc2, undefined, 'jsviews.converters({ loc2: null }) to remove registered converter' );
 });
 
 test("tags", function() {
@@ -331,11 +332,11 @@ test("tags", function() {
 
 	equal(jsviews.templates( "{{sort reverse=false people reverse=true towns}}{{:name}}{{/sort}}" ).render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Duplicate named parameters - last wins: {{sort reverse=false people reverse=true towns}}" );
 
-	var sortFn = jsviews.tags("sort2", sort);
-	equal(sortFn === sort && jsviews.tags.sort === sort && jsviews.tags.sort2 === sort, true, 'sortFunction === jsviews.tags.sort === jsviews.tags.sort2' );
+	var sort2 = jsviews.tags("sort2", sort);
+	equal(sort2.render === sort && jsviews.tags.sort.render === sort && jsviews.tags.sort2.render === sort, true, 'sortFunction === jsviews.tags.sort.render === jsviews.tags.sort2.render' );
 
 	jsviews.tags("sort2", null);
-	equal(jsviews.tags("locsort2"), undefined, 'jsviews.tags( "sort2", null ) to remove registered tag' );
+	equal(jsviews.tags.sort2, undefined, 'jsviews.tags( "sort2", null ) to remove registered tag' );
 });
 
 test("helpers", function() {
@@ -360,7 +361,7 @@ test("helpers", function() {
 	equal( toUpperCaseFn === toUpperCase && jsviews.helpers.toUpperCase === toUpperCase && jsviews.helpers.toUpperCase2 === toUpperCase, true, 'sortFunction === jsviews.helpers.toUpperCase === jsviews.helpers("toUpperCase")' );
 
 	jsviews.helpers("toUpperCase2", null);
-	equal(jsviews.helpers("toUpperCase2"), undefined, 'jsviews.helpers( "toUpperCase2", null ) to remove registered helper' );
+	equal(jsviews.helpers.toUpperCase2, undefined, 'jsviews.helpers( "toUpperCase2", null ) to remove registered helper' );
 });
 
 test("template encapsulation", function() {
@@ -455,6 +456,7 @@ test("template encapsulation", function() {
 			return "contextualNot2" + !value;
 		}
 	};
+	jsviews.render.tmplWithNestedResources({ a: "aVal" })
 	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }), "aval aValbtrue% (double:aVal&aVal) (override outer double:AVAL|AVAL)", 'Access nested resources from template' );
 	equal( jsviews.render.useLower({ a: "aVal" }), "Error: Unknown tag: {{lower}}. ", 'Cannot access nested resources from a different template' );
 	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }, context), "aval aValbcontextualNot2true% (double:aVal&aVal) (override outer double:contextualUpperAVAL|contextualUpperAVAL)", 'Resources passed in with context override nested resources' );

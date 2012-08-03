@@ -125,7 +125,7 @@ test("tags", function() {
 	equal( $.templates( "{{sort people reverse=true}}{{:name}}{{/sort}}" ).render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })" );
 
 	$.views.tags( "sort2", sort );
-	equal( $.views.tags.sort === sort, true, 'sortFunction === $.views.tags.sort' );
+	equal( $.views.tags.sort.render === sort, true, 'sortFunction === $.views.tags.sort' );
 
 	$.views.tags( "sort2", null );
 	equal( $.views.tags.sort2, undefined, 'Remove a registered tag: $.views.tag({ sor: null })' );
