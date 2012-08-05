@@ -10,9 +10,9 @@
 <body>
 <a href="../demos.html">JsRender Demos</a><br />
 
-<h3>Template context: Passing in additional variables</h3>
+<h3>Template context: Passing in additional variables to a render() call</h3>
 
-<div class="subhead">Passing in contextual variables or helper functions:</div>
+<div class="subhead">Passing in contextual variables or helper functions, using the options parameter of <em>...render( data, options );</em></div>
 <pre>
 $( selector ).render( data, {
     reverseSort: reverse,
@@ -21,7 +21,8 @@ $( selector ).render( data, {
 })
 </pre>
 
-<div class="subhead">Use ~name to access a context variable or helper by name:</div>
+<div class="subhead">Use <em>~name</em> to context variables or helpers by name - whether passed in with options,</div>
+<div class="subhead">registered globally as helpers, or registered as helpers for a specific template.</div>
 
 <pre>
 &lt;th>&lt;button>{{>~buttonCaption}}&lt;/button>&lt;/th>
@@ -99,11 +100,11 @@ $( selector ).render( data, {
 				]
 			}
 		];
-	
+
 	function myFormatFunction(value) {
 		return upperCase ? value.toUpperCase() : value.toLowerCase();
 	}
-	
+
 	$("#movieList")
 		.on("click", "#sortBtn", function(){
 			reverse = !reverse;
