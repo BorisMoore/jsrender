@@ -269,7 +269,10 @@
 			return self;
 		}
 		if (item === undefined) {
-			item = name;
+			if (name in store)
+				item = store[name];
+			else
+				item = name;			
 			name = undefined;
 		}
 		if (onStore = $viewsSub.onBeforeStoreItem) {
