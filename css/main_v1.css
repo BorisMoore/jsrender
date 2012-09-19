@@ -2,7 +2,8 @@ html, body {
   background: white;
   height: 100%;
   margin: 0;
-  padding: 0;   
+  padding: 0;  
+  width: 100%; 
 }
 
 html { 
@@ -45,11 +46,11 @@ section:last-child {
 }
 
 .wrapper {
-  padding: 0 5%;
+  padding: 0 5% 0 1%;
   position: relative;
   margin: 0 auto;
   max-width: 900px;
-  width: 90%;
+  width: 85%;
 }
 
 #splash {
@@ -128,8 +129,7 @@ section.wrapper {
   clear: both;
   padding-top: 7em;
   margin-top: 1em;
-  margin-bottom: 44px;
-  overflow: hidden;
+  margin-bottom: 4em;
 }
 
 section.wrapper {
