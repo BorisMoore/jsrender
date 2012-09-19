@@ -1,0 +1,230 @@
+<!doctype html>  
+<html lang="en">  
+<head>  
+  <meta charset="utf-8">  
+  <title>JsRender: Next-generation jQuery Templates</title>  
+  <meta name="description" content="JsRender is used for rendering of templates to strings, ready for insertion in the DOM.">  
+  <meta name="author" content="Boris Moore">  
+  <script type="text/javascript" src="js/XRegExp.js"></script>
+  <script type="text/javascript" src="js/shCore.js"></script>
+  <script type="text/javascript" src="js/shBrushJScript.js"></script>
+  <script type="text/javascript" src="js/shBrushXml.js"></script>
+  <link type="text/css" rel="stylesheet" href="css/shCore.css"/>
+  <link type="text/css" rel="Stylesheet" href="css/shThemeDefault.css" />
+  <link rel="stylesheet" href="css/retina.css">
+  <link rel="stylesheet" href="css/main_v1.css">
+  <script type="text/javascript">SyntaxHighlighter.all();</script>
+</head>  
+  <body>
+    <section id="splash">
+      <div class="wrapper">
+        <div class="text">
+          <h1>JsRender</h1>
+          <h2>Next-generation jQuery Templates</h2>
+        </div>
+        <div class="links">
+          <a class="download" title="Download JsRender" href="https://github.com/BorisMoore/jsrender/zipball/master">Downlaod v1.0pre</a>
+          <a titile="View JsRender on Github" href="https://github.com/BorisMoore/jsrender">View on Github</a>
+        </div>
+        <div class="image">
+          <img alt="JsRender" class="retina" src="img/jsrender.retina.jpg"/>
+          <img alt="JsRender" class="notretina" src="img/jsrender.jpg"/>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapterintro wrapper">
+      <h3>Basic Usage</h3>
+    </section>
+
+    <section class="entry wrapper">
+      <div class="text">
+        <h4>Render template from script block</h4>
+      </div>
+      <div class="code">
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+          
+          <table></table>
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+
+          <script id="personTmpl" type="text/x-jsrender">
+            <tr>
+              <td>{{>firstName}}</td>
+            </tr>
+          &lt;/script>
+
+        ]]></script>
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          var person = {
+            firstName: "Jeff"
+          };
+
+        ]]></script>
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          var html = $("#personTmpl").render(person);
+
+          $("table").append(html);
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+          
+          <table>
+            <tr>
+              <td>Jeff</td>
+            </tr>
+          </table>
+          
+        ]]></script>
+      </div>
+    </section>
+
+    <section class="entry wrapper">
+      <div class="text">
+        <h4>Compile template object from string</h4>
+      </div>
+      <div class="code">
+
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+          
+          <table></table>
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          var person = {
+            firstName: "Jeff"
+          };
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          var template = $.templates("<tr><td>{{>firstName}}</td></tr>");
+           
+          var html = template.render(person);
+           
+          $("table").append(html);
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+          
+          <table>
+            <tr>
+              <td>Jeff</td>
+            </tr>
+          </table>
+          
+        ]]></script>
+      </div>
+    </section>
+
+    <section class="entry wrapper">
+      <div class="text">
+        <h4>Compile from string as named template</h4>
+      </div>
+      <div class="code">
+
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+          
+          <table></table>
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          var person = {
+            firstName: "Jeff"
+          };
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          $.templates("detailsTmpl", "<tr><td>{{>firstName}}</td></tr>");
+           
+          var html = $.render.detailsTmpl(person);
+           
+          $("table").append(html);
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: xml; gutter: false"><![CDATA[
+          
+          <table>
+            <tr>
+              <td>Jeff</td>
+            </tr>
+          </table>
+          
+        ]]></script>
+      </div>
+    </section>
+
+    <section class="chapterintro wrapper">
+      <h3>Basic Commands</h3>
+    </section>
+
+    <section class="entry wrapper">
+      <div class="text">
+        <h4>Outputting data<br/>HTML-escaped</h4>
+      </div>
+      <div class="code">
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+          
+          $.templates("text", "{{>text}}");
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          $.render["text"]({text: "This is a TEXT"});
+
+        ]]></script>
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          This is a Text
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          $.render["text"]({text: "This is a <strong>TEXT</strong>"});
+
+        ]]></script>
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          This is a &amp;lt;strong&amp;gt;TEXT&amp;lt;/strong&amp;gt;
+
+        ]]></script>
+      </div>
+    </section>
+
+    <section class="entry wrapper">
+      <div class="text">
+        <h4>Outputting data<br/>HTML-unescaped</h4>
+      </div>
+      <div class="code">
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          $.render["text"]({text: "This is a <strong>TEXT</strong>"});
+
+        ]]></script>
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          This is a <strong>TEXT</strong>
+
+        ]]></script>
+      </div>
+    </section>
+
+  </body>
+</html>  

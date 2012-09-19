@@ -1,0 +1,13 @@
+img.retina {
+  display: none !important;
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  img.retina {
+    display: block !important;
+  }
+
+  img.notretina {
+    display: none !important;
+  }
+}
