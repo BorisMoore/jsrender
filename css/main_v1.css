@@ -155,6 +155,10 @@ section.wrapper .text {
   width: 30%;
 }
 
+section.wrapper .text h4 {
+  padding-bottom: 22px;
+}
+
 section.wrapper .code {
   float: right;
   font-size: 1.5em;
@@ -175,4 +179,37 @@ section.wrapper .code {
 
 .syntaxhighlighter .container .line {
   background: rgb(248,248,255) !important;
+}
+
+
+@media only screen and (max-width : 1000px) {
+  #splash .image img {
+    height: auto;
+    width: 40%;
+  } 
+}
+
+@media only screen and (max-width : 800px) {
+  #splash .image {
+    display: none;
+  } 
+}
+
+@media only screen and (max-width : 650px) {
+
+  section.wrapper .text {
+    display: block;
+    float: none;
+    width: 100%;
+  }
+
+  section.wrapper .code {
+    display: block;
+    float: none;
+    width: 100%;
+  }
+
+  section.wrapper {
+    margin-top: 30px;
+  }
 }
