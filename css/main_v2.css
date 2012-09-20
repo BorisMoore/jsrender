@@ -49,7 +49,6 @@ section:last-child {
   padding: 0 5% 0 1%;
   position: relative;
   margin: 0 auto;
-  overflow:hidden;
   max-width: 900px;
   width: 85%;
 }
@@ -162,18 +161,40 @@ h4 {
   font-size: 2.2em;
 }
 
-section.wrapper .text {
+section.entry .text {
   float: left;
   width: 30%;
 }
 
-section.wrapper .text h4 {
+section.entry .text:last-child {
+  margin-bottom: 2.0em;
+}
+
+section.entry .text h4 {
   padding-bottom: 22px;
 }
 
-section.wrapper .code {
+section.entry .text p {
+  font-size: 1.5em;
+  line-height: 1.7em;
+  margin-bottom: 1.4em;
+}
+
+section.entry .text p code {
+  background: rgb(248,248,255) !important;
+  border: 1px solid rgb(200,200,200);
+  font-weight: normal;
+  padding: 4px 4px;
+  position: relative;
+  top: -1px;
+  border-radius: 4px;
+  vertical-align: top;
+}
+
+section.entry .code {
   float: right;
   font-size: 1.5em;
+  margin-bottom: 2.5em;
   width: 66%;
 }
 
@@ -193,6 +214,15 @@ section.wrapper .code {
   background: rgb(248,248,255) !important;
 }
 
+.syntaxhighlighter .line {
+  white-space: normal !important;
+}
+
+.syntaxhighlighter table td.code .line {
+  padding: none !important;
+}
+
+/* MEDIA QUERIES */
 
 @media only screen and (max-width : 1000px) {
   #splash .image img {
@@ -211,13 +241,17 @@ section.wrapper .code {
 
 @media only screen and (max-width : 650px) {
 
-  section.wrapper .text {
+  section.entry .text {
     display: block;
     float: none;
     width: 100%;
   }
 
-  section.wrapper .code {
+  section.entry .text p {
+    font-size: 1.8em;
+  }
+
+  section.entry .code {
     display: block;
     float: none;
     width: 100%;
