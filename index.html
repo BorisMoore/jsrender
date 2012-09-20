@@ -149,9 +149,9 @@
 
         <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
 
-          $.templates("detailsTmpl", "<tr><td>{{>firstName}}</td></tr>");
+          $.templates("personTmpl", "<tr><td>{{>firstName}}</td></tr>");
            
-          var html = $.render.detailsTmpl(person);
+          var html = $.render.personTmpl(person);
            
           $("table").append(html);
 
@@ -213,6 +213,12 @@
         <h4>Outputting data<br/>HTML-unescaped</h4>
       </div>
       <div class="code">
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+          
+          $.templates("text", "{{:text}}");
+
+        ]]></script>
 
         <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
 
