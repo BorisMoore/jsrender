@@ -177,7 +177,7 @@
 
     <section class="entry wrapper">
       <div class="text">
-        <h4>Outputting data<br/>HTML-unescaped</h4>
+        <h4>Outputting data<br/>containing HTML markup</h4>
       </div>
       <div class="code">
 
@@ -199,8 +199,7 @@
         ]]></script>
       </div>
       <div class="text">
-        <p>For default data output use the <code>{{:attrName}}</code> command.</p>
-        <p>Use this command to render values that include html markup.</p>
+        <p>For default data output use the <code>{{:value}}</code> command.</p>
       </div>
     </section>
 
@@ -228,7 +227,8 @@
       </div>
 
       <div class="text">
-        <p>For outputting data that should be HTML-escaped you can use the <code>{{>attrName}}</code> command.</p>
+        <p>For outputting data that should be HTML-escaped you can use the <code>{{>value}}</code> command.</p>
+        <p>You could also use <code>{{html:value}}</code> which provides better security, but has slight performance cost.</p>
       </div>
     </section>
 
