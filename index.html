@@ -177,6 +177,34 @@
 
     <section class="entry wrapper">
       <div class="text">
+        <h4>Outputting data<br/>HTML-unescaped</h4>
+      </div>
+      <div class="code">
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+          
+          $.templates("text", "{{:text}}");
+
+        ]]></script>
+
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          $.render["text"]({text: "This is a <strong>TEXT</strong>"});
+
+        ]]></script>
+        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
+
+          This is a <strong>TEXT</strong>
+
+        ]]></script>
+      </div>
+      <div class="text">
+        <p>For default data output use the <code>{{:attrName}}</code> command.</p>
+      </div>
+    </section>
+
+    <section class="entry wrapper">
+      <div class="text">
         <h4>Outputting data<br/>HTML-escaped</h4>
       </div>
       <div class="code">
@@ -210,36 +238,9 @@
       </div>
 
       <div class="text">
-        <p>For outputting data you can use the <code>{{>attrName}}</code> command.</p>
-
+        <p>For outputting data that should be HTML-escaped you can use the <code>{{>attrName}}</code> command.</p>
       </div>
     </section>
-
-    <section class="entry wrapper">
-      <div class="text">
-        <h4>Outputting data<br/>HTML-unescaped</h4>
-      </div>
-      <div class="code">
-
-        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
-          
-          $.templates("text", "{{:text}}");
-
-        ]]></script>
-
-        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
-
-          $.render["text"]({text: "This is a <strong>TEXT</strong>"});
-
-        ]]></script>
-        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
-
-          This is a <strong>TEXT</strong>
-
-        ]]></script>
-      </div>
-    </section>
-
 
     <section class="wrapper" id="footer">
 
