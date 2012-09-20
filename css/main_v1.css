@@ -49,13 +49,26 @@ section:last-child {
   padding: 0 5% 0 1%;
   position: relative;
   margin: 0 auto;
+  overflow:hidden;
   max-width: 900px;
   width: 85%;
+}
+
+#footer {
+  display: block;
+  height: 3em;
+  margin-top: 10em;
+  margin-bottom: 1em;
+  width: 100%;
 }
 
 #splash {
   background: rgb(246,246,240);
   color: white;
+  height: 50em;
+}
+
+#splash .wrapper {
   height: 50em;
 }
 
@@ -118,11 +131,11 @@ section:last-child {
 }
 
 #splash .image img {
-  height: 458px;
+  height: auto;
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 500px;
+  top: 4em;
+  right: 8em;
+  width: 38em;
 }
 
 section.wrapper {
@@ -184,7 +197,9 @@ section.wrapper .code {
 @media only screen and (max-width : 1000px) {
   #splash .image img {
     height: auto;
-    width: 40%;
+    top: 2em;
+    right: 0em;
+    width: 38%;
   } 
 }
 
@@ -219,6 +234,10 @@ section.wrapper .code {
   #splash {
     background: rgb(246,246,240);
     color: white;
+    height: 30em;
+  }
+
+  #splash .wrapper {
     height: 30em;
   }
 
