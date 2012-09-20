@@ -200,6 +200,7 @@
       </div>
       <div class="text">
         <p>For default data output use the <code>{{:attrName}}</code> command.</p>
+        <p>Use this command to render values that include html markup.</p>
       </div>
     </section>
 
@@ -216,23 +217,12 @@
 
         <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
 
-          $.render["text"]({text: "This is a TEXT"});
+          $.render["text"]({text: "This was a user <strong>INPUT</strong>"});
 
         ]]></script>
         <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
 
-          This is a Text
-
-        ]]></script>
-
-        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
-
-          $.render["text"]({text: "This is a <strong>TEXT</strong>"});
-
-        ]]></script>
-        <script type="syntaxhighlighter" class="brush: js; gutter: false"><![CDATA[
-
-          This is a &amp;lt;strong&amp;gt;TEXT&amp;lt;/strong&amp;gt;
+          This was a user &amp;lt;strong&amp;gt;INPUT&amp;lt;/strong&amp;gt;
 
         ]]></script>
       </div>

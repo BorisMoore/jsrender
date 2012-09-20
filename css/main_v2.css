@@ -261,10 +261,6 @@ section.entry .code {
     font-size: 50%;
   }
 
-  #splash .links .download {
-    display: none;
-  }
-
   #splash {
     background: rgb(246,246,240);
     color: white;
@@ -277,6 +273,10 @@ section.entry .code {
 
   #splash .text {
     padding-top: 5em;
+  }
+
+  #splash .links {
+    padding-top: 2.2em;
   }
 
   section.wrapper {
