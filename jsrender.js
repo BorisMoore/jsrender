@@ -91,7 +91,7 @@
 			delimOpenChar0 = openChars ? "\\" + openChars.charAt(0) : delimOpenChar0; // Escape the characters - since they could be regex special characters
 			delimOpenChar1 = openChars ? "\\" + openChars.charAt(1) : delimOpenChar1;
 			delimCloseChar0 = closeChars ? "\\" + closeChars.charAt(0) : delimCloseChar0;
-			delimCloseChar1 = closeChars ? "\\" + closeChars.charAt(0) : delimCloseChar1;
+			delimCloseChar1 = closeChars ? "\\" + closeChars.charAt(1) : delimCloseChar1;
 			defer = defer ? "\\" + defer : deferChar;
 
 			// Build regex with new delimiters
