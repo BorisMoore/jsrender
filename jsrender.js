@@ -241,6 +241,7 @@
 				views[self.key = "_" + parentView._useKey++] = self;
 				// self.index = is index of the parent
 				self.index = parentView.index;
+				self.count = parentView.count;
 			} else {
 				// Parent is an 'Array View'. Add this view to its views array
 				views.splice(
@@ -249,6 +250,7 @@
 					? key
 					: views.length,
 				0, self);
+				self.count = parentView.data.length;
 			}
 		}
 		return self;
