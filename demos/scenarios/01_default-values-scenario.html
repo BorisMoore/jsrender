@@ -37,7 +37,7 @@
 
 $.views.tags({
     get: function( value ) {
-        return value || this.props.defaultValue;
+        return value || this.ctx.props.defaultValue;
     }
 });
 </pre>
@@ -56,7 +56,7 @@ $.views.tags({
 
 $.views.tags({
     yesNo: function( value ) {
-        return value ? this.props.yes : this.props.no;
+        return value ? this.tagCtx.props.yes : this.tagCtx.props.no;
     }
 });
 </pre>
@@ -104,11 +104,11 @@ $.views.tags({
 
 	$.views.tags({
 		get: function( value ) {
-			return value || this.props.defaultValue;
+			return value || this.tagCtx.props.defaultValue;
 		},
 
 		yesNo: function( value ) {
-			return value ? this.props.yes : this.props.no;
+			return value ? this.tagCtx.props.yes : this.tagCtx.props.no;
 		}
 	});
 

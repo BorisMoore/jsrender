@@ -1,18 +1,18 @@
-/// <reference path="../../jquery-1.7.1.js" />
 /// <reference path="../qunit/qunit.js" />
 /// <reference path="../../jsrender.js" />
+(function() {
 function compileTmpl( template ) {
 	try {
 		return typeof $.templates( null, template ).fn === "function" ? "compiled" : "failed compile";
 	}
 	catch(e) {
-		return "error:" + e;
+		return e.message;
 	}
 }
 
 function sort( array ){
 	var ret = "";
-	if ( this.props.reverse ) {
+	if ( this.tagCtx.props.reverse ) {
 		// Render in reverse order
 		for ( var i = array.length; i; i-- ) {
 			ret += this.tmpl.render( array[ i - 1 ] );
@@ -31,8 +31,7 @@ var person = { name: "Jo" },
 var tmplString =  "A_{{:name}}_B";
 $.views.allowCode = true;
 module( "api" );
-test("templates", function() {
-	expect(14);
+test("templates", 14, function() {
 	$.templates( "myTmpl", tmplString );
 	equal( $.render.myTmpl( person ), "A_Jo_B", 'Compile a template and then render it: $.templates( "myTmpl", tmplString ); $.render.myTmpl( data );' );
 
@@ -66,10 +65,10 @@ test("templates", function() {
 	equal( 	tmpl2 === $.templates( "", "#myTmpl" ), true, '$.templates( "#myTmpl" ) and $.templates( "", "#myTmpl" ) are equivalent' );
 
 	var cloned = $.templates( "cloned", "#myTmpl" );
-	equal( 	cloned !== tmpl2 && cloned.name == "cloned", true, '$.templates( "cloned", "#myTmpl" ) will clone the cached template' );
+	equal( 	cloned !== tmpl2 && cloned.tmplName == "cloned", true, '$.templates( "cloned", "#myTmpl" ) will clone the cached template' );
 
 	$.templates({ cloned: "#myTmpl" });
-	equal( 	$.templates.cloned !== tmpl2 && $.templates.cloned.name == "cloned", true, '$.templates({ cloned: "#myTmpl" }) will clone the cached template' );
+	equal( 	$.templates.cloned !== tmpl2 && $.templates.cloned.tmplName == "cloned", true, '$.templates({ cloned: "#myTmpl" }) will clone the cached template' );
 
 	$.templates( "myTmpl", null );
 	equal( $.templates.myTmpl, undefined, 'Remove a named template:  $.templates( "myTmpl", null );' );
@@ -87,8 +86,7 @@ test("templates", function() {
 	equal( $.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0 && $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0, true, 'Debug a template:  set debug:true on object' );
 });
 
-test("render", function() {
-	expect(5);
+test("render", 5, function() {
 	equal( $.trim( $("#myTmpl").render( person )), "A_Jo_B", '$( tmplSelector ).render( data );' ); // Trimming because IE adds whitespace
 
 	var tmpl3 = $.templates( "myTmpl4", tmplString );
@@ -103,8 +101,7 @@ test("render", function() {
 	equal( $.templates.myTmpl5.tmpls[0].render( person ), "innerJocontent", 'Nested template objects: $.templates.myTmpl.tmpls' );
 });
 
-test("converters", function() {
-	expect(3);
+test("converters", 3, function() {
 	function loc( data ) {
 		switch (data) { case "desktop": return "bureau"; };
 	}
@@ -118,9 +115,7 @@ test("converters", function() {
 	equal( $.views.converters.loc2, undefined, 'Remove a registered converter: $.views.converters({ loc: null })');
 });
 
-test("tags", function() {
-	expect(3);
-
+test("tags", 3, function() {
 	$.views.tags({ sort: sort });
 	equal( $.templates( "{{sort people reverse=true}}{{:name}}{{/sort}}" ).render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })" );
 
@@ -131,8 +126,7 @@ test("tags", function() {
 	equal( $.views.tags.sort2, undefined, 'Remove a registered tag: $.views.tag({ sor: null })' );
 });
 
-test("helpers", function() {
-	expect(3);
+test("helpers", 3, function() {
 	function concat() {
 		return "".concat.apply( "", arguments );
 	}
@@ -153,8 +147,7 @@ test("helpers", function() {
 	equal($.views.helpers.concat2, undefined,  'Remove a registered helper: $.views.helpers({ concat: null })' );
 });
 
-test("template encapsulation", function() {
-	expect(1);
+test("template encapsulation", 1, function() {
 	$.templates({
 		myTmpl6: {
 			markup: "{{sort reverse=true people}}{{:name}}{{/sort}}",
@@ -165,4 +158,5 @@ test("template encapsulation", function() {
 	});
 	equal( $.render.myTmpl6({ people: people }), "BillJo", '$.templates( "myTmpl", tmplObjWithNestedItems );' );
 });
+})();
 

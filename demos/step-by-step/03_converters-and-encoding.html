@@ -19,7 +19,7 @@
 
 <ul>
 <li>{{:value}} does not convert. Used to render values that include html markup</li>
-<li>{{loc:value}} Uses custom converter.</li>
+<li>{{loc:value lang="..."}} Uses custom converter.</li>
 <li>{{html:value}} Converts using built-in HTML encoder. (Better security, but slight perf cost)</li>
 <li>{{>value}} Alternative syntax for built-in HTML encoder.</li>
 </ul><br />
@@ -30,14 +30,15 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{loc:title}}</td>
+		<td>{{loc:title lang='EN'}}</td>
+		<td>{{loc:title lang='FR'}}</td>
 		<td class="synopsis">{{:synopsis}}</td>
 		<td class="synopsis">{{>synopsis}}</td>
 	</tr>
 </script>
 
 <table>
-	<thead><tr><th>Title (loc:French)</th><th>No Convert</th><th>HTML Encode</th></tr></thead>
+	<thead><tr><th>Title (loc:English)</th><th>Title (loc:French)</th><th>No Convert</th><th>HTML Encode</th></tr></thead>
 	<tbody id="movieList"></tbody>
 </table>
 
@@ -56,18 +57,26 @@
 
 	$.views.converters({
 		loc: function (value) {
-			switch (value) {
-				case "Meet Joe Black":
-					return "Rencontrez Joe Black";
+			var result = "";
+			
+			switch(this.tagCtx.props.lang) {
+				case "EN":
+					result = value;
 					break;
 
-				case "Eyes Wide Shut":
-					return "Les Yeux Grand Fermés";
-					break;
+				case "FR":
+					switch (value) {
+						case "Meet Joe Black":
+							result = "Rencontrez Joe Black";
+							break;
 
-				default:
-					return value||"";
+						case "Eyes Wide Shut":
+							result = "Les Yeux Grand Fermés";
+							break;
+					}
+				break;
 			}
+			return result;
 		}
 	});
 	$( "#movieList" ).html(

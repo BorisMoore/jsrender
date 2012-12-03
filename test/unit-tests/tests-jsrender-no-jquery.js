@@ -1,4 +1,8 @@
 /// <reference path="../../jsrender.js" />
+(function() {
+QUnit.config.notrycatch = true;
+QUnit.config.reorder = false;
+
 function compileTmpl( template ) {
 	try {
 		return typeof jsviews.templates( template ).fn === "function" ? "compiled" : "failed compile";
@@ -10,7 +14,7 @@ function compileTmpl( template ) {
 
 function sort( array ) {
 	var ret = "";
-	if ( this.props.reverse ) {
+	if ( this.tagCtx.props.reverse ) {
 		// Render in reverse order
 		if (arguments.length > 1) {
 			for ( i = arguments.length; i; i-- ) {
@@ -34,24 +38,21 @@ var tmplString = "A_{{:name}}_B";
 jsviews.tags({ sort: sort });
 
 module( "tagParser" );
-test("{{if}} {{else}}", function() {
-	expect(3);
+test("{{if}} {{else}}", 3, function() {
 	equal( compileTmpl( "A_{{if true}}{{/if}}_B" ), "compiled", "Empty if block: {{if}}{{/if}}" );
 	equal( compileTmpl( "A_{{if true}}yes{{/if}}_B" ), "compiled", "{{if}}...{{/if}}" );
 	equal( compileTmpl( "A_{{if true/}}yes{{/if}}_B" ), "Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\nA_{{if true/}}yes{{/if}}_B");
 });
 
 module( "{{if}}" );
-test("{{if}}", function() {
-	expect(4);
+test("{{if}}", 4, function() {
 	equal( jsviews.templates( "A_{{if true}}yes{{/if}}_B" ).render(), "A_yes_B", "{{if a}}: a" );
 	equal( jsviews.templates( "A_{{if false}}yes{{/if}}_B" ).render(), "A__B", "{{if a}}: !a" );
 	equal( jsviews.templates( "A_{{if true}}{{/if}}_B" ).render(), "A__B", "{{if a}}: empty: a" );
 	equal( jsviews.templates( "A_{{if false}}{{/if}}_B" ).render(), "A__B", "{{if a}}: empty: !a" );
 });
 
-test("{{if}} {{else}}", function() {
-	expect(7);
+test("{{if}} {{else}}", 7, function() {
 	equal( jsviews.templates( "A_{{if true}}yes{{else}}no{{/if}}_B" ).render(), "A_yes_B", "{{if a}} {{else}}: a" );
 	equal( jsviews.templates( "A_{{if false}}yes{{else}}no{{/if}}_B" ).render(), "A_no_B", "{{if a}} {{else}}: !a" );
 	equal( jsviews.templates( "A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B" ).render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a" );
@@ -61,15 +62,13 @@ test("{{if}} {{else}}", function() {
 	equal( jsviews.templates( "A_<div title='{{if true}}yes'{{else}}no'{{/if}}>x</div>_B" ).render(), "A_<div title='yes'>x</div>_B", "{{if}} and {{else}} work across quoted strings" );
 });
 
-test("{{if}} {{else}} external templates", function() {
-	expect(2);
+test("{{if}} {{else}} external templates", 2, function() {
 	equal( jsviews.templates( "A_{{if true tmpl='yes<br/>'/}}_B" ).render(), "A_yes<br/>_B", "{{if a tmpl=foo/}}: a" );
 	equal( jsviews.templates( "A_{{if false tmpl='yes<br/>'}}{{else false tmpl='or<br/>'}}{{else tmpl='no<br/>'}}{{/if}}_B" ).render(), "A_no<br/>_B", "{{if a tmpl=foo}}{{else b tmpl=bar}}{{else tmpl=baz}}: !a!b" );
 });
 
 module( "{{:}}" );
-test("convert", function() {
-	expect(4);
+test("convert", 4, function() {
 	equal( jsviews.templates( "{{>#data}}" ).render( "<br/>'\"&" ), "&lt;br/&gt;&#39;&#34;&amp;", "default html converter" );
 	equal( jsviews.templates( "{{html:#data}}" ).render( "<br/>'\"&" ), "&lt;br/&gt;&#39;&#34;&amp;", "html converter" );
 	equal( jsviews.templates( "{{:#data}}" ).render( "<br/>'\"&" ), "<br/>'\"&", "no convert" );
@@ -81,8 +80,7 @@ test("convert", function() {
 	equal(jsviews.templates( "{{loc:#data}}:{{loc:'desktop'}}" ).render( "desktop" ), "bureau:bureau", 'jsviews.converters("loc", locFunction);... {{loc:#data}}' );
 });
 
-test("paths", function() {
-	expect(17);
+test("paths", 17, function() {
 	equal( jsviews.templates( "{{:a}}" ).render({ a: "aVal" }), "aVal", "a" );
 	equal( jsviews.templates( "{{:a.b}}" ).render({ a: { b: "bVal" }}), "bVal", "a.b" );
 	equal( jsviews.templates( "{{:a.b.c}}" ).render({ a: { b: { c: "cVal" }}}), "cVal", "a.b.c" );
@@ -102,8 +100,7 @@ test("paths", function() {
 	equal( jsviews.templates( "{{:#index === 0}}" ).render([{ a: "aVal" }]), "true", "#index" );
 });
 
-test("types", function() {
-	expect(10);
+test("types", 10, function() {
 	equal( jsviews.templates( "{{:'abc'}}" ).render(), "abc", "'abc'" );
 	equal( jsviews.templates( "{{:true}}" ).render(), "true", "true" );
 	equal( jsviews.templates( "{{:false}}" ).render(), "false", "false" );
@@ -116,8 +113,7 @@ test("types", function() {
 	equal( jsviews.templates( "{{:notdefined}}" ).render({}), "", "notdefined" );
 });
 
-test("comparisons", function() {
-	expect(22);
+test("comparisons", 22,function () {
 	equal( jsviews.templates( "{{:1<2}}" ).render(), "true", "1<2" );
 	equal( jsviews.templates( "{{:2<1}}" ).render(), "false", "2<1" );
 	equal( jsviews.templates( "{{:5===5}}" ).render(), "true", "5===5" );
@@ -149,8 +145,7 @@ test("array access", function() {
 	equal( jsviews.templates( "{{:true && (a[0] || 'default')}}" ).render({ a: [0,22,33] }, { incr:function(val) { return val + 1; }}), "default", "true && (a[0] || 'default')" );
 });
 
-test("context", function() {
-	expect(4);
+test("context", 4, function() {
 	equal( jsviews.templates( "{{:~val}}" ).render( 1, { val: "myvalue" }), "myvalue", "~val" );
 	function format(value, upper) {
 		return value[upper ?  "toUpperCase" : "toLowerCase"]();
@@ -160,16 +155,14 @@ test("context", function() {
 	equal( jsviews.templates( "{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}" ).render({ people: people, town:"Redmond" }, { format: format }), "Jo lives in REDMOND. Bill lives in REDMOND. ", "Passing in context to nested templates: {{for people ~twn=town}}" );
 });
 
-test("values", function() {
-	expect(4);
+test("values", 4, function() {
 	equal( jsviews.templates( "{{:a}}" ).render({ a: 0 }), "0", "0" );
 	equal( jsviews.templates( "{{:b}}" ).render({ a: 0 }), "", "undefined" );
 	equal( jsviews.templates( "{{:a}}" ).render({ a: "" }), "", "" );
 	equal( jsviews.templates( "{{:b}}" ).render({ a: null }), "", null );
 });
 
-test("expressions", function() {
-	expect(8);
+test("expressions", 8, function() {
 	equal( compileTmpl( "{{:a++}}" ), "Syntax error\na++", "a++" );
 	equal( compileTmpl( "{{:(a,b)}}" ), "Syntax error\n(a,b)", "(a,b)" );
 	equal( jsviews.templates( "{{: a+2}}" ).render({ a: 2, b: false }), "4", "a+2");
@@ -181,22 +174,23 @@ test("expressions", function() {
 });
 
 module( "{{for}}" );
-test("{{for}}", function() {
-	expect(15);
+test("{{for}}", 16, function() {
 	jsviews.templates( {
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
 		templateForArray: "header_{{for #data}}{{:name}}{{/for}}_footer",
 		pageTmpl: '{{for [people] tmpl="templateForArray"/}}',
 		simpleFor: "a{{for people}}Content{{:#data}}|{{/for}}b",
-		forPrimitiveDataTypes: "a{{for people}}|{{:#data}}{{/for}}b"
+		forPrimitiveDataTypes: "a{{for people}}|{{:#data}}{{/for}}b",
+		testTmpl: "xxx{{:name}} {{:~foo}}"
 	});
 
 	equal( jsviews.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}' );
 	equal( jsviews.render.templateForArray( [people] ), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array' );
 	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}' );
 	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
-	equal( jsviews.templates( "{{for}}xxx{{:#data===~test}}{{/for}}" ).render({},{test:undefined}), "xxxtrue", "no parameter - renders once with #data undefined: {{for}}" );
-	equal( jsviews.templates( "{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}" ).render({}), "xxxtrue", "missingProperty - renders once with #data undefined: {{for missingProperty}}" );
+	equal( jsviews.templates( "{{for}}xxx{{:name}} {{:~foo}}{{/for}}" ).render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}" );
+	equal( jsviews.templates( "{{for tmpl='testTmpl'/}}" ).render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "no parameter, with tmpl parameter - renders once with parent #data context: {{for}}" );
+	equal( jsviews.templates( "{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}" ).render({}), "", "missingProperty - renders empty string" );
 	equal( jsviews.templates( "{{for null}}xxx{{:#data===null}}{{/for}}" ).render(), "xxxtrue", "null - renders once with #data null: {{for null}}" );
 	equal( jsviews.templates( "{{for false}}xxx{{:#data}}{{/for}}" ).render(), "xxxfalse", "false - renders once with #data false: {{for false}}" );
 	equal( jsviews.templates( "{{for 0}}xxx{{:#data}}{{/for}}" ).render(), "xxx0", "0 - renders once with #data false: {{for 0}}" );
@@ -205,18 +199,17 @@ test("{{for}}", function() {
 	equal( jsviews.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string' );
 	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContent|Contentfalse|Content|Content|Content1|b", 'Empty string, false, null or undefined members of array are also rendered' );
 	equal( jsviews.render.simpleFor({people:null}), "aContent|b", 'null is rendered once with #data null' );
-	equal( jsviews.render.simpleFor({}), "aContent|b", 'if #data is undefined, renders once with #data undefined' );
+	equal( jsviews.render.simpleFor({}), "ab", 'if #data is undefined, renders empty string' );
 	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,null,true,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey' );
 });
 
 module( "api" );
-test("templates", function() {
-	expect(14);
+test("templates", 14, function() {
 	var tmpl = jsviews.templates( tmplString );
 	equal( tmpl.render( person ), "A_Jo_B", 'Compile from string: var tmpl = jsviews.templates( tmplString );' );
 
 	var fnToString = tmpl.fn.toString();
-	equal( jsviews.templates( "", tmplString ).fn.toString() === fnToString && jsviews.templates( null, tmplString ).fn.toString() === fnToString && jsviews.templates( undefined, tmplString ).fn.toString() === fnToString, true, 
+	equal( jsviews.templates( "", tmplString ).fn.toString() === fnToString && jsviews.templates( null, tmplString ).fn.toString() === fnToString && jsviews.templates( undefined, tmplString ).fn.toString() === fnToString, true,
 	'if name is "", null, or undefined, then jsviews.templates( name, tmplString ) = jsviews.templates( tmplString );' );
 
 	jsviews.templates( "myTmpl", tmplString );
@@ -263,8 +256,7 @@ test("templates", function() {
 	equal( jsviews.templates.myTmpl, undefined, 'Remove a named template:  jsviews.templates( "myTmpl", null );' );
 });
 
-test("render", function() {
-	expect(18);
+test("render", 18, function() {
 	var tmpl1 = jsviews.templates( "myTmpl8", tmplString );
 	jsviews.templates( {
 		simple: "Content{{:#data}}|",
@@ -278,21 +270,23 @@ test("render", function() {
 	jsviews.templates( "myTmpl9", "A_{{for}}inner{{:name}}content{{/for}}_B" );
 	equal( jsviews.templates.myTmpl9.tmpls[0].render( person ), "innerJocontent", 'Access nested templates: jsviews.templates["myTmpl9[0]"];' );
 
-	jsviews.templates( "myTmpl10", "top index:{{:#index}}|{{for 1}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#index}}|{{else}}nested else index:{{:#index}}|{{/if}}{{/for}}" );
+	jsviews.templates( "myTmpl10", "top index:{{:#index}}|{{for 1}}nested index:{{:#get('item').index}}|{{if #get('item').index===0}}nested if index:{{:#get('item').index}}|{{else}}nested else index:{{:#get('item').index}}|{{/if}}{{/for}}" );
+
 	equal( jsviews.render.myTmpl10(people), "top index:0|nested index:0|nested if index:0|top index:1|nested index:1|nested else index:1|",
-										'#index gives the integer index even in nested blocks' );
-	jsviews.templates( "myTmpl11", "top index:{{:#index}}|{{for people}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#index}}|{{else}}nested else index:{{:#index}}|{{/if}}{{/for}}" );
+										"#get('item').index gives the integer index even in nested blocks" );
+	jsviews.templates( "myTmpl11", "top index:{{:#index}}|{{for people}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#get('item').index}}|{{else}}nested else index:{{:#get('item').index}}|{{/if}}{{/for}}" );
 
 	equal( jsviews.render.myTmpl11({ people: people }), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
-										'#index gives the integer index even in nested blocks' );
+										"#get('item').index gives the integer index even in nested blocks" );
 
 	jsviews.helpers({ myKeyIsCorrect: function() {
-		return this.parent.views[this.key] === this;
+		var view = this;
+		return view.parent.views[view._.key] === view;
 	}});
 	jsviews.templates( "myTmpl12", "{{for people}}nested {{:~myKeyIsCorrect()}}|{{if #index===0}}nested if {{:~myKeyIsCorrect()}}|{{else}}nested else {{:~myKeyIsCorrect()}}|{{/if}}{{/for}}" );
 
 	equal( jsviews.render.myTmpl12({ people: people }), "nested true|nested if true|nested true|nested else true|",
-										'#key gives the key of this view in the parent views collection/object' );
+										'view._key gives the key of this view in the parent views collection/object' );
 
 	equal( jsviews.templates( tmplString ).render( person ), "A_Jo_B", 'Compile from string: var html = jsviews.templates( tmplString ).render( data );' );
 	equal( jsviews.render.myTmpl8( people ), "A_Jo_BA_Bill_B", 'jsviews.render.myTmpl( array );' );
@@ -309,8 +303,7 @@ test("render", function() {
 	equal( jsviews.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey' );
 });
 
-test("converters", function() {
-	expect(3);
+test("converters", 3, function() {
 	function loc( data ) {
 		switch (data) { case "desktop": return "bureau"; };
 	}
@@ -324,8 +317,7 @@ test("converters", function() {
 	equal(jsviews.converters.loc2, undefined, 'jsviews.converters({ loc2: null }) to remove registered converter' );
 });
 
-test("tags", function() {
-	expect(5);
+test("tags", 5, function() {
 	equal(jsviews.templates( "{{sort people reverse=true}}{{:name}}{{/sort}}" ).render({ people: people }), "BillJo", "jsviews.tags({ sort: sortFunction })" );
 
 	equal(jsviews.templates( "{{sort people reverse=true towns}}{{:name}}{{/sort}}" ).render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}" );
@@ -339,8 +331,7 @@ test("tags", function() {
 	equal(jsviews.tags.sort2, undefined, 'jsviews.tags( "sort2", null ) to remove registered tag' );
 });
 
-test("helpers", function() {
-	expect(4);
+test("helpers", 4, function() {
 	jsviews.helpers({
 		not: function( value ) {
 			return !value;
@@ -364,101 +355,22 @@ test("helpers", function() {
 	equal(jsviews.helpers.toUpperCase2, undefined, 'jsviews.helpers( "toUpperCase2", null ) to remove registered helper' );
 });
 
-test("template encapsulation", function() {
-	expect(5);
-	jsviews.helpers({
-		not: function( value ) {
-			return !value;
-		},
-		concat: function() {
-			return "".concat.apply( "", arguments ) + "inner";
-		}
-	});
-
-	jsviews.templates({
-		encapsulate1: {
-			markup: "{{str:~not(true)}} {{sort people reverse=true tmpl='personTmpl'/}} {{str:~not2(false)}}",
-			tags: {
-				sort2: sort
-			},
-			templates: {
-				personTmpl: "{{upper:name}}"
-			},
-			helpers: {
-				not2: function( value ) {
-					return "not2:" + !value;
-				}
-			},
-			converters: {
-				str: function( value ) {
-					return value.toString() + ":tostring";
-				},
-				upper: function( value ) {
-					return value.toUpperCase();
-				}
-			}
-		}
-	});
-	equal( $.trim( jsviews.render.encapsulate1({ people: people })), "false:tostring BILLJO not2:true:tostring", 'jsviews.templates( "myTmpl", tmplObjWithNestedItems);' );
-
-	jsviews.templates({
-		useLower: "{{lower a/}}",
-		tmplWithNestedResources: {
-			markup: "{{lower a/}} {{:~concat2(a, 'b', ~not2(false))}} {{for #data tmpl='nestedTmpl1'/}} {{for #data tmpl='nestedTmpl2'/}}",
-			helpers: {
-				not2: function( value ) {
-					return !value;
-				},
-				concat2: function() {
-					return "".concat.apply( "", arguments ) + "%";
-				}
-			},
-			converters: {
-				"double": function( value ) {
-					return "(double:" +  value + "&" + value + ")";
-				}
-			},
-			tags: {
-				lower: function( val ) {
-					return val.toLowerCase()
-				}
-			},
-			templates: {
-				nestedTmpl1: "{{double:a}}",
-				nestedTmpl2: {
-					markup: "{{double:~upper(a)}}",
-					helpers: {
-						upper: function( value ) {
-							return value.toUpperCase();
-						}
-					},
-					converters: {
-						"double": function( value ) {
-							return "(override outer double:" +  value + "|" + value + ")";
-						}
-					}
-				},
-				templateWithDebug: {
-					markup: "{{double:~upper(a)}}",
-					debug: true
-				}
-			}
-		}
-	});
-	var context = {
-		upper: function( value ) {
-			return "contextualUpper" + value.toUpperCase();
-		},
-		not: function( value ) {
-			return "contextualNot" + !value;
-		},
-		not2: function( value ) {
-			return "contextualNot2" + !value;
-		}
-	};
-	jsviews.render.tmplWithNestedResources({ a: "aVal" })
-	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }), "aval aValbtrue% (double:aVal&aVal) (override outer double:AVAL|AVAL)", 'Access nested resources from template' );
-	equal( jsviews.render.useLower({ a: "aVal" }), "Error: Unknown tag: {{lower}}. ", 'Cannot access nested resources from a different template' );
-	equal( jsviews.render.tmplWithNestedResources({ a: "aVal" }, context), "aval aValbcontextualNot2true% (double:aVal&aVal) (override outer double:contextualUpperAVAL|contextualUpperAVAL)", 'Resources passed in with context override nested resources' );
-	equal( jsviews.templates.tmplWithNestedResources.templates.templateWithDebug.fn.toString().indexOf("debugger;") > 0, true, 'Can set debug=true on nested template' );
+test("delimiters", 1, function() {
+	jsviews.settings.delimiters("@%","%@");
+	var result = jsviews.templates( "A_@%if true%@yes@%/if%@_B" ).render();
+	jsviews.settings.delimiters("{{","}}");
+	equal( result, "A_yes_B", "Custom delimiters" );
 });
+
+test("template encapsulation", 1, function() {
+	jsviews.templates({
+		myTmpl6: {
+			markup: "{{sort reverse=true people}}{{:name}}{{/sort}}",
+			tags: {
+				sort: sort
+			}
+		}
+	});
+	equal( jsviews.render.myTmpl6({ people: people }), "BillJo", 'jsviews.templates( "myTmpl", tmplObjWithNestedItems );' );
+});
+})();

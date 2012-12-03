@@ -14,7 +14,7 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{>title}}</td>
+		{{for tmpl="#headerTemplate"/}}
 		<td>
 			{{for languages tmpl="#columnTemplate"/}}
 		</td>
@@ -25,6 +25,10 @@
 			{{for languages tmpl='#conditionalTemplate'/}}
 		</td>
 	</tr>
+</script>
+
+<script id="headerTemplate" type="text/x-jsrender">
+	<td>{{>title}}</td>
 </script>
 
 <script id="columnTemplate" type="text/x-jsrender">

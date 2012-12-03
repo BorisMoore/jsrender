@@ -16,8 +16,10 @@
 <pre>
 $( selector ).render( data, {
     reverseSort: reverse,
-    buttonCaption: reverse ? "Sort increasing" : "Sort decreasing",
-    format: myFormatFunction
+    format: myFormatFunction,
+    buttonCaption: function(val) {
+        ...
+    }
 })
 </pre>
 
@@ -25,7 +27,7 @@ $( selector ).render( data, {
 <div class="subhead">registered globally as helpers, or registered as helpers for a specific template.</div>
 
 <pre>
-&lt;th>&lt;button>{{>~buttonCaption}}&lt;/button>&lt;/th>
+&lt;th>&lt;button>{{>~buttonCaption('sort')}}&lt;/button>&lt;/th>
 ...
 &lt;td>{{>~format(title)}}&lt;/td>
 ...
@@ -37,8 +39,8 @@ $( selector ).render( data, {
 <script id="movieTemplate" type="text/x-jsrender">
 	<thead>
 		<tr>
-			<th><button id="formatBtn">{{>~format('Title')}}</button></th>
-			<th><button id="sortBtn">{{>~buttonCaption}}</button></th>
+			<th>Title <button id="formatBtn">{{>~buttonCaption('case')}}</button></th>
+			<th><button id="sortBtn">{{>~buttonCaption('sort')}}</button></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -65,9 +67,9 @@ $( selector ).render( data, {
 	$.views.tags({
 
 		// Tag to reverse-sort an array
-		sort: function( array ) {
+		sort: function( array ){
 			var ret = "";
-			if ( this.props.reverse ) {
+			if ( this.tagCtx.props.reverse ) {
 				// Render in reverse order
 				for ( var i = array.length; i; i-- ) {
 					ret += this.renderContent( array[ i - 1 ] );
@@ -119,8 +121,13 @@ $( selector ).render( data, {
 		$( "#movieList" ).html(
 			$( "#movieTemplate" ).render( [movies], {
 				reverseSort: reverse,
-				buttonCaption: reverse ? "Sort increasing" : "Sort decreasing",
-				format: myFormatFunction
+				format: myFormatFunction,
+				buttonCaption: function(val) {
+					if (val === 'sort') {
+						return reverse ? "Sort increasing" : "Sort decreasing";
+					}
+					return upperCase ? "to lower" : "to upper";
+				}
 			})
 		);
 	}

@@ -19,9 +19,9 @@ $.views.tags({
 
     // Tag to reverse-sort an array
 
-    sort: function( array ) {
+    sort: function( array ){
         var ret = "";
-        if ( this.props.reverse ) {
+        if ( this.tagCtx.props.reverse ) {
             // Render in reverse order
             for ( var i = array.length; i; i-- ) {
                 ret += this.renderContent( array[ i - 1 ] );
@@ -67,9 +67,9 @@ $.views.tags({
 	$.views.tags({
 
 		// Tag to reverse-sort an array
-		sort: function( array ) {
+		sort: function( array ){
 			var ret = "";
-			if ( this.props.reverse ) {
+			if ( this.tagCtx.props.reverse ) {
 				// Render in reverse order
 				for ( var i = array.length; i; i-- ) {
 					ret += this.renderContent( array[ i - 1 ] );

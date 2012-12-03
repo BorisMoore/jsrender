@@ -80,7 +80,7 @@
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Optimized render to string</b></td></tr>");
 
-	test( "jQuery Template", times * 500, 1, function() {
+	test( "jQuery Templates", times * 500, 1, function() {
 		ret = tmpl_jQueryTmpl($, { data: movie }).join("");
 	});
 	test( "doT", times * 500, 1, function() {
@@ -100,7 +100,7 @@
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Render to string, with HTML encoding</b></td></tr>");
 
-	test( "jQuery Template", times * 50, 1, function() {
+	test( "jQuery Templates", times * 50, 1, function() {
 		ret = tmpl_jQueryTmplEncode($, { data: movie }).join("");
 	});
 	test( "doT", times * 50, 1, function() {
@@ -121,7 +121,7 @@
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
-	test( "jQuery Template full features - inserted in DOM", times * 5, 0, function() {
+	test( "jQuery Templates full features - inserted in DOM", times * 5, 0, function() {
 		$( "#output" ).empty();
 		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
 	});
@@ -133,7 +133,7 @@
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Compile</b></td></tr>");
 
-	test( "jQuery Template compile", times * 5, 0, function() {
+	test( "jQuery Templates compile", times * 5, 0, function() {
 		tmpl_jQueryTmpl = $.template( jqueryTmplTemplate );
 	});
 	test( "doT compile", times * 5, 0, function() {

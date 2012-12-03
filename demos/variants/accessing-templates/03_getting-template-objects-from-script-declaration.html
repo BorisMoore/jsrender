@@ -12,7 +12,7 @@
 
 <h3>Getting template objects from script block template declarations</h3>
 
-<div class="subhead"> Variant of <a href="../../step-by-step/02_compiling-named-templates-from-strings.html">Compiling named templates sample</a></div><br />
+<div class="subhead"> Variant of '<a href="../../step-by-step/02_compiling-named-templates-from-strings.html">Compiling named templates</a>' sample</div><br />
 
 <script id="titleTemplate" type="text/x-jsrender">
 	<tr>
@@ -48,16 +48,17 @@
 		details = true;
 
 	function switchTemplates() {
-		var html;
+		var html,
+			button = $("#switchBtn");
 
 		details = !details;
 
 		/* Render using the other compiled template */
 		if ( details ) {
-			$( this ).text( "Show titles only" );
+			button.text( "Show titles only" );
 			html = detailTemplate.render( movies );
 		} else {
-			$( this ).text( "Show full details" );
+			button.text( "Show full details" );
 			html = titleTemplate.render( movies );
 		}
 		$( "#movieList" ).html( html );

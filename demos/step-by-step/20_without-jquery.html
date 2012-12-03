@@ -43,16 +43,16 @@
 
 	jsviews.tags({
 
-		sort: function( array ) {
+		sort: function( array ){
 			var ret = "";
-			if ( this.props.reverse ) {
+			if ( this.tagCtx.props.reverse ) {
 				// Render in reverse order
 				for ( var i = array.length; i; i-- ) {
-					ret += this.tmpl.render( array[ i - 1 ] );
+					ret += this.renderContent( array[ i - 1 ] );
 				}
 			} else {
 				// Render in original order
-				ret += this.tmpl.render( array );
+				ret += this.renderContent( array );
 			}
 			return ret;
 		}
