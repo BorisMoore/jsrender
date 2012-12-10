@@ -15,21 +15,23 @@
 <body>
 <a href="../demos.html">JsRender Demos</a><br />
 
-<h3>Using {{: }} or {{> }} to render data values with optional conversion or HTML encoding</h3>
+<h3>Using {{: }} or {{> }} to render data values with optional conversion or encoding</h3>
 
 <ul>
-<li>{{:value}} does not convert. Used to render values that include html markup</li>
-<li>{{loc:value lang="..."}} Uses custom converter.</li>
-<li>{{html:value}} Converts using built-in HTML encoder. (Better security, but slight perf cost)</li>
-<li>{{>value}} Alternative syntax for built-in HTML encoder.</li>
+<li><em>{{:value}}</em> &mdash; does not convert. Used to render values that include html markup.</li>
+<li><em>{{loc:value lang="..."}}</em> &mdash; Uses custom converter.</li>
+<li><em>{{html:value}}</em> &mdash; Converts using built-in HTML encoder. (Better security within element content, but slight perf cost).</li>
+<li><em>{{>value}}</em> &mdash; Alternative syntax for built-in HTML encoder.</li>
+<li><em>{{attr:availability}}</em> &mdash; Converts using built-in attribute encoder. (Better security within attributes).</li>
+<li><em>{{url:value lang="..."}}</em> &mdash; Converts using built-in URL encoder.</li>
 </ul><br />
 <div class="box label">
 <b>Note:</b> A common use for converters is to protect against injection attacks from untrusted data.
 <br />It is generally best to use <b>{{> }}</b> when rendering data within element content, if the data is not intended to provide markup for insertion in the DOM.
-<br />In the context of HTML attributes, other encoders can easily be registered, such as an attribute encoder, <b>{{attr: }}</b>.</div>
+<br />In the context of HTML attributes, use <b>{{attr: }}</b>.</div>
 
 <script id="movieTemplate" type="text/x-jsrender">
-	<tr>
+	<tr title="{{attr:availability}}">
 		<td>{{loc:title lang='EN'}}</td>
 		<td>{{loc:title lang='FR'}}</td>
 		<td class="synopsis">{{:synopsis}}</td>
@@ -46,10 +48,12 @@
 
 	var movies = [
 		{
+			availability: "Available in 'X&Y' Cinemas",
 			title: "Meet Joe Black",
 			synopsis: "The <span class='role'>grim reaper</span> (<a href='http://www.netflix.com/RoleDisplay/Brad_Pitt/73919'>Brad Pitt</a>) visits <span class='role'>Bill Parrish</span> (<a href='http://www.netflix.com/RoleDisplay/Anthony_Hopkins/43014'>Anthony Hopkins</a>)..."
 		},
 		{
+			availability: "Available at < 20kms from London",
 			title: "Eyes Wide Shut",
 			synopsis: "Director <span class='director'>Stanley Kubrick's</span> final film: <br/><br/><img src='http://cdn-4.nflximg.com/US/boxshots/large/5670434.jpg'/>"
 		}

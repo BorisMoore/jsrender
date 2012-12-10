@@ -12,29 +12,41 @@
 
 <script id="peopleTemplate" type="text/x-jsrender">
 
-<b>{{:#index+1}}:</b> {{>firstName}} {{>lastName}}:
+	<b>{{:#index+1}}:</b> {{>firstName}} {{>lastName}}:
 
-<br/>
-{{for address tmpl="#addressTemplate"/}}
+	<br/>
+	{{for address tmpl="#addressTemplate"/}}
 
-{{if phones cells}}
-	<div>
-		Phones:
-		{{for phones cells}} <b>{{>#data}}</b> ({{>#parent.parent.data.firstName}}'s){{/for}}
-	</div>
-{{/if}}
-<br/>
-
-<i>
-	{{>firstName}}
-
-	{{if address.street}}
-		lives in {{>address.street}}.
-	{{else}}
-		has no street address...
+	{{if phones cells}}
+		<div>
+			Phones:
+			{{for phones cells}} <b>{{>#data}}</b> ({{>#parent.parent.data.firstName}}'s{{/for}}
+		</div>
 	{{/if}}
-</i>
-<hr/>
+
+{{!-- or provide an alias to get to firstName from nested content
+
+	{{if phones cells ~frstNm=firstName}}
+		<div>
+			Phones:
+			{{for phones cells}} <b>{{>#data}}</b> ({{>~frstNm}})'s{{/for}}
+		</div>
+	{{/if}}
+
+--}}
+
+	<br/>
+
+	<i>
+		{{>firstName}}
+
+		{{if address.street noerror=true}}  {{!-- We added noerror=true, since address may be null or undefined --}}
+			lives in {{>address.street}}.
+		{{else}}
+			has no address...
+		{{/if}}
+	</i>
+	<hr/>
 
 </script>
 
@@ -65,9 +77,6 @@
 		{
 			firstName: "Xavier",
 			lastName: "NoStreet",
-			address: {
-				city: "Redmond"
-			},
 			phones: "222 666 3455",
 			cells: ["444 666 3455", "999 222 1111"]
 		},

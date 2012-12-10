@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<link href="../../demos/resources/demos.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<h2>Test page for nested template resources</h2>
+
+<script id="topTemplate" type="text/x-jsrender">
+topTMPL[[--<br/>
+{{if true}}
+{{globTag/}}<br/>
+{{topCnvt:~topHlp(title)}}<br/>{{topTag title/}}<br/>{{for people tmpl="innerTmpl"/}}<br/>
+{{topAddedCnvt:~topAddedHlp(title)}}{{topAddedTag title/}}
+{{/if}}
+<br/>--]]<br/>
+</script>
+
+<script id="innerTemplate" type="text/x-jsrender">
+innerTMPL[[--<br/>
+{{if true}}
+{{innerCnvt:~innerHlp(role)}}<br/>{{innerTag role/}}<br/>{{for name tmpl="innerInnerTmpl"/}}<br/>
+{{topTag role/}}
+{{topCnvt:~topHlp(role)}}
+{{/if}}
+<br/>--]]<br/>
+</script>
+
+<script id="innerInnerTemplate" type="text/x-jsrender">
+innerInnerTMPL[[--<br/>
+{{if true}}
+{{innerInnerCnvt:~innerInnerHlp(first)}}<br/>{{innerInnerTag last/}}<br/>
+{{topTag first/}}
+{{innerTag last/}}
+{{topAddedCnvt:~topAddedHlp(first)}}{{topAddedTag last/}}<br/>
+{{innerAddedCnvt:~innerAddedHlp(last)}}{{innerAddedTag first/}}
+{{/if}}
+<br/>--]]<br/>
+</script>
+
+<script id="topTagTemplate" type="text/x-jsrender">
+topTagTMPL{{:title}}<br/>
+{{if true}}
+{{tagInnerCnvt:~tagInnerHlp(title)}}<br/>{{tagInnerTag title/}}<br/>
+{{topTag title/}}
+{{/if}}
+<br/>--]]<br/>
+</script>
+
+<script id="innerTagTemplate" type="text/x-jsrender">
+innerTagTMPL[[--<br/>
+{{if true}}
+{{tagTagInnerCnvt:~tagTagInnerHlp(title)}}<br/>{{tagTagInnerTag title/}}<br/>
+{{topTag title/}}
+{{/if}}
+<br/>--]]<br/>
+</script>
+
+<div id="content"></div>
+
+<script type="text/javascript">
+	// Note: This setting makes the compiled template break when it hits errors, e.g. in a converter,
+	// or helper, rather than render the error string to the template output
+	$.views.settings.tryCatch=false;
+
+	// Create templates which use nested resources
+	$.templates({
+		topTmpl: {
+			markup: "#topTemplate",
+			templates: {
+				innerTmpl: {
+					markup: "#innerTemplate",
+					templates: {
+						innerInnerTmpl: {
+							markup: "#innerInnerTemplate",
+							tags: {
+								innerInnerTag: function (val) {
+									return "innerInnerTag" + val;
+								}
+							},
+							converters: {
+								innerInnerCnvt: function (val) {
+									return "innerInnerCnvt" + val;
+								}
+							},
+							helpers: {
+								innerInnerHlp: function (val) {
+									return "innerInnerHlp" + val;
+								}
+							}
+						}
+					},
+					tags: {
+						innerTag: function (val) {
+							return "innerTag" + val;
+						}
+					},
+					converters: {
+						innerCnvt: function (val) {
+							return "innerCnvt" + val;
+						}
+					},
+					helpers: {
+						innerHlp: function (val) {
+							return "innerHlp" + val;
+						}
+					}
+				}
+			},
+			tags: {
+				topTag: function (val) {
+					return "topTag" + val;
+				}
+			},
+			converters: {
+				topCnvt: function (val) {
+					return "topCnvt" + val;
+				}
+			},
+			helpers: {
+				topHlp: function (val) {
+					return "topHlp" + val;
+				}
+			}
+		}
+	});
+
+	// Create global resources
+	$.views
+	.tags({
+		globTag: {
+			template: {
+				markup: "#topTagTemplate",
+				tags: {
+					tagInnerTag: {
+						template: {
+							markup: "#innerTagTemplate",
+							tags: {
+								tagTagInnerTag: function(val) {
+									return "tagTagInnerTag" + val;
+								}
+							},
+							converters: {
+								tagTagInnerCnvt: function (val) {
+									return "tagTagInnerCnvt" + val;
+								}
+							},
+							helpers: {
+								tagTagInnerHlp: function (val) {
+									return "tagTagInnerHlp" + val;
+								}
+							}
+						}
+					}
+				},
+				converters: {
+					tagInnerCnvt: function (val) {
+						return "tagInnerCnvt" + val;
+					}
+				},
+				helpers: {
+					tagInnerHlp: function (val) {
+						return "tagInnerHlp" + val;
+					}
+				}
+			}
+		}
+	})
+	.converters({
+		globCnvt: function (val) {
+			return "globCnvt" + val;
+		}
+	})
+	.helpers({
+		globHlp: function (val) {
+			return "globHlp" + (val||"");
+		}
+	});
+	
+	// 'Dynamically' add some resources to the top template
+	$.views
+	.tags({
+		topAddedTag: function (val) {
+			return "topAddedTag" + val;
+		}
+	}, $.templates.topTmpl)
+	.converters({
+		topAddedCnvt: function (val) {
+			return "topAddedCnvt" + val;
+		}
+	}, $.templates.topTmpl)
+	.helpers({
+		topAddedHlp: function (val) {
+			return "topAddedHlp" + (val||"");
+		}
+	}, $.templates.topTmpl);
+
+	// 'Dynamically' add some resources to a nested template
+	$.views
+	.tags({
+		innerAddedTag: function (val) {
+			return "innerAddedTag" + val;
+		}
+	}, $.templates.topTmpl.templates.innerTmpl)
+	.converters({
+		innerAddedCnvt: function (val) {
+			return "innerAddedCnvt" + val;
+		}
+	}, $.templates.topTmpl.templates.innerTmpl)
+	.helpers({
+		innerAddedHlp: function (val) {
+			return "innerAddedHlp" + (val||"");
+		}
+	}, $.templates.topTmpl.templates.innerTmpl);
+
+	var people = [{
+			role: "first",
+			name: {
+				first: "Jeff",
+				last: "Friedman"
+			}
+		},{
+			role: "third",
+			name: {
+				first: "Rosa",
+				last: "Lee"
+			}
+		}];
+
+	var app = {
+		title: "friends",
+		people: people
+	};
+
+	var html = $.templates.topTmpl.render(app);
+	$("#content").html(html);
+
+	if ($("#content").text().length !== 846) {
+		throw "Incorrect output";
+	}
+</script>
+</body>
+</html>
