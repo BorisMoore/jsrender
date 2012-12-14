@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 23
+// informal pre beta commit counter: 24
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -231,6 +231,7 @@
 				tagCtx.ctx = extendCtx(tagCtx.ctx, linkCtx.view.ctx);
 			}
 			tag.ctx = tagCtx.ctx || {};
+			tagCtx.props = tagCtx.props || {};
 			delete tagCtx.ctx;
 
 			if (converter && ((tmplConverter = view.getRsc("converters", converter)) || error("Unknown converter: {{"+ converter + ":"))) {
@@ -292,7 +293,7 @@
 			childTemplates = parentTmpl.templates,
 			tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}"),
 			args = tagCtx.args = arguments.length > 6 ? slice.call(arguments, 6) : [],
-			props = tagCtx.props || {};
+			props = tagCtx.props = tagCtx.props || {};
 
 		tagCtx.view = parentView;
 		tagCtx.ctx = extendCtx(tagCtx.ctx, parentView.ctx); // Extend parentView.ctx
@@ -425,7 +426,7 @@
 				type: type,
 				// If the data is an array, this is an 'array view' with a views array for each child 'item view'
 				// If the data is not an array, this is an 'item view' with a views 'map' object for any child nested views
-				// _useKey is non zero if is not an 'array view' (owning a data array). Uuse this as next key for adding to child views map
+				// ._.useKey is non zero if is not an 'array view' (owning a data array). Uuse this as next key for adding to child views map
 				get: getView,
 				getIndex: getIndex,
 				getRsc: getResource,
@@ -537,13 +538,15 @@
 					// e.g. for linking the content of a div to a container, and using the initial content as template:
 					// $.link("#content", model, {tmpl: "#content"});
 
-					value = $templates[elem.getAttribute(tmplAttr)];
+					value = elem.getAttribute(tmplAttr);
+					name = name || value;
+					value = $templates[value];
 					if (!value) {
 						// Not already compiled and cached, so compile and cache the name
 						// Create a name for compiled template if none provided
 						name = name || "_" + autoTmplName++;
 						elem.setAttribute(tmplAttr, name);
-						value = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options); // Use tmpl as options
+						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options); // Use tmpl as options
 					}
 				}
 				return value;
@@ -581,7 +584,7 @@
 			if (tmplOrMarkup.fn || tmpl.fn) {
 				// tmpl is already compiled, so use it, or if different name is provided, clone it
 				if (tmplOrMarkup.fn) {
-					if (name && name !== tmplOrMarkup.name) {
+					if (name && name !== tmplOrMarkup.tmplName) {
 						tmpl = extendCtx(options, tmplOrMarkup);
 					} else {
 						tmpl = tmplOrMarkup;
@@ -711,7 +714,7 @@
 			// This is a call from renderTag
 			tmpl = tagCtx.isElse ? self._elses[tagCtx.isElse-1] : self.tmpl;
 			context = extendCtx(context, self.ctx);
-			props = tagCtx.props || {};
+			props = tagCtx.props;
 			if ( props.link === FALSE ) {
 				// link=false setting on block tag
 				// We will override inherited value of link by the explicit setting link=false taken from props
@@ -815,7 +818,6 @@
 
 			//    bind         tag        converter colon html     comment            code      params            slash   closeBlock
 			// /{(\^)?{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|!--((?:[^-]|-(?!-))*)--|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}/g
-
 			// Build abstract syntax tree (AST): [ tagName, converter, params, content, hash, bindings, contentMarkup ]
 			if (html) {
 				colon = ":";
@@ -848,6 +850,7 @@
 					block = TRUE;
 				}
 				if (params) {
+					params = params.replace(/\s*\n\s*/g, " "); // remove newlines from the params string, to avoid compiled code errors for unterminated strings
 					code = parseParams(params, pathBindings)
 						.replace(rBuildHash, function(all, isCtx, keyValue) {
 							if (isCtx) {
@@ -954,8 +957,7 @@
 				// a compiled tag expression to be inserted
 				tagName = node[0];
 				if (tagName === "*") {
-					// If this {{* }} tag is at the beginning of the template, start with var ret="";
-					// Otherwise remove the last "+\n" characters and replace with ";" to complete the ret += ...; statement, prior to inserted user code,
+					// Code tag: {{* }}
 					ret = "" + node[1];
 				} else {
 					converter = node[1];
