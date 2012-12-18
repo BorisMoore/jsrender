@@ -158,5 +158,10 @@ test("template encapsulation", 1, function() {
 	});
 	equal( $.render.myTmpl6({ people: people }), "BillJo", '$.templates( "myTmpl", tmplObjWithNestedItems );' );
 });
+
+test("parsing php/html-comments templates", 2, function() {
+	equal($.templates("<?php\necho 'Hello, Jo';\n?>").render(), "<?php\necho 'Hello, Jo';\n?>");
+	equal($.templates("<!-- \nAuthor: Jo\n -->").render(), "<!-- \nAuthor: Jo\n -->");
+});
 })();
 
