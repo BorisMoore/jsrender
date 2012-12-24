@@ -774,6 +774,7 @@
 					newView = swapContent ? parentView : View(context, self.tagName||"data", parentView, data, tmpl, key, onRender);
 					result += tmpl.fn(data, newView, $views);
 				}
+                result = $.trim(result);
 				return outerOnRender ? outerOnRender(result, newView) : result;
 			}
 		}
