@@ -875,7 +875,7 @@
 							+ ",") : "") + 'params:"' + params + '"' + (passedCtx ? ",ctx:{" + passedCtx.slice(0, -1) + "}" : "") + "},",
 						noError,
 						//"{" + (hash ? ("props:{" + hash + "},") : "") + 'params:"' + params + '"' + (passedCtx ? ",ctx:{" + passedCtx.slice(0, -1) + "}" : "") + "},",
-						bind && pathBindings || 0,
+						bind && pathBindings || 0
 					];
 				content.push(newNode);
 				if (block) {
