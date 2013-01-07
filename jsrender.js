@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 24
+// informal pre beta commit counter: 24b
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -191,20 +191,24 @@
 	function getHelper(helper) {
 		// Helper method called as view._hlp(key) from compiled template, for helper functions or template parameters ~foo
 		var wrapped,
-			view = this;
-		if (helper = (view.ctx || {})[helper] || view.getRsc("helpers", helper)) {
-			if (typeof helper === "function") {
+			view = this,
+			res = (view.ctx || {})[helper];
+
+		res = res === undefined ? view.getRsc("helpers", helper) : res;
+
+		if (res) {
+			if (typeof res === "function") {
 				wrapped = function() {
 					// If it is of type function, we will wrap it so it gets called with view as 'this' context.
 					// If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
 					// However note that helper functions on deeper paths will not have access to view and tagCtx.
 					// For example, ~util.foo() will have the ~util object as 'this' pointer
-					return helper.apply(view, arguments);
+					return res.apply(view, arguments);
 				};
-				$extend(wrapped, helper);
+				$extend(wrapped, res);
 			}
 		}
-		return wrapped || helper;
+		return wrapped || res;
 	}
 
 	//==============
@@ -264,7 +268,7 @@
 			store = $views[storeName];
 
 		res = store && store[item];
-		while (!res && view) {
+		while ((res === undefined) && view) {
 			store = view.tmpl[storeName];
 			res = store && store[item];
 			view = view.parent;
