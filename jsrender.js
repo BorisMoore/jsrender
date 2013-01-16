@@ -530,7 +530,7 @@
 					? value
 					: !rTmplString.test(value)
 					// If value is a string and does not contain HTML or tag content, then test as selector
-						&& jQuery && jQuery(value)[0];
+						&& jQuery && jQuery(document).find(value)[0];
 					// If selector is valid and returns at least one element, get first element
 					// If invalid, jQuery will throw. We will stay with the original string.
 				} catch (e) { }
