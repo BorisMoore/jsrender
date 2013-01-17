@@ -1,7 +1,8 @@
+/// <reference path="../qunit/qunit.js" />
 /// <reference path="../../jsrender.js" />
+(function($, global, QUnit, undefined) {
+"use strict";
 (function() {
-QUnit.config.notrycatch = true;
-QUnit.config.reorder = false;
 
 function compileTmpl( template ) {
 	try {
@@ -21,7 +22,7 @@ function sort( array ) {
 				ret += sort.call( this, arguments[ i - 1 ]);
 			}
 		} else for ( var i = array.length; i; i-- ) {
-			ret += this.tmpl.render( array[ i - 1 ] );
+			ret += this._.tmpl.render( array[ i - 1 ] );
 		}
 	} else {
 		// Render in original order
@@ -145,7 +146,7 @@ test("array access", function() {
 	equal( jsviews.templates( "{{:true && (a[0] || 'default')}}" ).render({ a: [0,22,33] }, { incr:function(val) { return val + 1; }}), "default", "true && (a[0] || 'default')" );
 });
 
-test("context", 4, function() {
+test("context", 5, function() {
 	equal( jsviews.templates( "{{:~val}}" ).render( 1, { val: "myvalue" }), "myvalue", "~val" );
 	function format(value, upper) {
 		return value[upper ?  "toUpperCase" : "toLowerCase"]();
@@ -153,6 +154,7 @@ test("context", 4, function() {
 	equal( jsviews.templates( "{{:~format(name) + ~format(name, true)}}" ).render( person, { format: format }), "joJO", "render( data, { format: formatFn }); ... {{:~format(name, true)}}" );
 	equal( jsviews.templates( "{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}" ).render({ people: people}, { format: format, type: "PascalCase" }), "pascalcaseJO", "render( data, { format: formatFn }); ... {{:~format(name, true)}}" );
 	equal( jsviews.templates( "{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}" ).render({ people: people, town:"Redmond" }, { format: format }), "Jo lives in REDMOND. Bill lives in REDMOND. ", "Passing in context to nested templates: {{for people ~twn=town}}" );
+	equal( jsviews.templates( "{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({ people: people}), "JoJo", "{{:~root}} returns the top-level data");
 });
 
 test("values", 4, function() {
@@ -317,7 +319,7 @@ test("converters", 3, function() {
 	equal(jsviews.converters.loc2, undefined, 'jsviews.converters({ loc2: null }) to remove registered converter' );
 });
 
-test("tags", 5, function() {
+test("tags", 7, function() {
 	equal(jsviews.templates( "{{sort people reverse=true}}{{:name}}{{/sort}}" ).render({ people: people }), "BillJo", "jsviews.tags({ sort: sortFunction })" );
 
 	equal(jsviews.templates( "{{sort people reverse=true towns}}{{:name}}{{/sort}}" ).render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}" );
@@ -329,6 +331,18 @@ test("tags", 5, function() {
 
 	jsviews.tags("sort2", null);
 	equal(jsviews.tags.sort2, undefined, 'jsviews.tags( "sort2", null ) to remove registered tag' );
+
+	jsviews.tags("boldTag", {
+		render: function() {
+			return "<em>" + this.renderContent() + "</em>";
+		},
+		template: "{{:#data}}"
+	});
+	equal(jsviews.templates("{{boldTag}}{{:#data}}{{/boldTag}}").render("theData"), "<em>theData</em>",
+		'Data context inside a block tag using .renderContent() is the same as the outer context');
+
+	equal(jsviews.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
+		'Data context inside the built-in template of a self-closing tag using .renderContent() is the same as the outer context');
 });
 
 test("helpers", 4, function() {
@@ -373,4 +387,6 @@ test("template encapsulation", 1, function() {
 	});
 	equal( jsviews.render.myTmpl6({ people: people }), "BillJo", 'jsviews.templates( "myTmpl", tmplObjWithNestedItems );' );
 });
+
 })();
+})(jQuery, this, QUnit);

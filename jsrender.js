@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 24b
+// informal pre beta commit counter: 25
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -38,15 +38,18 @@
 		rTestElseIf = /^if\s/,
 		rFirstElem = /<(\w+)[>\s]/,
 		rPrevElem = /<(\w+)[^>\/]*>[^>]*$/,
+		rAttrEncode = /[<"'&]/g,
+		rHtmlEncode = /[\x00<>"'&]/g,
 		autoTmplName = 0,
 		viewId = 0,
-		escapeMapForHtml = {
+		charEntities = {
 			"&": "&amp;",
 			"<": "&lt;",
-			">": "&gt;"
+			">": "&gt;",
+			"\x00": "&#0;",
+			"'": "&#39;",
+			'"': "&#34;"
 		},
-        attrEncodeChars = /[<"'&]/g,
-		htmlEncodeChars = /[\x00<>"'&]/g,
 		tmplAttr = "data-jsv-tmpl",
 		fnDeclStr = "var j=j||" + (jQuery ? "jQuery." : "js") + "views,",
 		slice = [].slice,
@@ -79,7 +82,8 @@
 				tmplFn: tmplFn,
 				parse: parseParams,
 				extend: $extend,
-				error: error
+				error: error,
+				syntaxError: syntaxError
 //TODO			invoke: $invoke
 			},
 			_cnvt: convertVal,
@@ -165,15 +169,44 @@
 	// View.get
 	//=========
 
-	function getView(type) {
-		// TODO complete/test/provide samples for this
-		// If type is undefined, returns root view (view under top view).
-		var view = this,
+	function getView(inner, type) { //view.get(inner, type)
+		if (!type) {
+			// view.get(type)
+			type = inner;
+			inner = undefined;
+		}
+
+		var views, i, l, found,
+			view = this,
 			root = !type || type === "root";
-		while (root && view.parent.parent || view && view.type !== type) {
+			// If type is undefined, returns root view (view under top view).
+
+		if (inner) {
+			// Go through views - this one, and all nested ones, depth-first - and return first one with given type.
+			found = view.type === type ? view : undefined;
+			if (!found) {
+				views = view.views;
+				if (view._.useKey) {
+					for (i in views) {
+						if (found = views[i].get(inner, type)) {
+							break;
+						}
+					}
+				} else for (i = 0, l = views.length; !found && i < l; i++) {
+					found = views[i].get(inner, type);
+				}
+			}
+		} else if (root) {
+			// Find root view. (view whose parent is top view)
+			while (view.parent.parent) {
+				found = view = view.parent;
+			}
+		} else while (view && !found) {
+			// Go through views - this one, and all parent ones - and return first one with given type.
+			found = view.type === type ? view : undefined;
 			view = view.parent;
 		}
-		return view;
+		return found;
 	}
 
 	function getIndex() {
@@ -183,13 +216,14 @@
 
 	getIndex.depends = function(view) {
 		return [view.get("item"), "index"];
-	}
+	};
+
 	//==========
-	// View._hlp
+	// View.hlp
 	//==========
 
 	function getHelper(helper) {
-		// Helper method called as view._hlp(key) from compiled template, for helper functions or template parameters ~foo
+		// Helper method called as view.hlp(key) from compiled template, for helper functions or template parameters ~foo
 		var wrapped,
 			view = this,
 			res = (view.ctx || {})[helper];
@@ -221,8 +255,13 @@
 			var tmplConverter,
 				linkCtx = !self.markup && self,
 				tag = {
+					_: {
+						inline: !linkCtx
+					},
 					tagName:  converter + ":",
-					tagCtx: tagCtx
+					tagCtx: tagCtx,
+					flow: TRUE,
+					_is: "tag"
 				},
 				args = tagCtx.args = slice.call(arguments, 5);
 
@@ -238,6 +277,8 @@
 			tagCtx.props = tagCtx.props || {};
 			delete tagCtx.ctx;
 
+			converter = converter !== "true" && converter; // If there is a convertBack but no convert, converter will be "true"
+
 			if (converter && ((tmplConverter = view.getRsc("converters", converter)) || error("Unknown converter: {{"+ converter + ":"))) {
 				// A call to {{cnvt: ... }} or {^{cnvt: ... }} or data-link="{cnvt: ... }"
 				text = tmplConverter.apply(tag, args);
@@ -247,10 +288,12 @@
 				bindingPaths = view.tmpl.bnds[bindingPaths-1];
 				linkCtx.paths = bindingPaths;
 				// Consider being able to switch off binding if parent view is not currently bound.
-				view._.tag = tag; // Provide this tag on view, for markerNode on bound tags, and for getting the tagCtx and linkCtx during rendering.
-				// Provide this tag on view, for addMarkerNode on bound tags to add the tag to view._.bnds, associated with the tag id,
-				// and so when rendering subsequent {{else}}, will be associated with this tag
+
+				view._.tag = tag; // Provide this tag on view, for addBindingMarkers^ on bound tags to add the tag
+				// to view._.bnds, associated with the tag id, and for getting the tagCtx and linkCtx during
+				// rendering, and so when rendering subsequent {{else}}, will be associated with this tag.
 				//TODO does this work with nested elses and with {^{foo:...}} which also adds tag to view, for markerNodes.
+
 				text = view._.onRender(text, view, TRUE);
 	//Example:  text = '<script type="jsv123"></script>' + text + '<script type="jsv123/"></script>';
 			}
@@ -276,25 +319,16 @@
 		return res;
 	}
 
-	function getResource2(storeName, item, root) {
-		var view = this,
-			store = !root && $views[storeName];
-		return store && store[item]
-			|| (store = view.tmpl[storeName], store && store[item])
-			|| view.parent && view.parent.getRsc(storeName, item, TRUE);
-	}
-
 	function renderTag(tagName, parentView, self, content, tagCtx, bind) {
 		// Called from within compiled template function, to render a template tag
 		// Returns the rendered tag
 
-		var ret, render, ctx, elses, tag, tags,
+		var ret, render, ctx, elses, tag, tags, attr,
 			tmpl = self.markup && self,
 			// self is either a template object (if rendering a tag) or a linkCtx object (if linking using a link tag)
 			linkCtx = !tmpl && self,
 			parentView_ = parentView._,
 			parentTmpl = tmpl || parentView.tmpl,
-			childTemplates = parentTmpl.templates,
 			tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}"),
 			args = tagCtx.args = arguments.length > 6 ? slice.call(arguments, 6) : [],
 			props = tagCtx.props = tagCtx.props || {};
@@ -315,78 +349,75 @@
 		if (tagName === "else") {
 			tag = parentView._.tag;
 			// Switch current tagCtx of tag instance to this {{else ...}}
-			elses = tag._elses = tag._elses || [];
+			elses = tag._.elses = tag._.elses || [];
 			elses.push(tmpl);
 			tagCtx.isElse = elses.length;
 			render = tag.render;
 		}
-		if (tagDef.init) {
-			// init is the constructor for the tag/control instance
 
-			// tags hash: tag.ctx.tags, merged with parentView.ctx.tags,
-			tags = ctx.tags = parentView.ctx && extendCtx(ctx.tags, parentView.ctx.tags) || {};
+		tag = tag || linkCtx.tag;
 
-			tag = tag || linkCtx.tag;
-			if (tag) {
-				// tag has already been instantiated, so keep it, but attach the current context, which may have changed
-				// Add tag to tags hash
-				tags[tagName] = tag;
-			} else {
+		if (!tag) {
+			if (tagDef.init) {
 				// If the tag has not already been instantiated, we will create a new instance and add to the tags hash,
 				// so ~tags.tagName will access the tag, even within the rendering of the template content of this tag
 //	TODO provide error handling owned by the tag - using tag.onError
 //			try {
-					tag = tags[tagName] = new tagDef.init(tagCtx, linkCtx, ctx);
+					tag = new tagDef.init(tagCtx, linkCtx, ctx);
 //				}
 //				catch(e) {
 //					tagDef.onError(e);
 //				}
-				tag.tmpl = tmpl;
-
-				if (linkCtx) {
-					tag.attr =
-						// Setting attr on tag so renderContent knows whether to include script node markers.
-						linkCtx.attr =
-							// Setting attr on self to ensure outputting to the correct target attribute.
-							linkCtx.attr || tagDef.attr || "";
-				}
+				// Set attr on linkCtx to ensure outputting to the correct target attribute.
+				tag.attr = tag.attr || tagDef.attr || undefined; // Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
+			} else {
+				// This is a simple tag declared as a function. We won't instantiate a specific tag constructor - just a standard instance object.
+				tag = {
+					// tag instance object if no init constructor
+					render: tagDef.render,
+					renderContent: renderContent
+				};
 			}
-			ctx.tag = tag;
-		} else {
-			// This is a simple tag declared as a function. We won't instantiate a specific tag constructor - just a standard instance object.
-			tag = tag || {
-				// tag instance object if no init constructor
-				render: tagDef.render,
-				renderContent: renderContent,
+			tag._ = {
+				parentTag: ctx.tag,
 				tmpl: tmpl,
-				tagName: tagName
+				inline: !linkCtx
 			};
+			if (linkCtx) {
+				// Set attr on linkCtx to ensure outputting to the correct target attribute.
+				linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
+			}
 		}
-
+		if (!tag.flow) {
+			// tags hash: tag.ctx.tags, merged with parentView.ctx.tags,
+			tags = ctx.tags = parentView.ctx && extendCtx(ctx.tags, parentView.ctx.tags) || {};
+			ctx.tag = tags[tagName] = tag;
+		}
 		// Provide tagCtx, linkCtx and ctx access from tag
 		tag.tagCtx = tagCtx;
+		tag.tagName = tagName;
 		tag.ctx = ctx;
-		if (linkCtx) {
-			linkCtx.tag = tag;
-			tag.linkCtx = linkCtx;
-		}
-
 		tag._is = "tag";
-		tag._done = tagCtx.isElse ? tag._done : FALSE; // If not an {{else}} this is a new
-		tmpl = tmpl || tag.tmpl;
-		elses = tag._elses;
+		tag._.done = tagCtx.isElse ? tag._.done : FALSE; // If not an {{else}} this is a new
+		tmpl = tmpl || tag._.tmpl;
+		elses = tag._.elses;
 
 //TODO The above works for initial rendering, but when refreshing {^{foo}} need also to associate with {{else}} tags. Use compilation to bind else content templates and expressions with the primary tag template and expression.
 
 		parentView_.tag = tag;
-		// Provide this tag on view, for addMarkerNode on bound tags to add the tag to view._.bnds, associated with the tag id,
+		// Provide this tag on view, for addBindingMarkers on bound tags to add the tag to view._.bnds, associated with the tag id,
 		// for getting the tagCtx and linkCtx during rendering, and so when rendering subsequent {{else}}, will be associated with this tag
 		//TODO does this work with nested elses and with {^{foo:...}} which also adds tag to view, for markerNodes.
 
 //		while (tmpl) {
 			// If tagDef has a 'render' function, call it.
 			// If the return result is undefined, return "", or, if a template (or content) is provided,
-			// return the rendered template(using the current data or the first parameter as data);
+			// return the rendered template(using the current data);
+
+			if (linkCtx) {
+				linkCtx.tag = tag;
+				tag._.linkCtx = linkCtx;
+			}
 			if (render = render || tag.render) {
 				ret = render.apply(tag, args);
 
@@ -395,15 +426,21 @@
 			ret = ret !== undefined
 				? ret    // Return result of render function unless it is undefined, in which case return rendered template
 				: tmpl
-					// render template on args[0] if defined, or otherwise on the current data item
-					? tag.renderContent(tagCtx.data !== undefined ? tagCtx.data : parentView.data, undefined, parentView)
-					: ""; // No return value from render, and no template defined, so return ::
+					// render template/content on the current data item
+					? tag.renderContent()
+					: ""; // No return value from render, and no template/content defined, so return ""
 
 //			tmpl = (tag !== "else" && elses) ? (tagCtx.isElse = tagCtx.isElse || 0, elses[tagCtx.isElse++]) : undefined;
 //}
 
 		// If bind, for {^{tag ... }}, insert script marker nodes
-		return bind ? parentView_.onRender(ret, parentView, bind) : ret;
+		if (tag._.inline && (attr = tag.attr) && attr !== "html") {
+			ret = attr === "text"
+				? $converters.html(ret)
+				: "";
+		}
+
+		return bind && parentView_.onRender ? parentView_.onRender(ret, parentView, bind) : ret;
 	}
 
 	//=================
@@ -434,7 +471,7 @@
 				get: getView,
 				getIndex: getIndex,
 				getRsc: getResource,
-				_hlp: getHelper,
+				hlp: getHelper,
 				_: self_
 		};
 
@@ -484,13 +521,11 @@
 		if (typeof item === "function") {
 			// Simple tag declared as function. No presenter instantation.
 			item = {
-				tagName: name,
-				render: item,
-				depends: item.depends
+				depends: item.depends,
+				render: item
 			};
 		} else {
 			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
-			item.tagName = name;
 			if (tmpl = item.template) {
 				item.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
 			}
@@ -501,7 +536,6 @@
 			}
 		}
 		item.renderContent = renderContent;
-		item.attr = "html";
 		if (parentTmpl) {
 			item._parentTmpl = parentTmpl;
 		}
@@ -530,10 +564,10 @@
 					? value
 					: !rTmplString.test(value)
 					// If value is a string and does not contain HTML or tag content, then test as selector
-						&& jQuery && jQuery(value)[0];
+						&& jQuery && jQuery(global.document).find(value)[0];
 					// If selector is valid and returns at least one element, get first element
 					// If invalid, jQuery will throw. We will stay with the original string.
-				} catch (e) { }
+				} catch (e) {}
 
 				if (elem) {
 					// Generally this is a script element.
@@ -646,7 +680,7 @@
 			//    $.views.things(items[, parentTmpl]),
 			// or $.views.things(name, item[, parentTmpl])
 
-			var onStore, compile, items, itemName, childTemplates, childTemplate, thisStore, childStoreName;
+			var onStore, compile, itemName, thisStore;
 
 			if (name && "" + name !== name && !name.nodeType && !name.markup) {
 				// Call to $.views.things(items[, parentTmpl]),
@@ -703,20 +737,22 @@
 	function renderContent(data, context, parentView, key, isLayout, onRender) {
 		// Render template against data as a tree of subviews (nested rendered template instances), or as a string (top-level template).
 		// If the data is the parent view, treat as layout template, re-render with the same data context.
-		var i, l, dataItem, newView, childView, itemResult, parentContext, props, swapContent, tagCtx, isTag, outerOnRender,
+		var i, l, dataItem, newView, childView, itemResult, props, swapContent, tagCtx, tag_, outerOnRender, tmplName,
 			self = this,
 			tmpl = self,
-			allowDataLink = self.attr === undefined || self.attr === "html",
+			allowDataLink = !self.attr || self.attr === "html",
 			result = "";
 
 		if (key === TRUE) {
 			swapContent = TRUE;
 			key = 0;
 		}
-		if (isTag = self._is === "tag") {
+		if (self._is === "tag") {
+			tag_ = self._;
+			tmplName = self.tagName;
 			tagCtx = self.tagCtx;
 			// This is a call from renderTag
-			tmpl = tagCtx.isElse ? self._elses[tagCtx.isElse-1] : self.tmpl;
+			tmpl = tagCtx.isElse ? tag_.elses[tagCtx.isElse-1] : tag_.tmpl;
 			context = extendCtx(context, self.ctx);
 			props = tagCtx.props;
 			if ( props.link === FALSE ) {
@@ -727,6 +763,7 @@
 				context.link = FALSE;
 			}
 			parentView = parentView || tagCtx.view;
+			data = data === undefined ?  parentView : data;
 		} else {
 			tmpl = self.jquery && (self[0] || error('Unknown template: "' + self.selector + '"')) // This is a call from $(selector).render
 				|| self;
@@ -734,7 +771,6 @@
 		if (tmpl) {
 			if (parentView) {
 				onRender = onRender || parentView._.onRender;
-				parentContext = parentView.ctx;
 				if (data === parentView) {
 					// Inherit the data from the parent view.
 					// This may be the contents of an {{if}} block
@@ -742,11 +778,13 @@
 					data = parentView.data;
 					isLayout = TRUE;
 				}
+				context = extendCtx(context, parentView.ctx);
+			} else {
+				(context = context || {}).root = data; // Provide ~root as shortcut to top-level data.
 			}
 
 			// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
 			// Note: If no jQuery, $extend does not support chained copies - so limit extend() to two parameters
-			context = extendCtx(context, parentContext);
 
 			if (!tmpl.fn) {
 				tmpl = $templates[tmpl] || $templates(tmpl);
@@ -774,8 +812,11 @@
 					}
 				} else {
 					// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "myTag" except for
-					// "item", "array" and "data" views. A "data" view is from programatic render(object) against a 'singleton'. 
-					newView = swapContent ? parentView : View(context, self.tagName||"data", parentView, data, tmpl, key, onRender);
+					// "item", "array" and "data" views. A "data" view is from programatic render(object) against a 'singleton'.
+					newView = swapContent ? parentView : View(context, tmplName||"data", parentView, data, tmpl, key, onRender);
+					if (tag_ && !self.flow) {
+						newView.tag = self;
+					}
 					result += tmpl.fn(data, newView, $views);
 				}
 				return outerOnRender ? outerOnRender(result, newView) : result;
@@ -801,7 +842,7 @@
 		error("Syntax error\n" + message);
 	}
 
-	function tmplFn(markup, tmpl, isLinkExpression) {
+	function tmplFn(markup, tmpl, isLinkExpression, convertBack) {
 		// Compile markup to AST (abtract syntax tree) then build the template function code from the AST nodes
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
 
@@ -871,14 +912,15 @@
 
 				newNode = [
 						tagName,
-						converter || "",
+						converter || !!convertBack || "",
 						code,
 						block && [],
 						"{" + (hash ? ("props:" + (noError ? "hsh": "{" + hash + "}")
 							+ ",") : "") + 'params:"' + params + '"' + (passedCtx ? ",ctx:{" + passedCtx.slice(0, -1) + "}" : "") + "},",
 						noError,
 						//"{" + (hash ? ("props:{" + hash + "},") : "") + 'params:"' + params + '"' + (passedCtx ? ",ctx:{" + passedCtx.slice(0, -1) + "}" : "") + "},",
-						bind && pathBindings || 0,
+						bind && pathBindings || 0
+//						(bind || hash || code.indexOf(",")+1) && pathBindings || 0
 					];
 				content.push(newNode);
 				if (block) {
@@ -1058,7 +1100,7 @@
 					if (object !== ".") {
 						var leaf,
 							ret = (helper
-								? 'view._hlp("' + helper + '")'
+								? 'view.hlp("' + helper + '")'
 								: view
 									? "view"
 									: "data")
@@ -1146,14 +1188,6 @@
 	// Utilities
 	//==========
 
-	// HTML encoding helper
-	function replacerForHtml(ch) {
-		// Original code from Mike Samuel <msamuel@google.com>
-		return escapeMapForHtml[ch]
-			// Intentional assignment that caches the result of encoding ch.
-			|| (escapeMapForHtml[ch] = "&#" + ch.charCodeAt(0) + ";");
-	}
-
 	// Merge objects, in particular contexts which inherit from parent contexts
 	function extendCtx(context, parentContext) {
 		// Return copy of parentContext, unless context is defined and is different, in which case return a new merged context
@@ -1201,59 +1235,67 @@
 	//========================== Register tags ==========================
 
 	$tags({
-		"if": function(val) {
-			var self = this;
-				// If not done and val is truey, set done=true on tag instance and render content. Otherwise return ""
-				// On else will call this function again on the same tag instance.
-			return (self._done || arguments.length && !val)
-				? ""
-				: (self._done = true,
-					// Test is satisfied, so render content on current context. Rather than return undefined
-					// (which will render the tmpl/content on the current context but will iterate if it is an array),
-					// we pass in the view. This ensures treating as a layout template - with no iteration
-					self.renderContent(self.tagCtx.view));
+		"if": {
+				render: function(val) {
+				var self = this;
+					// If not done and val is truey, set done=true on tag instance and render content. Otherwise return ""
+					// On else will call this function again on the same tag instance.
+				return (self._.done || arguments.length && !val)
+					? ""
+					: (self._.done = true,
+						// Test is satisfied, so render content on current context. Rather than return undefined
+						// (which will render the tmpl/content on the current context but will iterate if it is an array),
+						// we pass in the view. This ensures treating as a layout template - with no iteration
+						self.renderContent());
+			},
+			flow: TRUE
 		},
 // Temporary fix for binding to {{if}}
 //	"if": {
 //		render: function(val) {
 //			var self = this;
-//			return (self._done || arguments.length && !val) ? "" : (self._done = true, self.renderContent(self.tagCtx.view));
+//			return (self._done || arguments.length && !val) ? "" : (self._done = true, self.renderContent());
 //		}
 //	},
 		"else": function() {}, // Does nothing but ensures {{else}} tags are recognized as valid
-		"for": function() {
-			var i, arg, undef,
-				self = this,
-				tagCtx = self.tagCtx,
-				result = "",
-				args = arguments,
-				done = 0,
-				l = args.length;
+		"for": {
+			render: function() {
+				var i, arg,
+					self = this,
+					tagCtx = self.tagCtx,
+					result = "",
+					args = arguments,
+					done = 0,
+					l = args.length;
 
-			if (!l) {
-				return tagCtx.done
-					? ""
-					: (tagCtx.done = TRUE,
-						// Test is satisfied, so render content on current context. Rather than return undefined
-						// (which will render the tmpl/content on the current context but will iterate if it is an array),
-						// we pass in the view. This ensures treating as a layout template - with no iteration
-						self.renderContent(tagCtx.view));
-			}
-			for (i = 0; i < l; i++) {
-				arg = args[i];
-				undef = arg === undefined;
-				if (!undef) {
-					done += $.isArray(arg) ? arg.length : 1;
-					result += self.renderContent(arg);
-				} else {
-					return "";
+				if (!l) {
+					return tagCtx.done
+						? ""
+						: (tagCtx.done = TRUE,
+							// Test is satisfied, so render content on current context. Rather than return undefined
+							// (which will render the tmpl/content on the current context but will iterate if it is an array),
+							// we pass in the view. This ensures treating as a layout template - with no iteration
+							self.renderContent());
 				}
-			}
-			tagCtx.done = done;
-			return result;
+				for (i = 0; i < l; i++) {
+					arg = args[i];
+					if (arg === undefined) {
+						return "";
+					} else {
+						done += $.isArray(arg) ? arg.length : 1;
+						result += self.renderContent(arg);
+					}
+				}
+				tagCtx.done = done;
+				return result;
+			},
+			flow: TRUE
 		},
-		"*": function(value) {
-			return value;
+		"*": {
+			render: function(value) {
+				return value;
+			},
+			flow: TRUE
 		}
 	});
 
@@ -1265,14 +1307,19 @@
 
 	//========================== Register converters ==========================
 
+	// Get character entity for HTML and Attribute encoding
+	function getCharEntity(ch) {
+		return charEntities[ch];
+	}
+
 	$converters({
 		html: function(text) {
-			// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
-			return text != undefined ? String(text).replace(htmlEncodeChars, replacerForHtml) : "";
+			// HTML encode: Replace < > & and ' and " by corresponding entities.
+			return text != undefined ? String(text).replace(rHtmlEncode, getCharEntity) : "";
 		},
 		attr: function(text) {
-			// Attribute encoding helper: Replace < & ' and " by corresponding entities.
-			return text != undefined ? String(text).replace(attrEncodeChars, replacerForHtml) : "";
+			// Attribute encode: Replace < & ' and " by corresponding entities.
+			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : "";
 		},
 		url: function(text) {
 			// TODO - support chaining {{attr|url:....}} to protect against injection attacks from url parameters containing " or '.

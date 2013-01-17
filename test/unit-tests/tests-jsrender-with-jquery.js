@@ -1,6 +1,9 @@
 /// <reference path="../qunit/qunit.js" />
 /// <reference path="../../jsrender.js" />
+(function($, global, QUnit, undefined) {
+"use strict";
 (function() {
+
 function compileTmpl( template ) {
 	try {
 		return typeof $.templates( null, template ).fn === "function" ? "compiled" : "failed compile";
@@ -10,12 +13,12 @@ function compileTmpl( template ) {
 	}
 }
 
-function sort( array ){
+function sort( array ) {
 	var ret = "";
 	if ( this.tagCtx.props.reverse ) {
 		// Render in reverse order
 		for ( var i = array.length; i; i-- ) {
-			ret += this.tmpl.render( array[ i - 1 ] );
+			ret += this._.tmpl.render( array[ i - 1 ] );
 		}
 	} else {
 		// Render in original order
@@ -158,5 +161,6 @@ test("template encapsulation", 1, function() {
 	});
 	equal( $.render.myTmpl6({ people: people }), "BillJo", '$.templates( "myTmpl", tmplObjWithNestedItems );' );
 });
-})();
 
+})();
+})(jQuery, this, QUnit);
