@@ -6,7 +6,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 25
+// informal pre beta commit counter: 26
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -416,7 +416,7 @@
 
 			if (linkCtx) {
 				linkCtx.tag = tag;
-				tag._.linkCtx = linkCtx;
+				tag.linkCtx = linkCtx;
 			}
 			if (render = render || tag.render) {
 				ret = render.apply(tag, args);
