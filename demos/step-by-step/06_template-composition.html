@@ -14,7 +14,7 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		{{for tmpl="#headerTemplate"/}}
+		{{include tmpl="#headerTemplate"/}}
 		<td>
 			{{for languages tmpl="#columnTemplate"/}}
 		</td>
@@ -24,11 +24,23 @@
 		<td>
 			{{for languages tmpl='#conditionalTemplate'/}}
 		</td>
+		{{include tmpl="#sectionWrapperTemplate"}}
+			{{>title}}
+		{{/include}}
+		<td>
+			{{for languages tmpl='#indexWrapperTemplate'}}
+				<b>{{>name}}</b>
+			{{/for}}
+		</td>
 	</tr>
 </script>
 
 <script id="headerTemplate" type="text/x-jsrender">
 	<td>{{>title}}</td>
+</script>
+
+<script id="sectionWrapperTemplate" type="text/x-jsrender">
+	<td>Section: <em>{{include tmpl=#content/}}</em></td>
 </script>
 
 <script id="columnTemplate" type="text/x-jsrender">
@@ -49,8 +61,15 @@
 	{{/if}}
 </script>
 
+<script id="indexWrapperTemplate" type="text/x-jsrender">
+	<div>
+		{{:#index}}:
+		{{include tmpl=#content/}}
+	</div>
+</script>
+
 <table>
-	<thead><tr><th>Synopsis</th><th>Fixed Template</th><th>Template specified in data</th><th>Conditional Template</th></tr></thead>
+	<thead><tr><th>Synopsis</th><th>Fixed Template</th><th>Template specified in data</th><th>Conditional Template</th><th>Wrapper Template</th><th>Repeating Wrapper Template</th></tr></thead>
 	<tbody id="movieList"></tbody>
 </table>
 

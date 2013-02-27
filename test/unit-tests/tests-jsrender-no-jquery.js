@@ -22,7 +22,7 @@ function sort( array ) {
 				ret += sort.call( this, arguments[ i - 1 ]);
 			}
 		} else for ( var i = array.length; i; i-- ) {
-			ret += this._.tmpl.render( array[ i - 1 ] );
+			ret += this.tagCtx.render( array[ i - 1 ] );
 		}
 	} else {
 		// Render in original order
@@ -75,7 +75,7 @@ test("convert", 4, function() {
 	equal( jsviews.templates( "{{:#data}}" ).render( "<br/>'\"&" ), "<br/>'\"&", "no convert" );
 
 	function loc( data ) {
-		switch (data) { case "desktop": return "bureau"; };
+		switch (data) { case "desktop": return "bureau"; }
 	}
 	jsviews.converters("loc", loc);
 	equal(jsviews.templates( "{{loc:#data}}:{{loc:'desktop'}}" ).render( "desktop" ), "bureau:bureau", 'jsviews.converters("loc", locFunction);... {{loc:#data}}' );
@@ -101,7 +101,7 @@ test("paths", 17, function() {
 	equal( jsviews.templates( "{{:#index === 0}}" ).render([{ a: "aVal" }]), "true", "#index" );
 });
 
-test("types", 10, function() {
+test("types", function() {
 	equal( jsviews.templates( "{{:'abc'}}" ).render(), "abc", "'abc'" );
 	equal( jsviews.templates( "{{:true}}" ).render(), "true", "true" );
 	equal( jsviews.templates( "{{:false}}" ).render(), "false", "false" );
@@ -112,6 +112,19 @@ test("types", 10, function() {
 	equal( jsviews.templates( "{{: -33.33 }}" ).render(), "-33.33", "| -33.33 |" );
 	equal( jsviews.templates( "{{:-33.33 - 2.2}}" ).render(), "-35.53", "-33.33 - 2.2" );
 	equal( jsviews.templates( "{{:notdefined}}" ).render({}), "", "notdefined" );
+});
+
+test("noerror = true", function() {
+	equal( jsviews.templates( "{{:a.b.c.d.e noerror=true}}" ).render(), "", '{{:a.b.c.d.e noerror=true}} -> ""' );
+	equal( jsviews.templates( "{{>a.b.c.d.e noerror=true}}" ).render(), "", '{{>a.b.c.d.e noerror=true}} -> ""' );
+	equal( jsviews.templates({
+		markup: "{{withfallback:a.b noerror=true fallback='Missing Object'}} and {{withfallback:a noerror=true fallback='xx'}} and {{>a noerror=true}} and {{withfallback:a.x.y noerror=true fallback='xx'}}",
+		converters: {
+			withfallback: function(val) {
+				return val || this.tagCtx.props.fallback;
+			}
+		}
+	}).render({a:"yes"}), "Missing Object and yes and yes and xx", '{{withfallback:a.b noerror=true fallback="Missing Object"}} -> "Missing Object"' );
 });
 
 test("comparisons", 22,function () {
@@ -176,7 +189,7 @@ test("expressions", 8, function() {
 });
 
 module( "{{for}}" );
-test("{{for}}", 16, function() {
+test("{{for}}", 17, function() {
 	jsviews.templates( {
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
 		templateForArray: "header_{{for #data}}{{:name}}{{/for}}_footer",
@@ -189,20 +202,21 @@ test("{{for}}", 16, function() {
 	equal( jsviews.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}' );
 	equal( jsviews.render.templateForArray( [people] ), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array' );
 	equal( jsviews.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}' );
-	equal( jsviews.templates( "{{for people towns}}{{:name}}{{/for}}" ).render({ people: people, towns: towns }), "JoBillSeattleParisDelhi", "concatenated targets: {{for people towns}}" );
 	equal( jsviews.templates( "{{for}}xxx{{:name}} {{:~foo}}{{/for}}" ).render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}" );
-	equal( jsviews.templates( "{{for tmpl='testTmpl'/}}" ).render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "no parameter, with tmpl parameter - renders once with parent #data context: {{for}}" );
+	equal( jsviews.templates( "{{for tmpl='testTmpl'/}}" ).render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", ": {{for tmpl=.../}} no parameter - equivalent to {{include tmpl=.../}} - renders once with parent #data context" );
+	equal( jsviews.templates( "{{include tmpl='testTmpl'/}}" ).render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "{{include tmpl=.../}} with tmpl parameter - renders once with parent #data context. Equivalent to {{for tmpl=.../}}" );
 	equal( jsviews.templates( "{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}" ).render({}), "", "missingProperty - renders empty string" );
 	equal( jsviews.templates( "{{for null}}xxx{{:#data===null}}{{/for}}" ).render(), "xxxtrue", "null - renders once with #data null: {{for null}}" );
 	equal( jsviews.templates( "{{for false}}xxx{{:#data}}{{/for}}" ).render(), "xxxfalse", "false - renders once with #data false: {{for false}}" );
 	equal( jsviews.templates( "{{for 0}}xxx{{:#data}}{{/for}}" ).render(), "xxx0", "0 - renders once with #data false: {{for 0}}" );
 	equal( jsviews.templates( "{{for ''}}xxx{{:#data===''}}{{/for}}" ).render(), "xxxtrue", "'' - renders once with #data false: {{for ''}}" );
+	equal( jsviews.templates( "{{for #data}}{{:name}}{{/for}}" ).render(people), "JoBill", "If #data is an array, {{for #data}} iterates" );
 
 	equal( jsviews.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string' );
-	equal( jsviews.render.simpleFor({people:["",false,null,undefined,1]}), "aContent|Contentfalse|Content|Content|Content1|b", 'Empty string, false, null or undefined members of array are also rendered' );
+	equal( jsviews.render.simpleFor({people:["", false, null, undefined, 1]}), "aContent|Contentfalse|Content|Content|Content1|b", 'Empty string, false, null or undefined members of array are also rendered' );
 	equal( jsviews.render.simpleFor({people:null}), "aContent|b", 'null is rendered once with #data null' );
 	equal( jsviews.render.simpleFor({}), "ab", 'if #data is undefined, renders empty string' );
-	equal( jsviews.render.forPrimitiveDataTypes({people:[0,1,"abc","",,null,true,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey' );
+	equal( jsviews.render.forPrimitiveDataTypes({people:[0, 1, "abc", "", ,null ,true ,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey' );
 });
 
 module( "api" );
@@ -307,7 +321,7 @@ test("render", 18, function() {
 
 test("converters", 3, function() {
 	function loc( data ) {
-		switch (data) { case "desktop": return "bureau"; };
+		switch (data) { case "desktop": return "bureau"; }
 	}
 	jsviews.converters({ loc2: loc });
 	equal(jsviews.templates( "{{loc2:#data}}:{{loc2:'desktop'}}" ).render( "desktop" ), "bureau:bureau", "jsviews.converters({ loc: locFunction })" );
@@ -319,8 +333,10 @@ test("converters", 3, function() {
 	equal(jsviews.converters.loc2, undefined, 'jsviews.converters({ loc2: null }) to remove registered converter' );
 });
 
-test("tags", 7, function() {
+test("tags", function() {
 	equal(jsviews.templates( "{{sort people reverse=true}}{{:name}}{{/sort}}" ).render({ people: people }), "BillJo", "jsviews.tags({ sort: sortFunction })" );
+
+	equal(jsviews.templates( "{^{sort people reverse=true}}{^{:name}}{{/sort}}" ).render({ people: people }), "BillJo", "Calling render() with inline data-binding {^{...}} renders normnally without binding" );
 
 	equal(jsviews.templates( "{{sort people reverse=true towns}}{{:name}}{{/sort}}" ).render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}" );
 
@@ -334,15 +350,86 @@ test("tags", 7, function() {
 
 	jsviews.tags("boldTag", {
 		render: function() {
-			return "<em>" + this.renderContent() + "</em>";
+			return "<em>" + this.tagCtx.render() + "</em>";
 		},
 		template: "{{:#data}}"
 	});
 	equal(jsviews.templates("{{boldTag}}{{:#data}}{{/boldTag}}").render("theData"), "<em>theData</em>",
-		'Data context inside a block tag using .renderContent() is the same as the outer context');
+		'Data context inside a block tag using tagCtx.render() is the same as the outer context');
 
 	equal(jsviews.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
-		'Data context inside the built-in template of a self-closing tag using .renderContent() is the same as the outer context');
+		'Data context inside the built-in template of a self-closing tag using tagCtx.render() is the same as the outer context');
+});
+
+test('{{include}} and wrapping content', function() {
+	var result = jsviews.templates({
+			markup:
+				  'Before {{include tmpl="wrapper"}}'
+					+ '{{:name}}'
+				+ '{{/include}} After',
+			templates: {
+				wrapper: "header{{include tmpl=#content/}}footer"
+			}
+		}).render(people);
+
+	equal(result, "Before headerJofooter AfterBefore headerBillfooter After", 'Using {{include ... tmpl="wrapper"}}}wrapped{{/include}}');
+
+	var result = jsviews.templates({
+			markup:
+				  'This replaces:{{myTag override="replacementText" tmpl="wrapper"}}'
+					+ '{{:name}}'
+				+ '{{/myTag}}'
+				+  'This wraps:{{myTag tmpl="wrapper"}}'
+					+ '{{:name}}'
+				+ '{{/myTag}}',
+			tags: {
+				myTag: {
+					template: "add{{include tmpl=#content/}}",
+					render: function() {
+						return this.tagCtx.props.override;
+					}
+				}
+			},
+			templates: {
+				wrapper: "header{{include tmpl=#content/}}footer"
+			}
+		}).render(people);
+
+	equal(result, "This replaces:replacementTextThis wraps:headerJofooterThis replaces:replacementTextThis wraps:headerBillfooter", 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+
+	var result = jsviews.templates({
+			markup:
+				  'Before {{include tmpl="wrapper"}}'
+					+ '{{:name}}'
+				+ '{{/include}} After',
+			templates: {
+				wrapper: "header{{for people tmpl=#content/}}footer"
+			}
+		}).render({people: people});
+
+	equal(result, "Before headerJoBillfooter After", 'Using {{for ... tmpl="wrapper"}}}wrapped{{/for}}');
+
+	var result = jsviews.templates({
+			markup:
+				  'This replaces:{{myTag override="replacementText"}}'
+					+ '{{:name}}'
+				+ '{{/myTag}}'
+				+  'This wraps:{{myTag tmpl="wrapper"}}'
+					+ '{{:name}}'
+				+ '{{/myTag}}',
+			tags: {
+				myTag: {
+					render: function() {
+						return this.tagCtx.props.override;
+					}
+				}
+			},
+			templates: {
+				wrapper: "header{{for people tmpl=#content/}}footer"
+			}
+		}).render({people: people});
+
+	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 });
 
 test("helpers", 4, function() {

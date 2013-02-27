@@ -10,8 +10,8 @@
 <body>
 <a href="../demos.html">JsRender Demos</a><br />
 
-<h3>To pass an array to a "layout template" - which includes headers or footers,<br />
-as well as the rendered items - wrap the array in an array...</h3>
+<h3>To render a <em>non-repeating</em> template against an array, with content above or below the repeating items,<br />
+wrap the array - as <em>render([myArray])</em> - and include <em>{{for #data}}</em> for the repeating section</h3>
 
 <div class="subhead">Top-level layout:</div>
 <pre>
@@ -72,7 +72,7 @@ Template:
 				</td>
 			</tr>
 		{{/for}}
-	<tbody>
+	</tbody>
 </script>
 
 <table id="movieList"></table>

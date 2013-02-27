@@ -17,9 +17,12 @@
 		<td>{{>title}}</td>
 		<td>
 			{{for languages}}
+				<div class="{{:#index%2 ? 'even' : 'odd'}}"></div>
 				<div>
 					<em>{{>name}}</em>
 				</div>
+			{{else}}
+				No alternate languages	
 			{{/for}}
 		</td>
 	</tr>
@@ -54,6 +57,13 @@
 				{ name: "English" },
 				{ name: "German" }
 			]
+		},
+		{
+			title: "Local Story",
+			languages: []
+		},
+		{
+			title: "My Home Video"
 		}
 	];
 

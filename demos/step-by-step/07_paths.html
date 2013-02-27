@@ -15,32 +15,34 @@
 	<b>{{:#index+1}}:</b> {{>firstName}} {{>lastName}}:
 
 	<br/>
-	{{for address tmpl="#addressTemplate"/}}
+	{{for address tmpl="#addressTemplate"}}{{else}}
+		Address missing
+	{{/for}}
 
-	{{if phones cells}}
-		<div>
-			Phones:
-			{{for phones cells}} <b>{{>#data}}</b> ({{>#parent.parent.data.firstName}}'s{{/for}}
-		</div>
-	{{/if}}
+	<div>
+		Phones:
+		{{for phones cells}}
+			<b>{{>#data}}</b> ({{>#parent.parent.data.firstName}}'s)
+		{{else}}
+			{{>#parent.parent.data.firstName}} has no phones or cells
+		{{/for}}
 
 {{!-- or provide an alias to get to firstName from nested content
-
-	{{if phones cells ~frstNm=firstName}}
-		<div>
-			Phones:
-			{{for phones cells}} <b>{{>#data}}</b> ({{>~frstNm}})'s{{/for}}
-		</div>
-	{{/if}}
-
+		Phones:
+		{{for phones cells ~frstNm=firstName}}
+			<b>{{>#data}}</b> ({{>~frstNm}}'s)
+		{{else}}
+			{{>~frstNm}} has no phones or cells
+		{{/for}}
 --}}
+	</div>
 
 	<br/>
 
 	<i>
 		{{>firstName}}
 
-		{{if address.street noerror=true}}  {{!-- We added noerror=true, since address may be null or undefined --}}
+		{{if address && address.street}}  {{!-- address may be null or undefined --}}
 			lives in {{>address.street}}.
 		{{else}}
 			has no address...
@@ -69,7 +71,6 @@
 			firstName: "Pete",
 			lastName: "Ruffles",
 			address: {
-				street: "1 1st Ave NE",
 				city: "Bellevue"
 			},
 			cells: ["425 666 3455", "425 222 1111"]
@@ -77,7 +78,7 @@
 		{
 			firstName: "Xavier",
 			lastName: "NoStreet",
-			phones: "222 666 3455",
+			phones: ["222 666 3455"],
 			cells: ["444 666 3455", "999 222 1111"]
 		},
 		{

@@ -18,7 +18,7 @@ function sort( array ) {
 	if ( this.tagCtx.props.reverse ) {
 		// Render in reverse order
 		for ( var i = array.length; i; i-- ) {
-			ret += this._.tmpl.render( array[ i - 1 ] );
+			ret += this.tagCtx.render( array[ i - 1 ] );
 		}
 	} else {
 		// Render in original order

@@ -84,7 +84,7 @@
 			for ( key in object ) {
 				if ( object.hasOwnProperty( key )) {
 					// For each property/field, render the content of the {{fields object}} tag, with "~key" as template parameter
-					ret += this.renderContent( object[ key ], { key: key });
+					ret += this.tagCtx.render( object[ key ], { key: key });
 				}
 			}
 			return ret;

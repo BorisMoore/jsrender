@@ -108,7 +108,7 @@ $.views.helpers({
 				if (value) {
 					vars[key] = value;
 				} else {
-					vars[key] = this.renderContent(this.tagCtx.view);
+					vars[key] = this.tagCtx.render(this.tagCtx.view);
 				}
 			}
 		});
