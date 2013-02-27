@@ -13,12 +13,29 @@
 <h3>Custom tags</h3>
 
 <pre>
-&lt;td>{{sort languages reverse=true}}...{{/sort}}&lt;/td>
+{{wrapper1}}{{>title}}{{/wrapper1}}
+
+{{sort languages tmpl="#sortedTemplate"/}}
+
+{{sort languages reverse=true}}
+    &lt;div>
+        &lt;b>{{>name}}&lt;/b>
+    &lt;/div>
+{{/sort}}
 
 $.views.tags({
 
-    // Tag to reverse-sort an array
+    // Tag with a render method to return HTML content
+    wrapper1: function() {
+        return "Wrapped tag content:&lt;p>Title:&lt;br/>&lt;b>" + this.tagCtx.render()...;
+    },
 
+    // Tag with template and no render method
+    wrapper2: {
+        template: "Wrapped tag content:&lt;p>Title:&lt;br/>&lt;b>{{include tmpl=#content/}}..."
+    },
+
+    // Tag with render method to reverse-sort an array
     sort: function( array ){
         var ret = "";
         if ( this.tagCtx.props.reverse ) {
@@ -41,6 +58,12 @@ $.views.tags({
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
 		<td>{{>title}}</td>
+		<td>
+			{{wrapper1}}{{>title}}{{/wrapper1}}
+		</td>
+		<td>
+			{{wrapper2}}{{>title}}{{/wrapper2}}
+		</td>
 		<td>{{sort languages tmpl="#sortedTemplate"/}}</td>
 		<td>
 			{{sort languages reverse=true}}
@@ -49,7 +72,7 @@ $.views.tags({
 				</div>
 			{{/sort}}
 		</td>
-
+		
 	</tr>
 </script>
 
@@ -58,7 +81,7 @@ $.views.tags({
 </script>
 
 <table>
-	<thead><tr><th>Title</th><th>Languages</th><th>Reverse order</th></tr></thead>
+	<thead><tr><th>Title</th><th>Render method wrapping content</th><th>Tag template wrapping content</th><th>Sort tag: Languages</th><th>Sort tag: Reverse order</th></tr></thead>
 	<tbody id="movieList"></tbody>
 </table>
 
@@ -66,7 +89,17 @@ $.views.tags({
 
 	$.views.tags({
 
-		// Tag to reverse-sort an array
+		// Tag with a render method to return HTML content, including data, and the rendered inline content
+		wrapper1: function() {
+			return "Wrapped tag content:<p>Title:<br/><b>" + this.tagCtx.render() + "</b>.</p>" + this.tagCtx.view.data.languages.length + " languages available.";
+		},
+
+		// Tag with no render method. Just a template to render HTML content including data, and the rendered inline content
+		wrapper2: {
+			template: "Wrapped tag content:<p>Title:<br/><b>{{include tmpl=#content/}}</b>.</p>{{:languages.length}} languages available."
+		},
+
+		// Tag with render method to reverse-sort an array
 		sort: function( array ){
 			var ret = "";
 			if ( this.tagCtx.props.reverse ) {

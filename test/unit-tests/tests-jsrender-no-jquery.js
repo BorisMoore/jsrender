@@ -384,9 +384,8 @@ test('{{include}} and wrapping content', function() {
 				+ '{{/myTag}}',
 			tags: {
 				myTag: {
-					template: "add{{include tmpl=#content/}}",
 					render: function() {
-						return this.tagCtx.props.override;
+						return this.tagCtx.props.override; // If no override parameter, renders the tmpl template, which wraps the inline block content
 					}
 				}
 			},
@@ -395,13 +394,13 @@ test('{{include}} and wrapping content', function() {
 			}
 		}).render(people);
 
-	equal(result, "This replaces:replacementTextThis wraps:headerJofooterThis replaces:replacementTextThis wraps:headerBillfooter", 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+	equal(result, "This replaces:replacementTextThis wraps:headerJofooterThis replaces:replacementTextThis wraps:headerBillfooter", 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTag}}');
 
 	var result = jsviews.templates({
 			markup:
 				  'Before {{include tmpl="wrapper"}}'
 					+ '{{:name}}'
-				+ '{{/include}} After',
+					+ '{{/include}} After',
 			templates: {
 				wrapper: "header{{for people tmpl=#content/}}footer"
 			}
@@ -420,7 +419,7 @@ test('{{include}} and wrapping content', function() {
 			tags: {
 				myTag: {
 					render: function() {
-						return this.tagCtx.props.override;
+						return this.tagCtx.props.override; // If no override parameter, renders the tmpl template, which wraps the inline block content
 					}
 				}
 			},
@@ -429,7 +428,7 @@ test('{{include}} and wrapping content', function() {
 			}
 		}).render({people: people});
 
-	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{myTag ... tmpl="wrapper"}}wrapped{{/myTag}}');
 });
 
 test("helpers", 4, function() {

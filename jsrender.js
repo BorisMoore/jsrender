@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 27
+// informal pre beta commit counter: 28
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -346,11 +346,11 @@
 			// Set the tmpl property to the content of the block tag, unless set as an override property on the tag
 			content = tagCtx.tmpl;
 			content = tagCtx.content = content && parentTmpl.tmpls[content - 1];
-			tmpl = tagCtx.props.tmpl || content;
+			tmpl = tagCtx.props.tmpl;
 			if (!i && (!tmpl || !tag)) {
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}");
 			}
-			tmpl = tmpl || !i && tagDef.template;
+			tmpl = tmpl || !i && tagDef.template || content;
 			tmpl = "" + tmpl === tmpl // if a string
 				? parentView.getRsc("templates", tmpl) || $templates(tmpl)
 				: tmpl;
