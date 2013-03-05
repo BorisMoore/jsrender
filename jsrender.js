@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 29
+// informal pre beta commit counter: 30 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -25,9 +25,9 @@
 		rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 		//                                     object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)/g,
-		//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
-		// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*((\))(?=\s*\.|\s*\^)|\)|\])([([]?))|(\s+)/g,
+		//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot           prn2   space
+		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
 		rNewLine = /\s*\n\s*/g,
 		rUnescapeQuotes = /\\(['"])/g,
@@ -212,8 +212,8 @@
 		return view ? view.index : undefined;
 	}
 
-	getIndex.depends = function(view) {
-		return [view.get("item"), "index"];
+	getIndex.depends = function() {
+		return [this.get("item"), "index"];
 	};
 
 	//==========
@@ -661,7 +661,8 @@
 				{
 					markup: markup,
 					tmpls: [],
-					links: {},
+					links: {}, // Compiled functions for link expressions
+					tags: {}, // Compiled functions for bound tag expressions
 					bnds: [],
 					_is: "template",
 					render: renderContent
@@ -1162,24 +1163,26 @@
 
 	function parseParams(params, bindings) {
 
-		function parseTokens(all, lftPrn0, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, prn2, space) {
-			// rParams = /(\()(?=|\s*\()|(?:([([])\s*)?(?:([#~]?[\w$^.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$^.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)
-			//          lftPrn0-flwed by (- lftPrn               path    operator err                                                eq         path2       prn    comma   lftPrn3   apos quot        rtPrn   prn2   space
+		function parseTokens(all, lftPrn0, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
+			// rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$^.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$^.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)
+			//          lftPrn0-flwed by (- lftPrn               path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
 			operator = operator || "";
 			lftPrn = lftPrn || lftPrn0 || lftPrn2;
 			path = path || path2;
+			if (bindings && rtPrnDot) {
+				// TODO check for nested call ~foo(~bar().x).y
+				objectCall = bindings.push({_jsvOb: full.slice(pathStart[parenDepth - 1] + 1, index + 1)});
+			}
 			prn = prn || prn2 || "";
 
 			function parsePath(all, object, helper, view, viewProperty, pathTokens, leafToken) {
 				// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 				//                                        object   helper    view  viewProperty pathTokens       leafToken
-
 				if (object) {
-					bindings && bindings.push(path);
+					bindings && !name && bindings.push(path); // Add path binding for paths on props and args, but not within ~foo=expr (passing in template property aliases).
 					if (object !== ".") {
-						var leaf,
-							ret = (helper
+						var ret = (helper
 								? 'view.hlp("' + helper + '")'
 								: view
 									? "view"
@@ -1193,12 +1196,11 @@
 									) + (pathTokens || "")
 								: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
 
-						leaf = (leafToken ? "." + leafToken : "");
-						ret = ret + leaf;
-						ret = ret.slice(0, 9) === "view.data"
-						? ret.slice(5) // convert #view.data... to data...
-						: ret;
-						return ret;
+						ret = ret + (leafToken ? "." + leafToken : "");
+
+						return ret.slice(0, 9) === "view.data"
+							? ret.slice(5) // convert #view.data... to data...
+							: ret;
 					}
 				}
 				return all;
@@ -1207,7 +1209,7 @@
 			if (err) {
 				syntaxError(params);
 			} else {
-				return (aposed
+				var tokens = (aposed
 					// within single-quoted string
 					? (aposed = !apos, (aposed ? all : '"'))
 					: quoted
@@ -1216,7 +1218,7 @@
 						:
 					(
 						(lftPrn
-								? (parenDepth++, lftPrn)
+								? (parenDepth++, pathStart[parenDepth] = index, lftPrn)
 								: "")
 						+ (space
 							? (parenDepth
@@ -1228,7 +1230,7 @@
 							: eq
 					// named param
 					// Insert backspace \b (\x08) as separator for named params, used subsequently by rBuildHash
-								? (parenDepth && syntaxError(params), named = true, '\b' + path + ':')
+								? (parenDepth && syntaxError(params), named = path, '\b' + path + ':')
 								: path
 					// path
 									? (path.split("^").join(".").replace(rPath, parsePath)
@@ -1252,10 +1254,13 @@
 													: (aposed = apos, quoted = quot, '"')
 					))
 				);
+				return tokens;
 			}
 		}
-		var named,
+
+		var named, objectCall,
 			fnCall = {},
+			pathStart = {0:-1},
 			parenDepth = 0,
 			quoted = false, // boolean for string content in double quotes
 			aposed = false; // or in single quotes
@@ -1374,6 +1379,7 @@
 				return result;
 			},
 			onUpdate: function(ev, eventArgs, tagCtxs) {
+				//Consider adding filtering for perf optimization. However the below prevents update on some scenarios which _should_ update - namely when there is another array on which for also depends.
 				//var i, l, tci, prevArg;
 				//for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
 				//	if (prevArg.args[0] !== tagCtxs[tci].args[0]) {
@@ -1387,9 +1393,9 @@
 					self = this,
 					change = eventArgs.change;
 				if (this.tagCtxs[1] && (
-						   change === "insert" && ev.target.length === eventArgs.items.length
-						|| change === "remove" && !ev.target.length
-						|| change === "refresh" && !eventArgs.oldItems.length !== !ev.target.length
+						   change === "insert" && ev.target.length === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
+						|| change === "remove" && !ev.target.length // removing , and new length 0, so going from n to 0
+						|| change === "refresh" && !eventArgs.oldItems.length !== !ev.target.length // refreshing, and length is going from 0 to n or from n to 0
 					)) {
 					this.refresh();
 				} else {
