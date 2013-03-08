@@ -1308,8 +1308,10 @@
 	} else {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is not loaded.
-
-		$ = global.jsviews = $views;
+		if (!$) { $ = global.$ = {}};
+		$.render = $render;
+		$.views = $views;
+		$.templates = $templates = $views.templates;
 
 		$.isArray = Array && Array.isArray || function(obj) {
 			return Object.prototype.toString.call(obj) === "[object Array]";
