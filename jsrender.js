@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 30 (Beta Candidate)
+// informal pre beta commit counter: 31 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -328,8 +328,12 @@
 			linkCtx = parentView.linkCtx || 0,
 			ctx = parentView.ctx,
 			parentTmpl = tmpl || parentView.tmpl,
-			parentView_ = parentView._,
-			tag = tagName._is === "tag" && tagName;
+			parentView_ = parentView._;
+
+		if (tagName._is === "tag") {
+			tag = tagName;
+			tagName = tag.tagName;
+		}
 
 		// Provide tagCtx, linkCtx and ctx access from tag
 		if (boundTagKey) {
@@ -1043,7 +1047,7 @@
 
 					if (!(isElse = tagName === "else")) {
 						tmplBindingKey = 0;
-						if (pathBindings = node[6]) { // Array of paths, or false if not data-bound
+						if (tmplBindings && (pathBindings = node[6])) { // Array of paths, or false if not data-bound
 							tmplBindingKey = tmplBindings.push(pathBindings);
 						}
 					}
@@ -1172,7 +1176,7 @@
 			path = path || path2;
 			if (bindings && rtPrnDot) {
 				// TODO check for nested call ~foo(~bar().x).y
-				objectCall = bindings.push({_jsvOb: full.slice(pathStart[parenDepth - 1] + 1, index + 1)});
+				bindings.push({_jsvOb: full.slice(pathStart[parenDepth - 1] + 1, index + 1)});
 			}
 			prn = prn || prn2 || "";
 
@@ -1180,7 +1184,8 @@
 				// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 				//                                        object   helper    view  viewProperty pathTokens       leafToken
 				if (object) {
-					bindings && !name && bindings.push(path); // Add path binding for paths on props and args, but not within ~foo=expr (passing in template property aliases).
+					bindings && !isAlias && bindings.push(path); // Add path binding for paths on props and args,
+					// but not within foo=expr (named parameter) or ~foo=expr (passing in template parameter aliases).
 					if (object !== ".") {
 						var ret = (helper
 								? 'view.hlp("' + helper + '")'
@@ -1224,13 +1229,13 @@
 							? (parenDepth
 								? ""
 								: named
-									? (named = false, "\b")
+									? (named = isAlias = false, "\b")
 									: ","
 							)
 							: eq
 					// named param
 					// Insert backspace \b (\x08) as separator for named params, used subsequently by rBuildHash
-								? (parenDepth && syntaxError(params), named = path, '\b' + path + ':')
+								? (parenDepth && syntaxError(params), named = path, isAlias = path.charAt(0) === "~", '\b' + path + ':')
 								: path
 					// path
 									? (path.split("^").join(".").replace(rPath, parsePath)
@@ -1258,7 +1263,7 @@
 			}
 		}
 
-		var named, objectCall,
+		var named, isAlias,
 			fnCall = {},
 			pathStart = {0:-1},
 			parenDepth = 0,
@@ -1300,21 +1305,22 @@
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is loaded, so make $ the jQuery object
 		$ = jQuery;
-		$.render = $render;
-		$.views = $views;
-		$.templates = $templates = $views.templates;
 		$.fn.render = renderContent;
 
 	} else {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is not loaded.
 
-		$ = global.jsviews = $views;
+		$ = global.jsviews = {};
 
 		$.isArray = Array && Array.isArray || function(obj) {
 			return Object.prototype.toString.call(obj) === "[object Array]";
 		};
 	}
+
+	$.render = $render;
+	$.views = $views;
+	$.templates = $templates = $views.templates;
 
 	//========================== Register tags ==========================
 
@@ -1438,16 +1444,16 @@
 	$converters({
 		html: function(text) {
 			// HTML encode: Replace < > & and ' and " by corresponding entities.
-			return text != undefined ? String(text).replace(rHtmlEncode, getCharEntity) : "";
+			return text != undefined ? String(text).replace(rHtmlEncode, getCharEntity) : ""; // null and undefined return ""
 		},
 		attr: function(text) {
 			// Attribute encode: Replace < & ' and " by corresponding entities.
-			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : "";
+			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		},
 		url: function(text) {
 			// TODO - support chaining {{attr|url:....}} to protect against injection attacks from url parameters containing " or '.
 			// URL encoding helper.
-			return text != undefined ? encodeURI(String(text)) : "";
+			return text != undefined ? encodeURI(String(text)) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		}
 	});
 

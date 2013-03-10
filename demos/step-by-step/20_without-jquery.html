@@ -12,12 +12,16 @@
 <h3>JsRender without jQuery</h3>
 
 <pre>
-    jsviews.templates({
-        movieTemplate: document.getElementById( "movieTemplate" ).innerHTML,
+    (function($) {
         ...
-    });
+        $.templates({
+            movieTemplate: document.getElementById( "movieTemplate" ).innerHTML,
+            ...
+        });
 
-    document.getElementById( "movieList" ).innerHTML = jsviews.render.movieTemplate( movies );
+        document.getElementById( "movieList" ).innerHTML = $.render.movieTemplate( movies );
+
+    })(this.jsviews);
 </pre>
 
 <script id="movieTemplate" type="text/x-jsrender">
@@ -41,49 +45,54 @@
 
 <script type="text/javascript">
 
-	jsviews.tags({
+	(function($) {
 
-		sort: function( array ){
-			var ret = "";
-			if ( this.tagCtx.props.reverse ) {
-				// Render in reverse order
-				for ( var i = array.length; i; i-- ) {
-					ret += this.tagCtx.render( array[ i - 1 ] );
+		$.views.tags({
+
+			sort: function( array ){
+				var ret = "";
+				if ( this.tagCtx.props.reverse ) {
+					// Render in reverse order
+					for ( var i = array.length; i; i-- ) {
+						ret += this.tagCtx.render( array[ i - 1 ] );
+					}
+				} else {
+					// Render in original order
+					ret += this.tagCtx.render( array );
 				}
-			} else {
-				// Render in original order
-				ret += this.tagCtx.render( array );
+				return ret;
 			}
-			return ret;
-		}
 
-	});
+		});
 
-	var movies = [
-		{
-			title: "Meet Joe Black",
-			languages: [
-				{ name: "English" },
-				{ name: "French" }
-			]
-		},
-		{
-			title: "Eyes Wide Shut",
-			languages: [
-				{ name: "French" },
-				{ name: "German" },
-				{ name: "Spanish" }
-			]
-		}
-	];
+		var movies = [
+			{
+				title: "Meet Joe Black",
+				languages: [
+					{ name: "English" },
+					{ name: "French" }
+				]
+			},
+			{
+				title: "Eyes Wide Shut",
+				languages: [
+					{ name: "French" },
+					{ name: "German" },
+					{ name: "Spanish" }
+				]
+			}
+		];
 
-	jsviews.templates({
-		movieTemplate: document.getElementById( "movieTemplate" ).innerHTML,
-		sortedTemplate: document.getElementById( "sortedTemplate" ).innerHTML
-	});
+		$.templates({
+			movieTemplate: document.getElementById( "movieTemplate" ).innerHTML,
+			sortedTemplate: document.getElementById( "sortedTemplate" ).innerHTML
+		});
 
-	document.getElementById( "movieList" ).innerHTML =
-		"<table><thead><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></thead><tbody>" + jsviews.render.movieTemplate( movies ) + "</tbody></table>";
+		document.getElementById( "movieList" ).innerHTML =
+			"<table><thead><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></thead><tbody>" + $.render.movieTemplate( movies ) + "</tbody></table>";
+
+	})(this.jsviews);
+
 </script>
 
 </body>

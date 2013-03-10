@@ -51,6 +51,21 @@ var model = {
 	<tbody id="movieList2"></tbody>
 </table>
 
+<!---------------------- Third Example ---------------------->
+
+<div class="subhead">Using the top-level data, accessible in all nested contexts as <em>~root</em>:</div>
+
+<pre>
+{{for movies}}
+    &lt;tr>
+        &lt;td>'{{>title}}': showing at the '{{>~root.theater}}'&lt;/td>
+</pre>
+
+<table>
+	<thead><tr><th>Title</th><th>Languages (+specialMessage)</th></tr></thead>
+	<tbody id="movieList3"></tbody>
+</table>
+
 <!--=================== Demo ===================-->
 
 <!------------------ Templates ------------------>
@@ -77,6 +92,19 @@ var model = {
 			<td>
 				{{for languages ~title=title}}
 					{{>#data}}{{>~specialMessage(#data, ~title)}}<br/>
+				{{/for}}
+			</td>
+		</tr>
+	{{/for}}
+</script>
+
+<script id="movieTemplate3" type="text/x-jsrender">
+	{{for movies}}
+		<tr>
+			<td>'{{>title}}': showing at the '{{>~root.theater}}'</td>
+			<td>
+				{{for languages ~title=title}}
+					{{>#data}}{{>~root.specialMessage(#data, ~title)}}<br/>
 				{{/for}}
 			</td>
 		</tr>
@@ -118,6 +146,10 @@ var model = {
 
 	$( "#movieList2" ).html(
 		$( "#movieTemplate2" ).render( model )
+	);
+
+	$( "#movieList3" ).html(
+		$( "#movieTemplate3" ).render( model )
 	);
 
 </script>
