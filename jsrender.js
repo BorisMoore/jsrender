@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 31 (Beta Candidate)
+// informal pre beta commit counter: 32 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -29,7 +29,7 @@
 		//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot           prn2   space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
-		rNewLine = /\s*\n\s*/g,
+		rNewLine = /\s*\n/g,
 		rUnescapeQuotes = /\\(['"])/g,
 		// escape quotes and \ character
 		rEscapeQuotes = /([\\'"])/g,
@@ -1186,6 +1186,7 @@
 				if (object) {
 					bindings && !isAlias && bindings.push(path); // Add path binding for paths on props and args,
 					// but not within foo=expr (named parameter) or ~foo=expr (passing in template parameter aliases).
+//TODO Add opt-out for path binding {^{foo |expr1| b=|expr2|}
 					if (object !== ".") {
 						var ret = (helper
 								? 'view.hlp("' + helper + '")'
@@ -1253,6 +1254,7 @@
 													: "")
 											)
 											: comma
+//TODO add support for top-level literals
 												? (fnCall[parenDepth] || syntaxError(params), ",") // We don't allow top-level literal arrays or objects
 												: lftPrn0
 													? ""
