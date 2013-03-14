@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 32 (Beta Candidate)
+// informal pre beta commit counter: 33 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -296,6 +296,7 @@
 			value = boundTagCtx && view._.onRender
 				? view._.onRender(value, view, boundTagCtx)
 				: value;
+			view._.tag = undefined;
 		}
 		return value;
 	}
