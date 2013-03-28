@@ -32,7 +32,6 @@ var person = { name: "Jo" },
 	towns = [{ name: "Seattle" },{ name: "Paris" },{ name: "Delhi" }];
 
 var tmplString =  "A_{{:name}}_B";
-$.views.allowCode = true;
 module("api");
 test("templates", 14, function() {
 	$.templates("myTmpl", tmplString);

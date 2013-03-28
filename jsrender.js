@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 33 (Beta Candidate)
+// informal pre beta commit counter: 34 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -37,7 +37,7 @@
 		rTestElseIf = /^if\s/,
 		rFirstElem = /<(\w+)[>\s]/,
 		rPrevElem = /<(\w+)[^>\/]*>[^>]*$/,
-		rAttrEncode = /[<"'&]/g,
+		rAttrEncode = /[><"'&]/g, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
 		rHtmlEncode = /[><"'&]/g,
 		autoTmplName = 0,
 		viewId = 0,
@@ -68,7 +68,6 @@
 		$views = {
 			jsviews: versionNumber,
 			render: $render,
-			View: View,
 			settings: {
 				delimiters: $viewsDelimiters,
 				debugMode: true,
@@ -76,6 +75,7 @@
 			},
 			sub: {
 				// subscription, e.g. JsViews integration
+				View: View,
 				Error: JsViewsError,
 				tmplFn: tmplFn,
 				parse: parseParams,
@@ -305,15 +305,15 @@
 	// jsviews._tag
 	//=============
 
-	function getResource(storeName, item) {
+function getResource(resourceType, itemName) {
 		var res,
 			view = this,
-			store = $views[storeName];
+			store = $views[resourceType];
 
-		res = store && store[item];
+		res = store && store[itemName];
 		while ((res === undefined) && view) {
-			store = view.tmpl[storeName];
-			res = store && store[item];
+			store = view.tmpl[resourceType];
+			res = store && store[itemName];
 			view = view.parent;
 		}
 		return res;
@@ -711,13 +711,17 @@
 				}
 				return $views;
 			}
-			thisStore = parentTmpl ? parentTmpl[storeNames] = parentTmpl[storeNames] || {} : theStore;
-
 			// Adding a single unnamed item to the store
 			if (item === undefined) {
 				item = name;
 				name = undefined;
 			}
+			if (name && "" + name !== name) { // name must be a string
+				parentTmpl = item;
+				item = name;
+				name = undefined;
+			}
+			thisStore = parentTmpl ? parentTmpl[storeNames] = parentTmpl[storeNames] || {} : theStore;
 			compile = storeSettings.compile;
 			if (onStore = $viewsSub.onBeforeStoreItem) {
 				// e.g. provide an external compiler or preprocess the item.
@@ -725,13 +729,11 @@
 			}
 			if (!name) {
 				item = compile(undefined, item);
-			} else if ("" + name === name) { // name must be a string
-				if (item === null) {
-					// If item is null, delete this entry
-					delete thisStore[name];
-				} else {
-					thisStore[name] = compile ? (item = compile(name, item, parentTmpl, storeName, storeSettings)) : item;
-				}
+			} else if (item === null) {
+				// If item is null, delete this entry
+				delete thisStore[name];
+			} else {
+				thisStore[name] = compile ? (item = compile(name, item, parentTmpl, storeName, storeSettings)) : item;
 			}
 			if (item) {
 				item._is = storeName;
@@ -1450,7 +1452,7 @@
 			return text != undefined ? String(text).replace(rHtmlEncode, getCharEntity) : ""; // null and undefined return ""
 		},
 		attr: function(text) {
-			// Attribute encode: Replace < & ' and " by corresponding entities.
+			// Attribute encode: Replace < > & ' and " by corresponding entities.
 			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		},
 		url: function(text) {
