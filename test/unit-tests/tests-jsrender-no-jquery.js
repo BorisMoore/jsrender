@@ -171,10 +171,10 @@ test("context", 5, function() {
 });
 
 test("values", 4, function() {
-	equal($.templates("{{:a}}").render({ a: 0 }), "0", "0");
-	equal($.templates("{{:b}}").render({ a: 0 }), "", "undefined");
-	equal($.templates("{{:a}}").render({ a: "" }), "", "");
-	equal($.templates("{{:b}}").render({ a: null }), "", null);
+	equal($.templates("{{:a}}").render({ a: 0 }), "0", '{{:undefined}} returns "0"');
+	equal($.templates("{{:a}}").render({}), "", "{{:undefined}} returns empty string");
+	equal($.templates("{{:a}}").render({ a: "" }), "", "{{:''}} returns empty string");
+	equal($.templates("{{:a}}").render({ a: null }), "", "{{:null}} returns empty string");
 });
 
 test("expressions", 8, function() {
@@ -319,9 +319,10 @@ test("render", 18, function() {
 	equal($.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey');
 });
 
-test("converters", 3, function() {
+test("converters", function() {
 	function loc(data) {
 		switch (data) { case "desktop": return "bureau"; }
+		return data;
 	}
 	$.views.converters({ loc2: loc });
 	equal($.templates("{{loc2:#data}}:{{loc2:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({ loc: locFunction })");
@@ -331,6 +332,27 @@ test("converters", 3, function() {
 
 	$.views.converters({ loc2: null});
 	equal($.views.converters.loc2, undefined, '$.views.converters({ loc2: null }) to remove registered converter');
+
+	equal($.templates("{{attr:a}}").render({ a: 0 }), "0", '{{attr:0}} returns "0"');
+	equal($.templates("{{attr:a}}").render({}), "", "{{attr:undefined}} returns empty string");
+	equal($.templates("{{attr:a}}").render({ a: "" }), "", "{{attr:''}} returns empty string");
+	equal($.templates("{{attr:a}}").render({ a: null }), "null", '{{attr:null}} returns "null"');
+	equal($.templates("{{attr:a}}").render({ a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{attr:"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
+
+	equal($.templates("{{>a}}").render({ a: 0 }), "0", '{{>0}} returns "0"');
+	equal($.templates("{{>a}}").render({}), "", "{{>undefined}} returns empty string");
+	equal($.templates("{{>a}}").render({ a: "" }), "", "{{>''}} returns empty string");
+	equal($.templates("{{>a}}").render({ a: null }), "", "{{>null}} returns empty string");
+	equal($.templates("{{>a}}").render({ a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{>"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
+
+	equal($.templates("{{loc:a}}").render({ a: 0 }), "0", '{{cnvt:0}} returns "0"');
+	equal($.templates("{{loc:a}}").render({}), "undefined", '{{cnvt:undefined}} returns empty "undefined"');
+	equal($.templates("{{loc:a}}").render({ a: "" }), "", "{{cnvt:''}} returns empty string");
+	equal($.templates("{{loc:a}}").render({ a: null }), "null", "{{cnvt:null}} returns null");
+
+	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "||undefined|", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
+	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:0}), "0|0|0|0", "{{attr:0}}|{{>0}}|{{loc:0}}|{{:0}} returns correct values");
+	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:false}), "false|false|false|false", "{{attr:false}}|{{>false}}|{{loc:false}}|{{:false}} returns correct values");
 });
 
 test("tags", function() {

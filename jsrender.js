@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 34 (Beta Candidate)
+// informal pre beta commit counter: 35 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -25,14 +25,14 @@
 		rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 		//                                     object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*((\))(?=\s*\.|\s*\^)|\)|\])([([]?))|(\s+)/g,
-		//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot           prn2   space
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
+		//          lftPrn0        lftPrn                  path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
 		rNewLine = /\s*\n/g,
 		rUnescapeQuotes = /\\(['"])/g,
 		// escape quotes and \ character
-		rEscapeQuotes = /([\\'"])/g,
+		rEscapeQuotes = /\\?(['"\\])/g,
 		rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
 		rTestElseIf = /^if\s/,
 		rFirstElem = /<(\w+)[>\s]/,
@@ -305,7 +305,7 @@
 	// jsviews._tag
 	//=============
 
-function getResource(resourceType, itemName) {
+	function getResource(resourceType, itemName) {
 		var res,
 			view = this,
 			store = $views[resourceType];
@@ -874,7 +874,6 @@ function getResource(resourceType, itemName) {
 		// Compile markup to AST (abtract syntax tree) then build the template function code from the AST nodes
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
 
-
 		//==== nested functions ====
 		function pushprecedingContent(shift) {
 			shift -= loc;
@@ -927,7 +926,7 @@ function getResource(resourceType, itemName) {
 				if (params) {
 					// remove newlines from the params string, to avoid compiled code errors for unterminated strings
 					params = params.replace(rNewLine, " ");
-					code = parseParams(params, pathBindings)
+					code = parseParams(params, pathBindings, tmpl)
 						.replace(rBuildHash, function(all, isCtx, keyValue) {
 							if (isCtx) {
 								passedCtx += keyValue + ",";
@@ -998,13 +997,13 @@ function getResource(resourceType, itemName) {
 		}
 //			result = tmplFnsCache[markup] = buildCode(astTop, tmpl);
 //		}
-		return buildCode(astTop, tmpl || markup, isLinkExpr);
+		return buildCode(astTop, isLinkExpr ? markup : tmpl, isLinkExpr);
 	}
 
 	function buildCode(ast, tmpl, isLinkExpr) {
 		// Build the template function code from the AST nodes, and set as property on the passed-in template object
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
-		var i, node, tagName, converter, params, hash, hasTag, hasEncoder, getsVal, hasCnvt, tmplBindings, pathBindings, elseStartIndex, elseIndex,
+		var i, node, tagName, converter, params, hash, hasTag, hasEncoder, getsVal, hasCnvt, useCnvt, tmplBindings, pathBindings, elseStartIndex, elseIndex,
 			nestedTmpls, tmplName, nestedTmpl, tagAndElses, allowCode, content, markup, notElse, nextIsElse, oldCode, isElse, isGetVal, prm, tagCtxFn,
 			tmplBindingKey = 0,
 			code = "",
@@ -1105,12 +1104,12 @@ function getResource(resourceType, itemName) {
 						if (isLinkExpr) {
 							return tagCtxFn;
 						}
-						hasCnvt = true;
+						useCnvt = 1;
 					}
 
 					code += (isGetVal
-						? "\n" + (pathBindings ? "" : noError) + (isLinkExpr ? "return " : "ret+=") + (hasCnvt // Call _cnvt if there is a converter: {{cnvt: ... }} or {^{cnvt: ... }}
-							? (hasCnvt = true, 'c("' + converter + '",view,' + (pathBindings
+						? "\n" + (pathBindings ? "" : noError) + (isLinkExpr ? "return " : "ret+=") + (useCnvt // Call _cnvt if there is a converter: {{cnvt: ... }} or {^{cnvt: ... }}
+							? (useCnvt = 0, hasCnvt = true, 'c("' + converter + '",view,' + (pathBindings
 								? ((tmplBindings[tmplBindingKey - 1] = tagCtxFn), tmplBindingKey) // Store the compiled tagCtxFn in tmpl.bnds, and pass the key to convertVal()
 								: "{" + hash) + ");")
 							: tagName === ">"
@@ -1168,19 +1167,22 @@ function getResource(resourceType, itemName) {
 		return code;
 	}
 
-	function parseParams(params, bindings) {
+	function parseParams(params, bindings, tmpl) {
+
+		//function pushBindings() { // Consider structured path bindings
+		//	if (bindings) {
+		//		named ? bindings[named] = bindings.pop(): bindings.push(list = []);
+		//	}
+		//}
 
 		function parseTokens(all, lftPrn0, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-			// rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$^.]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$^.]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*([)\]])([([]?))|(\s+)
-			//          lftPrn0-flwed by (- lftPrn               path    operator err                                                eq         path2       prn    comma   lftPrn2   apos quot        rtPrn   prn2   space
+			// rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*((\))(?=\s*\.|\s*\^)|\)|\])([([]?))|(\s+)/g,
+			//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot           prn2   space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+			var expr;
 			operator = operator || "";
 			lftPrn = lftPrn || lftPrn0 || lftPrn2;
 			path = path || path2;
-			if (bindings && rtPrnDot) {
-				// TODO check for nested call ~foo(~bar().x).y
-				bindings.push({_jsvOb: full.slice(pathStart[parenDepth - 1] + 1, index + 1)});
-			}
 			prn = prn || prn2 || "";
 
 			function parsePath(all, object, helper, view, viewProperty, pathTokens, leafToken) {
@@ -1188,6 +1190,7 @@ function getResource(resourceType, itemName) {
 				//                                        object   helper    view  viewProperty pathTokens       leafToken
 				if (object) {
 					bindings && !isAlias && bindings.push(path); // Add path binding for paths on props and args,
+//					bindings && !isAlias && list.push(path); // Add path binding for paths on props and args,
 					// but not within foo=expr (named parameter) or ~foo=expr (passing in template parameter aliases).
 //TODO Add opt-out for path binding {^{foo |expr1| b=|expr2|}
 					if (object !== ".") {
@@ -1218,7 +1221,23 @@ function getResource(resourceType, itemName) {
 			if (err) {
 				syntaxError(params);
 			} else {
-				var tokens = (aposed
+				if (bindings && rtPrnDot) {
+					// TODO check for nested call ~foo(~bar().x).y
+					// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
+					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
+					expr = pathStart[parenDepth]
+					if (full.length - 2 > index - expr) { // We need to compile a subexpression
+						expr = full.slice(expr, index + 1);
+						rtPrnDot = delimOpenChar1 + ":" + expr + delimCloseChar0; // The parameter or function subexpression
+						rtPrnDot = tmplLinks[rtPrnDot] = tmplLinks[rtPrnDot] || tmplFn(delimOpenChar0 + rtPrnDot + delimCloseChar1, tmpl, true); // Compile the expression (or use cached copy already in tmpl.links)
+						if (!rtPrnDot.paths) {
+							parseParams(expr, rtPrnDot.paths = [], tmpl);
+						}
+						bindings.push({_jsvOb: rtPrnDot}); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
+						//list.push({_jsvOb: rtPrnDot});
+					}
+				}
+				return (aposed
 					// within single-quoted string
 					? (aposed = !apos, (aposed ? all : '"'))
 					: quoted
@@ -1227,11 +1246,14 @@ function getResource(resourceType, itemName) {
 						:
 					(
 						(lftPrn
-								? (parenDepth++, pathStart[parenDepth] = index, lftPrn)
+								? (parenDepth++, pathStart[parenDepth] = index++, lftPrn)
 								: "")
 						+ (space
 							? (parenDepth
 								? ""
+								//: (pushBindings(), named
+								//	? (named = isAlias = false, "\b")
+								//	: ",")
 								: named
 									? (named = isAlias = false, "\b")
 									: ","
@@ -1239,12 +1261,12 @@ function getResource(resourceType, itemName) {
 							: eq
 					// named param
 					// Insert backspace \b (\x08) as separator for named params, used subsequently by rBuildHash
-								? (parenDepth && syntaxError(params), named = path, isAlias = path.charAt(0) === "~", '\b' + path + ':')
+								? (parenDepth && syntaxError(params), named = path, /*pushBindings(),*/isAlias = path.charAt(0) === "~", '\b' + path + ':')
 								: path
 					// path
 									? (path.split("^").join(".").replace(rPath, parsePath)
 										+ (prn
-											? (fnCall[++parenDepth] = true, prn)
+											? (fnCall[++parenDepth] = true, path.charAt(0) !== "." && (pathStart[parenDepth] = index), prn)
 											: operator)
 									)
 									: operator
@@ -1264,16 +1286,18 @@ function getResource(resourceType, itemName) {
 													: (aposed = apos, quoted = quot, '"')
 					))
 				);
-				return tokens;
 			}
 		}
 
-		var named, isAlias,
+		var named, isAlias,// list,
+			tmplLinks = tmpl.links,
 			fnCall = {},
 			pathStart = {0:-1},
 			parenDepth = 0,
 			quoted = false, // boolean for string content in double quotes
 			aposed = false; // or in single quotes
+
+		//pushBindings();
 
 		return (params + " ").replace(rParams, parseTokens);
 	}
