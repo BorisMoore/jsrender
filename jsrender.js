@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 35 (Beta Candidate)
+// informal pre beta commit counter: 36 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -82,12 +82,10 @@
 				extend: $extend,
 				error: error,
 				syntaxError: syntaxError
-//TODO			invoke: $invoke
 			},
 			_cnvt: convertVal,
 			_tag: renderTag,
 
-			// TODO provide better debug experience - e.g. support $.views.onError callback
 			_err: function(e) {
 				// Place a breakpoint here to intercept template rendering errors
 				return $viewsSettings.debugMode ? ("Error: " + (e.message || e)) + ". " : '';
@@ -114,15 +112,6 @@
 			}
 			return target;
 		}
-
-//TODO		function $invoke() {
-//			try {
-//				return arguments[1].apply(arguments[0], arguments[2]);
-//			}
-//			catch(e) {
-//				throw new $views.sub.Error(e, arguments[0]);
-//			}
-//		}
 
 		(JsViewsError.prototype = new Error()).constructor = JsViewsError;
 
@@ -1088,11 +1077,6 @@
 						nextIsElse = nextIsElse && nextIsElse[0] === "else";
 					}
 
-//TODO consider passing in ret to c() and t() so they can look at the previous ret, and detect whether this is a jsrender tag _within_an_HTML_element_tag_
-// and if so, don't insert marker nodes, add data-link attributes to the HTML element markup... No need for people to set link=false.
-
-//TODO consider the following approach rather than noerror=true: params.replace(/data.try\([^]*\)/)
-
 					hash += ",args:[" + params + "]}";
 
 					if (isGetVal && pathBindings || converter && tagName !== ">") {
@@ -1190,9 +1174,8 @@
 				//                                        object   helper    view  viewProperty pathTokens       leafToken
 				if (object) {
 					bindings && !isAlias && bindings.push(path); // Add path binding for paths on props and args,
-//					bindings && !isAlias && list.push(path); // Add path binding for paths on props and args,
 					// but not within foo=expr (named parameter) or ~foo=expr (passing in template parameter aliases).
-//TODO Add opt-out for path binding {^{foo |expr1| b=|expr2|}
+//					bindings && !isAlias && list.push(path);
 					if (object !== ".") {
 						var ret = (helper
 								? 'view.hlp("' + helper + '")'
@@ -1222,7 +1205,6 @@
 				syntaxError(params);
 			} else {
 				if (bindings && rtPrnDot) {
-					// TODO check for nested call ~foo(~bar().x).y
 					// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
 					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
 					expr = pathStart[parenDepth]
@@ -1279,7 +1261,6 @@
 													: "")
 											)
 											: comma
-//TODO add support for top-level literals
 												? (fnCall[parenDepth] || syntaxError(params), ",") // We don't allow top-level literal arrays or objects
 												: lftPrn0
 													? ""
@@ -1457,12 +1438,6 @@
 		}
 	});
 
-	//========================== Register global helpers ==========================
-
-	//	$helpers({ // Global helper functions
-	//		// TODO add any useful built-in helper functions
-	//	});
-
 	//========================== Register converters ==========================
 
 	// Get character entity for HTML and Attribute encoding
@@ -1480,7 +1455,6 @@
 			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		},
 		url: function(text) {
-			// TODO - support chaining {{attr|url:....}} to protect against injection attacks from url parameters containing " or '.
 			// URL encoding helper.
 			return text != undefined ? encodeURI(String(text)) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		}
