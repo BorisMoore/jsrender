@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 36 (Beta Candidate)
+// informal pre beta commit counter: 37 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -31,14 +31,13 @@
 
 		rNewLine = /\s*\n/g,
 		rUnescapeQuotes = /\\(['"])/g,
-		// escape quotes and \ character
-		rEscapeQuotes = /\\?(['"\\])/g,
+		rEscapeQuotes = /\\?(['"\\])/g, // Escape quotes and \ character
 		rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
 		rTestElseIf = /^if\s/,
 		rFirstElem = /<(\w+)[>\s]/,
 		rPrevElem = /<(\w+)[^>\/]*>[^>]*$/,
-		rAttrEncode = /[><"'&]/g, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
-		rHtmlEncode = /[><"'&]/g,
+		rAttrEncode = /[\x00`><"'&]/g, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
+		rHtmlEncode = rAttrEncode,
 		autoTmplName = 0,
 		viewId = 0,
 		charEntities = {
@@ -47,7 +46,8 @@
 			">": "&gt;",
 			"\x00": "&#0;",
 			"'": "&#39;",
-			'"': "&#34;"
+			'"': "&#34;",
+			"`": "&#96;"
 		},
 		tmplAttr = "data-jsv-tmpl",
 		slice = [].slice,
@@ -312,7 +312,7 @@
 		// Called from within compiled template function, to render a template tag
 		// Returns the rendered tag
 
-		var render, tag, tags, attr, isElse, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef,
+		var render, tag, tags, attr, isElse, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef, callInit,
 			ret = "",
 			boundTagKey = +tagCtxs === tagCtxs && tagCtxs, // if tagCtxs is an integer, then it is the boundTagKey
 			linkCtx = parentView.linkCtx || 0,
@@ -344,7 +344,7 @@
 			if (!i && (!tmpl || !tag)) {
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}");
 			}
-			tmpl = tmpl || !i && tagDef.template || content;
+			tmpl = tmpl || (tag ? tag._def : tagDef).template || content;
 			tmpl = "" + tmpl === tmpl // if a string
 				? parentView.getRsc("templates", tmpl) || $templates(tmpl)
 				: tmpl;
@@ -360,13 +360,14 @@
 			if (!tag) {
 				// This will only be hit for initial tagCtx (not for {{else}}) - if the tag instance does not exist yet
 				// Instantiate tag if it does not yet exist
-				if (tagDef.init) {
+				if (tagDef._ctr) {
 					// If the tag has not already been instantiated, we will create a new instance.
 					// ~tag will access the tag, even within the rendering of the template content of this tag.
 					// From child/descendant tags, can access using ~tag.parent, or ~parentTags.tagName
 //	TODO provide error handling owned by the tag - using tag.onError
 //				try {
-					tag = new tagDef.init(tagCtx, linkCtx, ctx);
+					tag = new tagDef._ctr();
+					callInit = !!tag.init;
 //				}
 //				catch(e) {
 //					tagDef.onError(e);
@@ -375,7 +376,7 @@
 					tag.attr = tag.attr || tagDef.attr || undefined;
 					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
 				} else {
-					// This is a simple tag declared as a function. We won't instantiate a specific tag constructor - just a standard instance object.
+					// This is a simple tag declared as a function, or with init set to false. We won't instantiate a specific tag constructor - just a standard instance object.
 					tag = {
 						// tag instance object if no init constructor
 						render: tagDef.render
@@ -397,27 +398,32 @@
 				tag.tagName = tagName;
 				tag.parent = parentTag = ctx && ctx.tag,
 				tag._is = "tag";
+				tag._def = tagDef;
 				// Provide this tag on view, for addBindingMarkers on bound tags to add the tag to view._.bnds, associated with the tag id,
 			}
 			parentView_.tag = tag;
 			tagCtx.tag = tag;
 			tag.tagCtxs = tagCtxs;
-			tag.rendering = {}; // Provide object for state during render calls to tag and elses. (Used by {{if}} and {{for}}...)
-
 			if (!tag.flow) {
 				tagCtxCtx = tagCtx.ctx = tagCtx.ctx || {};
 
 				// tags hash: tag.ctx.tags, merged with parentView.ctx.tags,
-				tags = tagCtxCtx.parentTags = ctx && extendCtx(tagCtxCtx.parentTags, ctx.parentTags) || {};
+				tags = tag.parents = tagCtxCtx.parentTags = ctx && extendCtx(tagCtxCtx.parentTags, ctx.parentTags) || {};
 				if (parentTag) {
 					tags[parentTag.tagName] = parentTag;
 				}
 				tagCtxCtx.tag = tag;
 			}
+			tag.rendering = {}; // Provide object for state during render calls to tag and elses. (Used by {{if}} and {{for}}...)
 		}
 		for (i = 0; i < l; i++) {
 			tagCtx = tag.tagCtx = tagCtxs[i];
 			tag.ctx = tagCtx.ctx;
+
+			if (!i && callInit) {
+				tag.init(tagCtx, linkCtx, tag.ctx);
+				callInit = undefined;
+			}
 
 			if (render = tag.render) {
 				itemRet = render.apply(tag, tagCtx.args);
@@ -522,29 +528,28 @@
 		}
 	}
 
-	function compileTag(name, item, parentTmpl) {
+	function compileTag(name, tagDef, parentTmpl) {
 		var init, tmpl;
-		if (typeof item === "function") {
+		if (typeof tagDef === "function") {
 			// Simple tag declared as function. No presenter instantation.
-			item = {
-				depends: item.depends,
-				render: item
+			tagDef = {
+				depends: tagDef.depends,
+				render: tagDef
 			};
 		} else {
 			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
-			if (tmpl = item.template) {
-				item.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
+			if (tmpl = tagDef.template) {
+				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
 			}
-			if (item.init !== false) {
-				init = item.init = item.init || function(tagCtx) {};
-				init.prototype = item;
-				(init.prototype = item).constructor = init;
+			if (tagDef.init !== false) {
+				init = tagDef._ctr = function(tagCtx) {};
+				(init.prototype = tagDef).constructor = init;
 			}
 		}
 		if (parentTmpl) {
-			item._parentTmpl = parentTmpl;
+			tagDef._parentTmpl = parentTmpl;
 		}
-//TODO	item.onError = function(e) {
+//TODO	tagDef.onError = function(e) {
 //			var error;
 //			if (error = this.prototype.onError) {
 //				error.call(this, e);
@@ -552,7 +557,7 @@
 //				throw e;
 //			}
 //		}
-		return item;
+		return tagDef;
 	}
 
 	function compileTmpl(name, tmpl, parentTmpl, storeName, storeSettings, options) {
@@ -850,9 +855,7 @@
 	// (Compile AST then build template function)
 
 	function error(message) {
-		if ($viewsSettings.debugMode) {
-			throw new $views.sub.Error(message);
-		}
+		throw new $views.sub.Error(message);
 	}
 
 	function syntaxError(message) {
@@ -1408,7 +1411,7 @@
 				var arrayView,
 					self = this,
 					change = eventArgs.change;
-				if (this.tagCtxs[1] && (
+				if (this.tagCtxs[1] && ( // There is an {{else}}
 						   change === "insert" && ev.target.length === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
 						|| change === "remove" && !ev.target.length // removing , and new length 0, so going from n to 0
 						|| change === "refresh" && !eventArgs.oldItems.length !== !ev.target.length // refreshing, and length is going from 0 to n or from n to 0
@@ -1442,7 +1445,7 @@
 
 	// Get character entity for HTML and Attribute encoding
 	function getCharEntity(ch) {
-		return charEntities[ch];
+		return charEntities[ch] || (charEntities[ch] = "&#" + ch.charCodeAt(0) + ";");
 	}
 
 	$converters({

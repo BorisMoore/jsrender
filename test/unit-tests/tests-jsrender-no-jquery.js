@@ -381,6 +381,33 @@ test("tags", function() {
 
 	equal($.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
 		'Data context inside the built-in template of a self-closing tag using tagCtx.render() is the same as the outer context');
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	var eventData = "",
+
+		renderedOutput = $.templates({
+			markup: '{^{myWidget name/}}',
+			tags: {
+				myWidget: {
+					init: function(tagCtx, linkCtx) {
+						eventData += " init";
+					},
+					render: function(name, things) {
+						eventData += " render";
+						return name + " " + this.getType();
+					},
+					getType: function() {
+						eventData += " getType";
+						return this.type;
+					},
+					type: "special"
+				}
+			}
+		}).render(person);
+
+	// ............................... Assert .................................
+	equals(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
 });
 
 test('{{include}} and wrapping content', function() {
