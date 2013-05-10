@@ -1,0 +1,7 @@
+{
+	"author": "Boris Moore",
+	"name": "jsrender",
+	"description": "Next-generation jQuery Templates, optimized for high-performance pure string-based rendering, without DOM or jQuery dependency.",
+	"version": "0.3.7",
+	"main": "./jsrender"
+}
