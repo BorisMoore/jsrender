@@ -1467,3 +1467,5 @@
 	$viewsDelimiters();
 
 })(this, this.jQuery);
+
+if (typeof(module) !== 'undefined' && typeof(module.exports) !== 'undefined') { module.exports = this.jsviews; }
