@@ -1,7 +1,11 @@
 {
 	"author": "Boris Moore",
-	"name": "jsrender",
+	"name": "borismoore-jsrender",
 	"description": "Next-generation jQuery Templates, optimized for high-performance pure string-based rendering, without DOM or jQuery dependency.",
 	"version": "0.3.7",
-	"main": "./jsrender"
+	"dependencies": {},
+	"main": "./jsrender",
+	"engines": {
+		"node": "*"
+	}
 }
