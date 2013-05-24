@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 37 (Beta Candidate)
+// informal pre beta commit counter: 38 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -18,7 +18,8 @@
 
 	var versionNumber = "v1.0pre",
 
-		$, jsvStoreName, rTag, rTmplString,
+		$, jsvStoreName, rTag, rTmplString,// nodeJsModule,
+
 //TODO	tmplFnsCache = {},
 		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", linkChar = "^",
 
@@ -31,7 +32,7 @@
 
 		rNewLine = /\s*\n/g,
 		rUnescapeQuotes = /\\(['"])/g,
-		rEscapeQuotes = /\\?(['"\\])/g, // Escape quotes and \ character
+		rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
 		rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
 		rTestElseIf = /^if\s/,
 		rFirstElem = /<(\w+)[>\s]/,
@@ -414,8 +415,8 @@
 				}
 				tagCtxCtx.tag = tag;
 			}
-			tag.rendering = {}; // Provide object for state during render calls to tag and elses. (Used by {{if}} and {{for}}...)
 		}
+		tag.rendering = {}; // Provide object for state during render calls to tag and elses. (Used by {{if}} and {{for}}...)
 		for (i = 0; i < l; i++) {
 			tagCtx = tag.tagCtx = tagCtxs[i];
 			tag.ctx = tagCtx.ctx;
@@ -967,7 +968,7 @@
 			content = astTop,
 			current = [, , , astTop];
 
-		markup = markup.replace(rEscapeQuotes, "\\$1");
+		markup = markup.replace(rEscapeQuotes, "\\$&");
 
 //TODO	result = tmplFnsCache[markup]; // Only cache if template is not named and markup length < ...,
 //and there are no bindings or subtemplates?? Consider standard optimization for data-link="a.b.c"
@@ -1301,6 +1302,11 @@
 			: parentContext && $extend({}, parentContext);
 	}
 
+	// Get character entity for HTML and Attribute encoding
+	function getCharEntity(ch) {
+		return charEntities[ch] || (charEntities[ch] = "&#" + ch.charCodeAt(0) + ";");
+	}
+
 	//========================== Initialize ==========================
 
 	for (jsvStoreName in jsvStores) {
@@ -1329,6 +1335,11 @@
 		$.isArray = Array && Array.isArray || function(obj) {
 			return Object.prototype.toString.call(obj) === "[object Array]";
 		};
+
+	//	//========================== Future Node.js support ==========================
+	//	if ((nodeJsModule = global.module) && nodeJsModule.exports) {
+	//		nodeJsModule.exports = $;
+	//	}
 	}
 
 	$.render = $render;
@@ -1442,11 +1453,6 @@
 	});
 
 	//========================== Register converters ==========================
-
-	// Get character entity for HTML and Attribute encoding
-	function getCharEntity(ch) {
-		return charEntities[ch] || (charEntities[ch] = "&#" + ch.charCodeAt(0) + ";");
-	}
 
 	$converters({
 		html: function(text) {

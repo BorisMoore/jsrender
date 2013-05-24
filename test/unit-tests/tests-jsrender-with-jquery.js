@@ -33,7 +33,10 @@ var person = { name: "Jo" },
 
 var tmplString =  "A_{{:name}}_B";
 module("api");
-test("templates", 14, function() {
+test("templates", 16, function() {
+	equal($.templates("#myTmpl2").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
+	equal($.templates("' \" \\ \\' \\\"").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template compiled from string");
+
 	$.templates("myTmpl", tmplString);
 	equal($.render.myTmpl(person), "A_Jo_B", 'Compile a template and then render it: $.templates("myTmpl", tmplString); $.render.myTmpl(data);');
 
