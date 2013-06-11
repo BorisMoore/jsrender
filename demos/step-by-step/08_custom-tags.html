@@ -8,135 +8,115 @@
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="../demos.html">JsRender Demos</a><br />
-
-<h3>Custom tags</h3>
-
-<pre>
-{{wrapper1}}{{>title}}{{/wrapper1}}
-
-{{sort languages tmpl="#sortedTemplate"/}}
-
-{{sort languages reverse=true}}
-    &lt;div>
-        &lt;b>{{>name}}&lt;/b>
-    &lt;/div>
-{{/sort}}
-
-$.views.tags({
-
-    // Tag with a render method to return HTML content
-    wrapper1: function() {
-        return "Wrapped tag content:&lt;p>Title:&lt;br/>&lt;b>" + this.tagCtx.render()...;
-    },
-
-    // Tag with template and no render method
-    wrapper2: {
-        template: "Wrapped tag content:&lt;p>Title:&lt;br/>&lt;b>{{include tmpl=#content/}}..."
-    },
-
-    // Tag with render method to reverse-sort an array
-    sort: function( array ){
-        var ret = "";
-        if ( this.tagCtx.props.reverse ) {
-            // Render in reverse order
-            for ( var i = array.length; i; i-- ) {
-                ret += this.tagCtx.render( array[ i - 1 ] );
-            }
-        } else {
-            // Render in original order
-            ret += this.tagCtx.render( array );
-        }
-        return ret;
-    }
-
-});
-</pre>
-
-<!--================ Demo ================-->
 
 <script id="movieTemplate" type="text/x-jsrender">
-	<tr>
-		<td>{{>title}}</td>
-		<td>
-			{{wrapper1}}{{>title}}{{/wrapper1}}
-		</td>
-		<td>
-			{{wrapper2}}{{>title}}{{/wrapper2}}
-		</td>
-		<td>{{sort languages tmpl="#sortedTemplate"/}}</td>
-		<td>
-			{{sort languages reverse=true}}
-				<div>
-					<b>{{>name}}</b>
-				</div>
-			{{/sort}}
-		</td>
-		
-	</tr>
+  <tr>
+    <td>
+      {{fntag}}{{>title}}{{/fntag}}
+    </td>
+    <td>
+      {{fntag tmpl="#wrappedTmpl"/}}
+    </td>
+    <td>
+      {{tmpltag}}{{>title}}{{/tmpltag}}
+    </td>
+    <td>
+      {{tmpltag template="#wrappedTmpl"/}}
+    </td>
+    <td>
+      {{sort languages reverse=true}}
+        <div>
+          <b>{{>name}}</b>
+        </div>
+      {{/sort}}
+    </td>
+    <td>{{sort languages tmpl="#sortedTmpl"/}}</td>
+  </tr>
 </script>
 
-<script id="sortedTemplate" type="text/x-jsrender">
-	<div>{{>name}}</div>
+<script id="sortedTmpl" type="text/x-jsrender">
+  <div>{{>name}}</div>
 </script>
+<script id="wrappedTmpl" type="text/x-jsrender">{{>title}}</script>
 
 <table>
-	<thead><tr><th>Title</th><th>Render method wrapping content</th><th>Tag template wrapping content</th><th>Sort tag: Languages</th><th>Sort tag: Reverse order</th></tr></thead>
-	<tbody id="movieList"></tbody>
+  <thead><tr>
+  <th>Render method wrapping content</th>
+  <th>Render method with external content</th>
+  <th>Tag template wrapping content</th>
+  <th>Tag template with external content</th>
+  <th>Sort tag: Reverse order</th>
+  <th>Sort tag: Languages (external content)</th></tr></thead>
+  <tbody id="movieList"></tbody>
 </table>
 
-<script type="text/javascript">
+<script>
+$.views.tags({
 
-	$.views.tags({
+  // Tag with a render method to return HTML content,
+  // including data, and the rendered inline content
+  fntag: function() {
+    return "Title:<br/><b>" +
+      this.tagCtx.render() +
+      "</b>.<br/>" +
+      this.tagCtx.view.data.languages.length +
+      "&nbsp;languages.";
+  },
 
-		// Tag with a render method to return HTML content, including data, and the rendered inline content
-		wrapper1: function() {
-			return "Wrapped tag content:<p>Title:<br/><b>" + this.tagCtx.render() + "</b>.</p>" + this.tagCtx.view.data.languages.length + " languages available.";
-		},
+  // Tag with no render method. Just a template to
+  // render HTML content including data, and the
+  // rendered inline content.
 
-		// Tag with no render method. Just a template to render HTML content including data, and the rendered inline content
-		wrapper2: {
-			template: "Wrapped tag content:<p>Title:<br/><b>{{include tmpl=#content/}}</b>.</p>{{:languages.length}} languages available."
-		},
+  // To use as a self-closing tag, with an external
+  // template, use named "template" property.
+  tmpltag: {
+    template: "Title:<br/><b>" +
+      "{{include " +
+          // block content
+            "tmpl=#content" +
+          // or external content
+            "||~tag.tagCtx.props.template/}}" +
+      "</b>.<br/>{{:languages.length}}&nbsp;languages."
+  },
 
-		// Tag with render method to reverse-sort an array
-		sort: function( array ){
-			var ret = "";
-			if ( this.tagCtx.props.reverse ) {
-				// Render in reverse order
-				for ( var i = array.length; i; i-- ) {
-					ret += this.tagCtx.render( array[ i - 1 ] );
-				}
-			} else {
-				// Render in original order
-				ret += this.tagCtx.render( array );
-			}
-			return ret;
-		}
+  // Tag with render method to reverse-sort an array
+  sort: function(array){
+    var ret = "";
+    if (this.tagCtx.props.reverse) {
+      // Render in reverse order
+      for (var i = array.length; i; i--) {
+        ret += this.tagCtx.render(array[i - 1]);
+      }
+    } else {
+      // Render in original order
+      ret += this.tagCtx.render(array);
+    }
+    return ret;
+  }
 
-	});
+});
 
-	var movies = [
-		{
-			title: "Meet Joe Black",
-			languages: [
-				{ name: "English" },
-				{ name: "French" }
-			]
-		},
-		{
-			title: "Eyes Wide Shut",
-			languages: [
-				{ name: "French" },
-				{ name: "German" },
-				{ name: "Spanish" }
-			]
-		}
-	];
+var movies = [
+  {
+    title: "Meet Joe Black",
+    languages: [
+      { name: "English" },
+      { name: "French" }
+    ]
+  },
+  {
+    title: "Eyes Wide Shut",
+    languages: [
+      { name: "French" },
+      { name: "German" },
+      { name: "Spanish" }
+    ]
+  }
+];
 
-	$( "#movieList" ).html(
-		$( "#movieTemplate" ).render( movies )
-	);
+$("#movieList").html(
+  $("#movieTemplate").render(movies)
+);
 
 </script>
 

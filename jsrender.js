@@ -1,12 +1,11 @@
-/*! JsRender v1.0pre: http://github.com/BorisMoore/jsrender */
+/*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews */
 /*
 * Optimized version of jQuery Templates, for rendering to string.
 * Does not require jQuery, or HTML DOM
-* Integrates with JsViews (http://github.com/BorisMoore/jsviews)
+* Integrates with JsViews (http://jsviews.com/jsviews)
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 38 (Beta Candidate)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -16,7 +15,7 @@
 
 	//========================== Top-level vars ==========================
 
-	var versionNumber = "v1.0pre",
+	var versionNumber = "v1.0.0-beta",
 
 		$, jsvStoreName, rTag, rTmplString,// nodeJsModule,
 
@@ -36,7 +35,6 @@
 		rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
 		rTestElseIf = /^if\s/,
 		rFirstElem = /<(\w+)[>\s]/,
-		rPrevElem = /<(\w+)[^>\/]*>[^>]*$/,
 		rAttrEncode = /[\x00`><"'&]/g, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
 		rHtmlEncode = rAttrEncode,
 		autoTmplName = 0,
@@ -51,7 +49,6 @@
 			"`": "&#96;"
 		},
 		tmplAttr = "data-jsv-tmpl",
-		slice = [].slice,
 
 		$render = {},
 		jsvStores = {
@@ -313,7 +310,7 @@
 		// Called from within compiled template function, to render a template tag
 		// Returns the rendered tag
 
-		var render, tag, tags, attr, isElse, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef, callInit,
+		var render, tag, tags, attr, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef, callInit,
 			ret = "",
 			boundTagKey = +tagCtxs === tagCtxs && tagCtxs, // if tagCtxs is an integer, then it is the boundTagKey
 			linkCtx = parentView.linkCtx || 0,
@@ -397,7 +394,7 @@
 					tag._.arrVws = {};
 				}
 				tag.tagName = tagName;
-				tag.parent = parentTag = ctx && ctx.tag,
+				tag.parent = parentTag = ctx && ctx.tag;
 				tag._is = "tag";
 				tag._def = tagDef;
 				// Provide this tag on view, for addBindingMarkers on bound tags to add the tag to view._.bnds, associated with the tag id,
@@ -446,7 +443,7 @@
 				? $converters.html(ret)
 				: "";
 		}
-		return ret = boundTagKey && parentView._.onRender
+		return boundTagKey && parentView._.onRender
 			// Call onRender (used by JsViews if present, to add binding annotations around rendered content)
 			? parentView._.onRender(ret, parentView, boundTagKey)
 			: ret;
@@ -996,8 +993,8 @@
 	function buildCode(ast, tmpl, isLinkExpr) {
 		// Build the template function code from the AST nodes, and set as property on the passed-in template object
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
-		var i, node, tagName, converter, params, hash, hasTag, hasEncoder, getsVal, hasCnvt, useCnvt, tmplBindings, pathBindings, elseStartIndex, elseIndex,
-			nestedTmpls, tmplName, nestedTmpl, tagAndElses, allowCode, content, markup, notElse, nextIsElse, oldCode, isElse, isGetVal, prm, tagCtxFn,
+		var i, node, tagName, converter, params, hash, hasTag, hasEncoder, getsVal, hasCnvt, useCnvt, tmplBindings, pathBindings,
+			nestedTmpls, tmplName, nestedTmpl, tagAndElses, content, markup, nextIsElse, oldCode, isElse, isGetVal, prm, tagCtxFn,
 			tmplBindingKey = 0,
 			code = "",
 			noError = "",
@@ -1009,7 +1006,7 @@
 			tmpl = 0;
 		} else {
 			tmplName = tmpl.tmplName || "unnamed";
-			if (allowCode = tmpl.allowCode) {
+			if (tmpl.allowCode) {
 				tmplOptions.allowCode = true;
 			}
 			if (tmpl.debug) {
@@ -1075,7 +1072,6 @@
 							// Switch to a new code string for this bound tag (and its elses, if it has any) - for returning the tagCtxs array
 							oldCode = code;
 							code = "";
-							elseStartIndex = i;
 						}
 						nextIsElse = ast[i + 1];
 						nextIsElse = nextIsElse && nextIsElse[0] === "else";
@@ -1211,7 +1207,7 @@
 				if (bindings && rtPrnDot) {
 					// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
 					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
-					expr = pathStart[parenDepth]
+					expr = pathStart[parenDepth];
 					if (full.length - 2 > index - expr) { // We need to compile a subexpression
 						expr = full.slice(expr, index + 1);
 						rtPrnDot = delimOpenChar1 + ":" + expr + delimCloseChar0; // The parameter or function subexpression
@@ -1354,7 +1350,7 @@
 			render: function(val) {
 				// This function is called once for {{if}} and once for each {{else}}.
 				// We will use the tag.rendering object for carrying rendering state across the calls.
-				// If not done (a previous block has not been rendered), look at expression for this block and render the block if expression is truey
+				// If not done (a previous block has not been rendered), look at expression for this block and render the block if expression is truthy
 				// Otherwise return ""
 				var self = this,
 					ret = (self.rendering.done || !val && (arguments.length || !self.tagCtx.index))
@@ -1372,7 +1368,7 @@
 					different = !prevArg !== !tagCtxs[tci].args[0];
 					if (!!prevArg || different) {
 						return different;
-						// If newArg and prevArg are both truey, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
+						// If newArg and prevArg are both truthy, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
 						// If newArg and prevArg are different, return true, to update
 						// If newArg and prevArg are both falsey, move to the next {{else ...}}
 					}
@@ -1386,8 +1382,7 @@
 			render: function(val) {
 				// This function is called once for {{for}} and once for each {{else}}.
 				// We will use the tag.rendering object for carrying rendering state across the calls.
-				var i, arg,
-					self = this,
+				var self = this,
 					tagCtx = self.tagCtx,
 					noArg = !arguments.length,
 					result = "",
@@ -1408,7 +1403,7 @@
 				}
 				return result;
 			},
-			onUpdate: function(ev, eventArgs, tagCtxs) {
+			//onUpdate: function(ev, eventArgs, tagCtxs) {
 				//Consider adding filtering for perf optimization. However the below prevents update on some scenarios which _should_ update - namely when there is another array on which for also depends.
 				//var i, l, tci, prevArg;
 				//for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
@@ -1417,7 +1412,7 @@
 				//	}
 				//}
 				//return false;
-			},
+			//},
 			onArrayChange: function(ev, eventArgs) {
 				var arrayView,
 					self = this,
