@@ -6,16 +6,16 @@ _Simple and intuitive, powerful and extensible, lightning fast_<br/>
 **JSRender** and **JsViews** together provide the next-generation implementation of both _JQuery Templates_, and _JQuery Data Link_ - and supersede those libraries.
 
 <h3>Documentation and Downloads</h3>
-**[Documentation](http://jsviews.com)**, **[downloads](http://jsviews.com/#download)**, **[samples](http://jsviews.com/#samples)** and **[API docs and tutorials](http://jsviews.com/#jsrapi)** are available on the **[jsviews.com website](http://jsviews.com/#jsrender)**.
-<br/>(Stay tuned at [jsviews.com](http://jsviews.com) for additional content - coming incrementally as we move towards V1.0)
+**[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
+<br/>(Stay tuned at [www.jsviews.com](http://www.jsviews.com) for additional content - coming incrementally as we move towards V1.0)
 
 <h3>JsRender and JsViews</h3>
 JsRender is used for rendering of templates to strings, ready for insertion in the DOM.<br/>
-It is also used by the [JsViews](http://jsviews.com/#jsviews) platform, which adds data binding to JsRender templates,
+It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, which adds data binding to JsRender templates,
 and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites. 
 
 <h3>Demos</h3>
-In addition to the demos at [jsviews.com/#samples](http://jsviews.com/#samples), and throughout the [API documentation](http://jsviews.com/#jsrapi), 
+In addition to the demos at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi),
 see also:
 
 - the [demos](https://github.com/BorisMoore/jsrender/tree/master/demos) folder of this GitHub repository - available [here](http://borismoore.github.io/jsrender/demos/index.html) as live samples.
