@@ -6,6 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
+// informal pre V1.0 commit counter: v1.0.0-beta (40)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -25,11 +26,11 @@
 		rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 		//                                     object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
-		//          lftPrn0        lftPrn                  path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
+		//          lftPrn0        lftPrn        bound         path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
-		rNewLine = /\s*\n/g,
+		rNewLine = /[ \t]*(\r\n|\n|\r)/g,
 		rUnescapeQuotes = /\\(['"])/g,
 		rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
 		rBuildHash = /\x08(~)?([^\x08]+)\x08/g,
@@ -207,11 +208,11 @@
 	// View.hlp
 	//==========
 
-	function getHelper(helper) {
+	function getHelper(helper, context) {
 		// Helper method called as view.hlp(key) from compiled template, for helper functions or template parameters ~foo
 		var wrapped,
 			view = this,
-			res = (view.ctx || {})[helper];
+			res = context && context[helper] || (view.ctx || {})[helper];
 
 		res = res === undefined ? view.getRsc("helpers", helper) : res;
 
@@ -261,7 +262,6 @@
 
 			if (linkCtx) {
 				linkCtx.tag = tag;
-				tag.linkCtx = linkCtx;
 				tagCtx.ctx = extendCtx(tagCtx.ctx, linkCtx.view.ctx);
 			}
 			tag.tagCtx = tagCtx;
@@ -342,7 +342,7 @@
 			if (!i && (!tmpl || !tag)) {
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}");
 			}
-			tmpl = tmpl || (tag ? tag._def : tagDef).template || content;
+			tmpl = tmpl || (tag ? tag : tagDef).template || content;
 			tmpl = "" + tmpl === tmpl // if a string
 				? parentView.getRsc("templates", tmpl) || $templates(tmpl)
 				: tmpl;
@@ -727,8 +727,8 @@
 			} else {
 				thisStore[name] = compile ? (item = compile(name, item, parentTmpl, storeName, storeSettings)) : item;
 			}
-			if (item) {
-				item._is = storeName;
+			if (compile && item) {
+				item._is = storeName; // Only do this for compiled objects (tags, templates...)
 			}
 			if (onStore = $viewsSub.onStoreItem) {
 				// e.g. JsViews integration
@@ -1159,7 +1159,7 @@
 		//	}
 		//}
 
-		function parseTokens(all, lftPrn0, lftPrn, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
+		function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
 			// rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*((\))(?=\s*\.|\s*\^)|\)|\])([([]?))|(\s+)/g,
 			//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot           prn2   space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
@@ -1173,9 +1173,16 @@
 				// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 				//                                        object   helper    view  viewProperty pathTokens       leafToken
 				if (object) {
-					bindings && !isAlias && bindings.push(path); // Add path binding for paths on props and args,
-					// but not within foo=expr (named parameter) or ~foo=expr (passing in template parameter aliases).
-//					bindings && !isAlias && list.push(path);
+					if (bindings) {
+						if (named === "linkTo") {
+							bindto = bindings.to = bindings.to || [];
+							bindto.push(path);
+						}
+						if (!named || boundName) {
+							bindings.push(path); // Add path binding for paths on props and args,
+//							list.push(path);
+						}
+					}
 					if (object !== ".") {
 						var ret = (helper
 								? 'view.hlp("' + helper + '")'
@@ -1204,19 +1211,21 @@
 			if (err) {
 				syntaxError(params);
 			} else {
-				if (bindings && rtPrnDot) {
+				if (bindings && rtPrnDot && !aposed && !quoted) {
 					// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
 					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
-					expr = pathStart[parenDepth];
-					if (full.length - 2 > index - expr) { // We need to compile a subexpression
-						expr = full.slice(expr, index + 1);
-						rtPrnDot = delimOpenChar1 + ":" + expr + delimCloseChar0; // The parameter or function subexpression
-						rtPrnDot = tmplLinks[rtPrnDot] = tmplLinks[rtPrnDot] || tmplFn(delimOpenChar0 + rtPrnDot + delimCloseChar1, tmpl, true); // Compile the expression (or use cached copy already in tmpl.links)
-						if (!rtPrnDot.paths) {
-							parseParams(expr, rtPrnDot.paths = [], tmpl);
+					if (!named || boundName || bindto) {
+						expr = pathStart[parenDepth];
+						if (full.length - 2 > index - expr) { // We need to compile a subexpression
+							expr = full.slice(expr, index + 1);
+							rtPrnDot = delimOpenChar1 + ":" + expr + delimCloseChar0; // The parameter or function subexpression
+							rtPrnDot = tmplLinks[rtPrnDot] = tmplLinks[rtPrnDot] || tmplFn(delimOpenChar0 + rtPrnDot + delimCloseChar1, tmpl, true); // Compile the expression (or use cached copy already in tmpl.links)
+							if (!rtPrnDot.paths) {
+								parseParams(expr, rtPrnDot.paths = [], tmpl);
+							}
+							(bindto || bindings).push({_jsvOb: rtPrnDot}); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
+							//list.push({_jsvOb: rtPrnDot});
 						}
-						bindings.push({_jsvOb: rtPrnDot}); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
-						//list.push({_jsvOb: rtPrnDot});
 					}
 				}
 				return (aposed
@@ -1234,16 +1243,15 @@
 							? (parenDepth
 								? ""
 								//: (pushBindings(), named
-								//	? (named = isAlias = false, "\b")
 								//	: ",")
 								: named
-									? (named = isAlias = false, "\b")
+									? (named = boundName = bindto = false, "\b")
 									: ","
 							)
 							: eq
 					// named param
 					// Insert backspace \b (\x08) as separator for named params, used subsequently by rBuildHash
-								? (parenDepth && syntaxError(params), named = path, /*pushBindings(),*/isAlias = path.charAt(0) === "~", '\b' + path + ':')
+								? (parenDepth && syntaxError(params), named = path, boundName = bound, /*pushBindings(),*/ '\b' + path + ':')
 								: path
 					// path
 									? (path.split("^").join(".").replace(rPath, parsePath)
@@ -1270,7 +1278,7 @@
 			}
 		}
 
-		var named, isAlias,// list,
+		var named, bindto, boundName, // list,
 			tmplLinks = tmpl.links,
 			fnCall = {},
 			pathStart = {0:-1},
