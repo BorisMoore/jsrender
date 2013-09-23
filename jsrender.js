@@ -1,4 +1,5 @@
-/*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews */
+/*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
+informal pre V1.0 commit counter: 42 */
 /*
 * Optimized version of jQuery Templates, for rendering to string.
 * Does not require jQuery, or HTML DOM
@@ -6,7 +7,6 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre V1.0 commit counter: v1.0.0-beta (40)
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -238,11 +238,11 @@
 	function convertVal(converter, view, tagCtx) {
 		// self is template object or linkCtx object
 		var tmplConverter, tag, value,
-			boundTagCtx = +tagCtx === tagCtx && tagCtx, // if value is an integer, then it is the key for the boundTagCtx
-			linkCtx = view.linkCtx;
+			boundTagCtx = +tagCtx === tagCtx && tagCtx, // if tagCtx is an integer, then it is the key for the boundTagCtx (compiled function to return the tagCtx)
+			linkCtx = view.linkCtx; // For data-link="{cvt:...}"...
 
 		if (boundTagCtx) {
-			// Call compiled function which returns the tagCtxs for current data
+			// This is a bound tag: {^{xx:yyy}}. Call compiled function which returns the tagCtxs for current data
 			tagCtx = (boundTagCtx = view.tmpl.bnds[boundTagCtx-1])(view.data, view, $views);
 		}
 
@@ -251,17 +251,17 @@
 		if (converter || boundTagCtx) {
 			tag = linkCtx && linkCtx.tag || {
 				_: {
-					inline: !linkCtx
+					inline: !linkCtx,
+					bnd: boundTagCtx
 				},
 				tagName: converter + ":",
 				flow: true,
 				_is: "tag"
 			};
 
-			tag._.bnd = boundTagCtx;
-
 			if (linkCtx) {
 				linkCtx.tag = tag;
+				tag.linkCtx = tag.linkCtx || linkCtx;
 				tagCtx.ctx = extendCtx(tagCtx.ctx, linkCtx.view.ctx);
 			}
 			tag.tagCtx = tagCtx;
@@ -306,7 +306,7 @@
 		return res;
 	}
 
-	function renderTag(tagName, parentView, tmpl, tagCtxs) {
+	function renderTag(tagName, parentView, tmpl, tagCtxs, isRefresh) {
 		// Called from within compiled template function, to render a template tag
 		// Returns the rendered tag
 
@@ -389,14 +389,18 @@
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
 				}
-				if (tag._.bnd = boundTagFn || linkCtx) {
+				if (tag._.bnd = boundTagFn || linkCtx.fn) {
 					// Bound if {^{tag...}} or data-link="{tag...}"
 					tag._.arrVws = {};
+				} else if (tag.dataBoundOnly) {
+					error("{^{" + tagName + "}} tag must be data-bound");
 				}
 				tag.tagName = tagName;
 				tag.parent = parentTag = ctx && ctx.tag;
 				tag._is = "tag";
 				tag._def = tagDef;
+				//TODO better perf for childTags() - keep child tag.tags array, (and remove child, when disposed)
+				// tag.tags = [];
 				// Provide this tag on view, for addBindingMarkers on bound tags to add the tag to view._.bnds, associated with the tag id,
 			}
 			parentView_.tag = tag;
@@ -409,6 +413,7 @@
 				tags = tag.parents = tagCtxCtx.parentTags = ctx && extendCtx(tagCtxCtx.parentTags, ctx.parentTags) || {};
 				if (parentTag) {
 					tags[parentTag.tagName] = parentTag;
+					//TODO better perf for childTags:  parentTag.tags.push(tag);
 				}
 				tagCtxCtx.tag = tag;
 			}
@@ -423,22 +428,24 @@
 				callInit = undefined;
 			}
 
+			itemRet = undefined;
 			if (render = tag.render) {
 				itemRet = render.apply(tag, tagCtx.args);
 			}
-			ret += itemRet !== undefined
+			itemRet = itemRet !== undefined
 				? itemRet   // Return result of render function unless it is undefined, in which case return rendered template
-				: tagCtx.tmpl
-					// render template/content on the current data item
-					? tagCtx.render()
-					: ""; // No return value from render, and no template/content defined, so return ""
+				: tagCtx.tmpl && tagCtx.render() || (isRefresh ? undefined : "");
+				// No return value from render, and no template/content tagCtx.render(), so return undefined
+			ret =  ret ? ret + (itemRet || "") : itemRet; // If no rendered content, this will be undefined
 		}
+
 		delete tag.rendering;
 
 		tag.tagCtx = tag.tagCtxs[0];
 		tag.ctx= tag.tagCtx.ctx;
 
 		if (tag._.inline && (attr = tag.attr) && attr !== "html") {
+			// inline tag with attr set to "text" will insert HTML-encoded content - as if it was element-based innerText
 			ret = attr === "text"
 				? $converters.html(ret)
 				: "";
@@ -491,7 +498,7 @@
 				views[self_.key = "_" + parentView_.useKey++] = self;
 				tag = parentView_.tag;
 				self_.bnd = isArray && (!tag || !!tag._.bnd && tag); // For array views that are data bound for collection change events, set the
-				// view._.bnd property to true for top-level link() or data-link="{for}", or to the tag instance for a data- bound tag, e.g. {^{for ...}}
+				// view._.bnd property to true for top-level link() or data-link="{for}", or to the tag instance for a data-bound tag, e.g. {^{for ...}}
 			} else {
 				// Parent is an 'array view'. Add this view to its views array
 				views.splice(
@@ -1098,9 +1105,9 @@
 								: "{" + hash) + ");")
 							: tagName === ">"
 								? (hasEncoder = true, "h(" + params + ");")
-								: (getsVal = true, "(v=" + params + ")!=" + (isLinkExpr ? "=" : "") + 'u?v:"";') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute 
+								: (getsVal = true, "(v=" + params + ")!=" + (isLinkExpr ? "=" : "") + 'u?v:"";') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
 						)
-						: (hasTag = true, "{tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
+						: (hasTag = true, "{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 							+ (content ? nestedTmpls.length: "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
 							+ hash + ","));
 

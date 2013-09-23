@@ -12,7 +12,7 @@ _Simple and intuitive, powerful and extensible, lightning fast_<br/>
 <h3>JsRender and JsViews</h3>
 JsRender is used for rendering of templates to strings, ready for insertion in the DOM.<br/>
 It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, which adds data binding to JsRender templates,
-and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites. 
+and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
 
 <h3>Demos</h3>
 In addition to the demos at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi),

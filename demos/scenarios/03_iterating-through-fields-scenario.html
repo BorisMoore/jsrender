@@ -78,13 +78,13 @@
 <script type="text/javascript">
 
 	$.views.tags({
-		fields: function( object ) {
+		fields: function(object) {
 			var key,
 				ret = "";
-			for ( key in object ) {
-				if ( object.hasOwnProperty( key )) {
+			for (key in object) {
+				if (object.hasOwnProperty(key)) {
 					// For each property/field, render the content of the {{fields object}} tag, with "~key" as template parameter
-					ret += this.tagCtx.render( object[ key ], { key: key });
+					ret += this.tagCtx.render(object[key], { key: key });
 				}
 			}
 			return ret;
@@ -93,12 +93,12 @@
 
 	//Define a custom getFields helper function to iterate over fields and return
 	$.views.helpers({
-		getFields: function( object ) {
+		getFields: function(object) {
 			var key, value,
 				fieldsArray = [];
-			for ( key in object ) {
-				if ( object.hasOwnProperty( key )) {
-					value = object[ key ];
+			for (key in object) {
+				if (object.hasOwnProperty(key)) {
+					value = object[key];
 					// For each property/field add an object to the array, with key and value
 					fieldsArray.push({
 						key: key,
@@ -106,7 +106,7 @@
 					});
 				}
 			}
-			// Return the array, to be rendered using {{for ~fields(object)}}
+			// Return the array, to be rendered using {{for ~getFields(object)}}
 			return fieldsArray;
 		}
 	});
@@ -129,12 +129,12 @@
 		}
 	];
 
-	$( "#movieList1" ).html(
-		$( "#movieTemplate1" ).render( movies )
+	$("#movieList1").html(
+		$("#movieTemplate1").render(movies)
 	);
 
-	$( "#movieList2" ).html(
-		$( "#movieTemplate2" ).render( movies )
+	$("#movieList2").html(
+		$("#movieTemplate2").render(movies)
 	);
 
 </script>
