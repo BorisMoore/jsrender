@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 42 */
+informal pre V1.0 commit counter: 43 */
 /*
 * Optimized version of jQuery Templates, for rendering to string.
 * Does not require jQuery, or HTML DOM
@@ -23,11 +23,11 @@ informal pre V1.0 commit counter: 42 */
 //TODO	tmplFnsCache = {},
 		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", linkChar = "^",
 
-		rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-		//                                     object     helper    view  viewProperty pathTokens      leafToken
+		rPath = /^(?:null|true|false|\d[\d.]*|(!*?)([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+		//                                     none   object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
-		//          lftPrn0        lftPrn        bound         path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
+		//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
 		rNewLine = /[ \t]*(\r\n|\n|\r)/g,
@@ -50,7 +50,6 @@ informal pre V1.0 commit counter: 42 */
 			"`": "&#96;"
 		},
 		tmplAttr = "data-jsv-tmpl",
-
 		$render = {},
 		jsvStores = {
 			template: {
@@ -123,7 +122,7 @@ informal pre V1.0 commit counter: 42 */
 		// Set the tag opening and closing delimiters and 'link' character. Default is "{{", "}}" and "^"
 		// openChars, closeChars: opening and closing strings, each with two characters
 
-		if (!$viewsSub.rTag || arguments.length) {
+		if (!$viewsSub.rTag || openChars) {
 			delimOpenChar0 = openChars ? openChars.charAt(0) : delimOpenChar0; // Escape the characters - since they could be regex special characters
 			delimOpenChar1 = openChars ? openChars.charAt(1) : delimOpenChar1;
 			delimCloseChar0 = closeChars ? closeChars.charAt(0) : delimCloseChar0;
@@ -1167,8 +1166,8 @@ informal pre V1.0 commit counter: 42 */
 		//}
 
 		function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-			// rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:([#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*!:?\/]|(=))\s*|([#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*((\))(?=\s*\.|\s*\^)|\)|\])([([]?))|(\s+)/g,
-			//          lftPrn        lftPrn2                 path    operator err                                                eq          path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot           prn2   space
+			//rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
+			//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
 			var expr;
 			operator = operator || "";
@@ -1176,9 +1175,9 @@ informal pre V1.0 commit counter: 42 */
 			path = path || path2;
 			prn = prn || prn2 || "";
 
-			function parsePath(all, object, helper, view, viewProperty, pathTokens, leafToken) {
-				// rPath = /^(?:null|true|false|\d[\d.]*|([\w$]+|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-				//                                        object   helper    view  viewProperty pathTokens       leafToken
+			function parsePath(allPath, not, object, helper, view, viewProperty, pathTokens, leafToken) {
+				// rPath = /^(?:null|true|false|\d[\d.]*|(!*?)([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+				//                                        none   object     helper    view  viewProperty pathTokens      leafToken
 				if (object) {
 					if (bindings) {
 						if (named === "linkTo") {
@@ -1186,7 +1185,7 @@ informal pre V1.0 commit counter: 42 */
 							bindto.push(path);
 						}
 						if (!named || boundName) {
-							bindings.push(path); // Add path binding for paths on props and args,
+							bindings.push(path.slice(not.length)); // Add path binding for paths on props and args,
 //							list.push(path);
 						}
 					}
@@ -1207,12 +1206,12 @@ informal pre V1.0 commit counter: 42 */
 
 						ret = ret + (leafToken ? "." + leafToken : "");
 
-						return ret.slice(0, 9) === "view.data"
+						return not + (ret.slice(0, 9) === "view.data"
 							? ret.slice(5) // convert #view.data... to data...
-							: ret;
+							: ret);
 					}
 				}
-				return all;
+				return allPath;
 			}
 
 			if (err) {
@@ -1368,7 +1367,7 @@ informal pre V1.0 commit counter: 42 */
 				// If not done (a previous block has not been rendered), look at expression for this block and render the block if expression is truthy
 				// Otherwise return ""
 				var self = this,
-					ret = (self.rendering.done || !val && (arguments.length || !self.tagCtx.index))
+					ret = (self.rendering.done || !val && (val !== undefined || !self.tagCtx.index))
 						? ""
 						: (self.rendering.done = true, self.selected = self.tagCtx.index,
 							// Test is satisfied, so render content on current context. We call tagCtx.render() rather than return undefined
