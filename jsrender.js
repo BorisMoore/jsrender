@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 43 */
+informal pre V1.0 commit counter: 44 */
 /*
 * Optimized version of jQuery Templates, for rendering to string.
 * Does not require jQuery, or HTML DOM
@@ -346,7 +346,7 @@ informal pre V1.0 commit counter: 43 */
 				? parentView.getRsc("templates", tmpl) || $templates(tmpl)
 				: tmpl;
 
-			$extend( tagCtx, {
+			$extend(tagCtx, {
 				tmpl: tmpl,
 				render: renderContent,
 				index: i,
@@ -681,8 +681,8 @@ informal pre V1.0 commit counter: 43 */
 		htmlTag = wrapMap[tmpl.htmlTag];
 		if (htmlTag && htmlTag !== wrapMap.div) {
 			// When using JsViews, we trim templates which are inserted into HTML contexts where text nodes are not rendered (i.e. not 'Phrasing Content').
+			// Currently not trimmed for <li> tag. (Not worth adding perf cost)
 			tmpl.markup = $.trim(tmpl.markup);
-			tmpl._elCnt = true; // element content model (no rendered text nodes), not phrasing content model
 		}
 
 		return tmpl;
@@ -774,7 +774,7 @@ informal pre V1.0 commit counter: 43 */
 			tmpl = tagCtx.tmpl;
 			context = extendCtx(context, self.ctx);
 			contentTmpl = tagCtx.content; // The wrapped content - to be added to views, below
-			if ( tagCtx.props.link === false ) {
+			if (tagCtx.props.link === false) {
 				// link=false setting on block tag
 				// We will override inherited value of link by the explicit setting link=false taken from props
 				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
@@ -1181,7 +1181,7 @@ informal pre V1.0 commit counter: 43 */
 				if (object) {
 					if (bindings) {
 						if (named === "linkTo") {
-							bindto = bindings.to = bindings.to || [];
+							bindto = bindings._jsvto = bindings._jsvto || [];
 							bindto.push(path);
 						}
 						if (!named || boundName) {
@@ -1367,7 +1367,7 @@ informal pre V1.0 commit counter: 43 */
 				// If not done (a previous block has not been rendered), look at expression for this block and render the block if expression is truthy
 				// Otherwise return ""
 				var self = this,
-					ret = (self.rendering.done || !val && (val !== undefined || !self.tagCtx.index))
+					ret = (self.rendering.done || !val && (arguments.length || !self.tagCtx.index))
 						? ""
 						: (self.rendering.done = true, self.selected = self.tagCtx.index,
 							// Test is satisfied, so render content on current context. We call tagCtx.render() rather than return undefined

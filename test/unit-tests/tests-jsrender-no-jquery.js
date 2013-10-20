@@ -53,12 +53,14 @@ test("{{if}}", 4, function() {
 	equal($.templates("A_{{if false}}{{/if}}_B").render(), "A__B", "{{if a}}: empty: !a");
 });
 
-test("{{if}} {{else}}", 7, function() {
+test("{{if}} {{else}}", 9, function() {
 	equal($.templates("A_{{if true}}yes{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else}}: a");
 	equal($.templates("A_{{if false}}yes{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else}}: !a");
 	equal($.templates("A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a");
 	equal($.templates("A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_or_B", "{{if a}} {{else b}} {{else}}: b");
 	equal($.templates("A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b");
+	equal($.templates("A_{{if undefined}}yes{{else true}}or{{else}}no{{/if}}_B").render({}), "A_or_B", "{{if undefined}} {{else b}} {{else}}: !a!b");
+	equal($.templates("A_{{if false}}yes{{else undefined}}or{{else}}no{{/if}}_B").render({}), "A_no_B", "{{if a}} {{else undefined}} {{else}}: !a!b");
 	equal($.templates("A_{{if false}}<div title='yes'{{else}}<div title='no'{{/if}}>x</div>_B").render(), "A_<div title='no'>x</div>_B", "{{if}} and {{else}} work across HTML tags");
 	equal($.templates("A_<div title='{{if true}}yes'{{else}}no'{{/if}}>x</div>_B").render(), "A_<div title='yes'>x</div>_B", "{{if}} and {{else}} work across quoted strings");
 });
@@ -127,7 +129,7 @@ test("noerror = true", function() {
 	}).render({a:"yes"}), "Missing Object and yes and yes and xx", '{{withfallback:a.b noerror=true fallback="Missing Object"}} -> "Missing Object"');
 });
 
-test("comparisons", 22,function () {
+test("comparisons", 22,function() {
 	equal($.templates("{{:1<2}}").render(), "true", "1<2");
 	equal($.templates("{{:2<1}}").render(), "false", "2<1");
 	equal($.templates("{{:5===5}}").render(), "true", "5===5");
@@ -171,7 +173,7 @@ test("context", 5, function() {
 });
 
 test("values", 4, function() {
-	equal($.templates("{{:a}}").render({ a: 0 }), "0", '{{:undefined}} returns "0"');
+	equal($.templates("{{:a}}").render({ a: 0 }), "0", '{{:0}} returns "0"');
 	equal($.templates("{{:a}}").render({}), "", "{{:undefined}} returns empty string");
 	equal($.templates("{{:a}}").render({ a: "" }), "", "{{:''}} returns empty string");
 	equal($.templates("{{:a}}").render({ a: null }), "", "{{:null}} returns empty string");
@@ -183,7 +185,7 @@ test("expressions", 8, function() {
 	equal($.templates("{{: a+2}}").render({ a: 2, b: false }), "4", "a+2");
 	equal($.templates("{{: b?'yes':'no' }}").render({ a: 2, b: false }), "no", "b?'yes':'no'");
 	equal($.templates("{{:(a||-1) + (b||-1) }}").render({ a: 2, b: 0 }), "1", "a||-1");
-	equal($.templates("{{:3*b()*!a*4/3}}").render({ a: false, b: function () { return 3; }}), "12", "3*b()*!a*4/3");
+	equal($.templates("{{:3*b()*!a*4/3}}").render({ a: false, b: function() { return 3; }}), "12", "3*b()*!a*4/3");
 	equal($.templates("{{:a%b}}").render({ a: 30, b: 16}), "14", "a%b");
 	equal($.templates("A_{{if v1 && v2 && v3 && v4}}no{{else !v1 && v2 || v3 && v4}}yes{{/if}}_B").render({v1:true,v2:false,v3:2,v4:"foo"}), "A_yes_B", "x && y || z");
 });
@@ -358,7 +360,7 @@ test("converters", function() {
 test("tags", function() {
 	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })");
 
-	equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({ people: people }), "BillJo", "Calling render() with inline data-binding {^{...}} renders normnally without binding");
+	equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({ people: people }), "BillJo", "Calling render() with inline data-binding {^{...}} renders normally without binding");
 
 	equal($.templates("{{sort people reverse=true towns}}{{:name}}{{/sort}}").render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}");
 
@@ -381,6 +383,8 @@ test("tags", function() {
 
 	equal($.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
 		'Data context inside the built-in template of a self-closing tag using tagCtx.render() is the same as the outer context');
+
+	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })");
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
@@ -408,6 +412,35 @@ test("tags", function() {
 
 	// ............................... Assert .................................
 	equals(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
+
+	// =============================== Arrange ===============================
+	$.views.tags({
+		norendernotemplate: {},
+		voidrender: function() {},
+		emptyrender: function() {return ""},
+		emptytemplate: {
+			template: ""
+		},
+		templatereturnsempty: {
+			template: "{{:a}}"
+		}
+	});
+
+	// ............................... Assert .................................
+	equals($.templates("a{{norendernotemplate/}}b{^{norendernotemplate/}}c{{norendernotemplate}}{{/norendernotemplate}}d{^{norendernotemplate}}{{/norendernotemplate}}e").render(1), "abcde",
+	"non-rendering tag (no template, no render function) renders empty string");
+
+	equals($.templates("a{{voidrender/}}b{^{voidrender/}}c{{voidrender}}{{/voidrender}}d{^{voidrender}}{{/voidrender}}e").render(1), "abcde",
+	"non-rendering tag (no template, no return from render function) renders empty string");
+
+	equals($.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").render(1), "abcde",
+	"non-rendering tag (no template, empty string returned from render function) renders empty string");
+
+	equals($.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").render(1), "abcde",
+	"non-rendering tag (template has no content, no render function) renders empty string");
+
+	equals($.templates("a{{templatereturnsempty/}}b{^{templatereturnsempty/}}c{{templatereturnsempty}}{{/templatereturnsempty}}d{^{templatereturnsempty}}{{/templatereturnsempty}}e").render(1), "abcde",
+	"non-rendering tag (template returns emtpy string, no render function) renders empty string");
 });
 
 test('{{include}} and wrapping content', function() {
