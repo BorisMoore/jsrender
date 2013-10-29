@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 44 */
+informal pre V1.0 commit counter: 45 */
 /*
 * Optimized version of jQuery Templates, for rendering to string.
 * Does not require jQuery, or HTML DOM
@@ -23,10 +23,10 @@ informal pre V1.0 commit counter: 44 */
 //TODO	tmplFnsCache = {},
 		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", linkChar = "^",
 
-		rPath = /^(?:null|true|false|\d[\d.]*|(!*?)([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+		rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 		//                                     none   object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^|\s*$)|[)\]])([([]?))|(\s+)/g,
 		//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2      space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
@@ -546,6 +546,8 @@ informal pre V1.0 commit counter: 44 */
 				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
 			}
 			if (tagDef.init !== false) {
+				// Set int: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
+				// so equivalent to setting tag to render function, except you can also provide a template.
 				init = tagDef._ctr = function(tagCtx) {};
 				(init.prototype = tagDef).constructor = init;
 			}
@@ -886,7 +888,7 @@ informal pre V1.0 commit counter: 44 */
 
 			//    bind         tag        converter colon html     comment            code      params            slash   closeBlock
 			// /{(\^)?{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|!--((?:[^-]|-(?!-))*)--|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}/g
-			// Build abstract syntax tree (AST): [ tagName, converter, params, content, hash, bindings, contentMarkup ]
+			// Build abstract syntax tree (AST): [tagName, converter, params, content, hash, bindings, contentMarkup]
 			if (html) {
 				colon = ":";
 				converter = "html";
@@ -1022,7 +1024,7 @@ informal pre V1.0 commit counter: 44 */
 			nestedTmpls = tmpl.tmpls;
 		}
 		for (i = 0; i < l; i++) {
-			// AST nodes: [ tagName, converter, params, content, hash, noError, pathBindings, contentMarkup, link ]
+			// AST nodes: [tagName, converter, params, content, hash, noError, pathBindings, contentMarkup, link]
 			node = ast[i];
 
 			// Add newline for each callout to t() c() etc. and each markup string
@@ -1222,9 +1224,14 @@ informal pre V1.0 commit counter: 44 */
 					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
 					if (!named || boundName || bindto) {
 						expr = pathStart[parenDepth];
-						if (full.length - 2 > index - expr) { // We need to compile a subexpression
+						if (full.length - 1 > index - expr) { // We need to compile a subexpression
 							expr = full.slice(expr, index + 1);
 							rtPrnDot = delimOpenChar1 + ":" + expr + delimCloseChar0; // The parameter or function subexpression
+							//TODO Optimize along the lines of:
+							//var paths = [];
+							//rtPrnDot = tmplLinks[rtPrnDot] = tmplLinks[rtPrnDot] || tmplFn(delimOpenChar0 + rtPrnDot + delimCloseChar1, tmpl, true, paths); // Compile the expression (or use cached copy already in tmpl.links)
+							//rtPrnDot.paths = rtPrnDot.paths || paths;
+
 							rtPrnDot = tmplLinks[rtPrnDot] = tmplLinks[rtPrnDot] || tmplFn(delimOpenChar0 + rtPrnDot + delimCloseChar1, tmpl, true); // Compile the expression (or use cached copy already in tmpl.links)
 							if (!rtPrnDot.paths) {
 								parseParams(expr, rtPrnDot.paths = [], tmpl);
@@ -1294,7 +1301,10 @@ informal pre V1.0 commit counter: 44 */
 
 		//pushBindings();
 
-		return (params + " ").replace(rParams, parseTokens);
+		return (params + " ")
+			.replace(/\)\^/g, ").") // Treat "...foo()^bar..." as equivalent to "...foo().bar..."
+								//since preceding computed observables in the path will always be updated if their dependencies change
+			.replace(rParams, parseTokens);
 	}
 
 	//==========
@@ -1432,7 +1442,7 @@ informal pre V1.0 commit counter: 44 */
 					self = this,
 					change = eventArgs.change;
 				if (this.tagCtxs[1] && ( // There is an {{else}}
-						   change === "insert" && ev.target.length === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
+							 change === "insert" && ev.target.length === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
 						|| change === "remove" && !ev.target.length // removing , and new length 0, so going from n to 0
 						|| change === "refresh" && !eventArgs.oldItems.length !== !ev.target.length // refreshing, and length is going from 0 to n or from n to 0
 					)) {
@@ -1470,11 +1480,11 @@ informal pre V1.0 commit counter: 44 */
 		},
 		attr: function(text) {
 			// Attribute encode: Replace < > & ' and " by corresponding entities.
-			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
+			return text != undefined ? String(text).replace(rAttrEncode, getCharEntity) : text === null ? text : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		},
 		url: function(text) {
 			// URL encoding helper.
-			return text != undefined ? encodeURI(String(text)) : text === null ? null : ""; // null returns null, e.g. to remove attribute. undefined returns ""
+			return text != undefined ? encodeURI(String(text)) : text === null ? text : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		}
 	});
 

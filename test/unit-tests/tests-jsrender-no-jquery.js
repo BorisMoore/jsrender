@@ -179,7 +179,7 @@ test("values", 4, function() {
 	equal($.templates("{{:a}}").render({ a: null }), "", "{{:null}} returns empty string");
 });
 
-test("expressions", 8, function() {
+test("expressions", 18, function() {
 	equal(compileTmpl("{{:a++}}"), "Syntax error\na++", "a++");
 	equal(compileTmpl("{{:(a,b)}}"), "Syntax error\n(a,b)", "(a,b)");
 	equal($.templates("{{: a+2}}").render({ a: 2, b: false }), "4", "a+2");
@@ -188,6 +188,16 @@ test("expressions", 8, function() {
 	equal($.templates("{{:3*b()*!a*4/3}}").render({ a: false, b: function() { return 3; }}), "12", "3*b()*!a*4/3");
 	equal($.templates("{{:a%b}}").render({ a: 30, b: 16}), "14", "a%b");
 	equal($.templates("A_{{if v1 && v2 && v3 && v4}}no{{else !v1 && v2 || v3 && v4}}yes{{/if}}_B").render({v1:true,v2:false,v3:2,v4:"foo"}), "A_yes_B", "x && y || z");
+	equal($.templates("{{:!true}}").render({}), "false", "!true");
+	equal($.templates("{{if !true}}yes{{else}}no{{/if}}").render({}), "no", "{{if !true}}...");
+	equal($.templates("{{:!false}}").render({}), "true", "!false");
+	equal($.templates("{{if !false}}yes{{else}}no{{/if}}").render({}), "yes", "{{if !false}}...");
+	equal($.templates("{{:!!true}}").render({}), "true", "!!true");
+	equal($.templates("{{if !!true}}yes{{else}}no{{/if}}").render({}), "yes", "{{if !!true}}...");
+	equal($.templates("{{:!(true)}}").render({}), "false", "!(true)");
+	equal($.templates("{{:!true === false}}").render({}), "true", "!true === false");
+	equal($.templates("{{:false === !true}}").render({}), "true", "false === !true");
+	equal($.templates("{{:false === !null}}").render({}), "false", "false === !null");
 });
 
 module("{{for}}");
@@ -415,38 +425,55 @@ test("tags", function() {
 
 	// =============================== Arrange ===============================
 	$.views.tags({
-		norendernotemplate: {},
-		voidrender: function() {},
-		emptyrender: function() {return ""},
-		emptytemplate: {
+		noRenderNoTemplate: {},
+		voidRender: function() {},
+		emptyRender: function() {return ""},
+		emptyTemplate: {
 			template: ""
 		},
-		templatereturnsempty: {
+		templateReturnsEmpty: {
 			template: "{{:a}}"
+		},
+		templateInitIsFalse: {
+			init:false,
+      render: function(){
+        return "Foo" + JSON.stringify(this.__proto__);
+      }
+		},
+		templateInitIsFalseWithTemplate: {
+			init:false,
+      template: "Foo "
 		}
+
 	});
 
 	// ............................... Assert .................................
-	equals($.templates("a{{norendernotemplate/}}b{^{norendernotemplate/}}c{{norendernotemplate}}{{/norendernotemplate}}d{^{norendernotemplate}}{{/norendernotemplate}}e").render(1), "abcde",
+	equals($.templates("a{{noRenderNoTemplate/}}b{^{noRenderNoTemplate/}}c{{noRenderNoTemplate}}{{/noRenderNoTemplate}}d{^{noRenderNoTemplate}}{{/noRenderNoTemplate}}e").render(1), "abcde",
 	"non-rendering tag (no template, no render function) renders empty string");
 
-	equals($.templates("a{{voidrender/}}b{^{voidrender/}}c{{voidrender}}{{/voidrender}}d{^{voidrender}}{{/voidrender}}e").render(1), "abcde",
+	equals($.templates("a{{voidRender/}}b{^{voidRender/}}c{{voidRender}}{{/voidRender}}d{^{voidRender}}{{/voidRender}}e").render(1), "abcde",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
-	equals($.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").render(1), "abcde",
+	equals($.templates("a{{emptyRender/}}b{^{emptyRender/}}c{{emptyRender}}{{/emptyRender}}d{^{emptyRender}}{{/emptyRender}}e").render(1), "abcde",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
-	equals($.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").render(1), "abcde",
+	equals($.templates("a{{emptyTemplate/}}b{^{emptyTemplate/}}c{{emptyTemplate}}{{/emptyTemplate}}d{^{emptyTemplate}}{{/emptyTemplate}}e").render(1), "abcde",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
-	equals($.templates("a{{templatereturnsempty/}}b{^{templatereturnsempty/}}c{{templatereturnsempty}}{{/templatereturnsempty}}d{^{templatereturnsempty}}{{/templatereturnsempty}}e").render(1), "abcde",
-	"non-rendering tag (template returns emtpy string, no render function) renders empty string");
+	equals($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
+	"non-rendering tag (template returns empty string, no render function) renders empty string");
+
+	equals($.templates("a{{templateInitIsFalse/}}b{^{templateInitIsFalse/}}c{{templateInitIsFalse}}{{/templateInitIsFalse}}d{^{templateInitIsFalse}}{{/templateInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
+	"Template with init:false renders with render method - and has not prototype or constructor (plain object)");
+
+	equals($.templates("a{{templateInitIsFalseWithTemplate/}}b{^{templateInitIsFalseWithTemplate/}}c{{templateInitIsFalseWithTemplate}}{{/templateInitIsFalseWithTemplate}}d{^{templateInitIsFalseWithTemplate}}{{/templateInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
+	"Template with init:false and template renders template");
 });
 
 test('{{include}} and wrapping content', function() {
 	var result = $.templates({
 			markup:
-				  'Before {{include tmpl="wrapper"}}'
+					'Before {{include tmpl="wrapper"}}'
 					+ '{{:name}}'
 				+ '{{/include}} After',
 			templates: {
@@ -458,7 +485,7 @@ test('{{include}} and wrapping content', function() {
 
 	var result = $.templates({
 			markup:
-				  'This replaces:{{myTag override="replacementText" tmpl="wrapper"}}'
+					'This replaces:{{myTag override="replacementText" tmpl="wrapper"}}'
 					+ '{{:name}}'
 				+ '{{/myTag}}'
 				+  'This wraps:{{myTag tmpl="wrapper"}}'
@@ -481,7 +508,7 @@ test('{{include}} and wrapping content', function() {
 
 	var result = $.templates({
 			markup:
-				  'Before {{include tmpl="wrapper"}}'
+					'Before {{include tmpl="wrapper"}}'
 					+ '{{:name}}'
 				+ '{{/include}} After',
 			templates: {
@@ -493,7 +520,7 @@ test('{{include}} and wrapping content', function() {
 
 	var result = $.templates({
 			markup:
-				  'This replaces:{{myTag override="replacementText"}}'
+					'This replaces:{{myTag override="replacementText"}}'
 					+ '{{:name}}'
 				+ '{{/myTag}}'
 				+  'This wraps:{{myTag tmpl="wrapper"}}'
