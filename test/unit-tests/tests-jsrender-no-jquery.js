@@ -284,7 +284,7 @@ test("templates", 14, function() {
 	equal($.templates.myTmpl, undefined, 'Remove a named template:  $.templates("myTmpl", null);');
 });
 
-test("render", 18, function() {
+test("render", 21, function() {
 	var tmpl1 = $.templates("myTmpl8", tmplString);
 	$.templates({
 		simple: "Content{{:#data}}|",
@@ -302,10 +302,47 @@ test("render", 18, function() {
 
 	equal($.render.myTmpl10(people), "top index:0|nested index:0|nested if index:0|top index:1|nested index:1|nested else index:1|",
 										"#get('item').index gives the integer index even in nested blocks");
+
 	$.templates("myTmpl11", "top index:{{:#index}}|{{for people}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#get('item').index}}|{{else}}nested else index:{{:#get('item').index}}|{{/if}}{{/for}}");
 
 	equal($.render.myTmpl11({ people: people }), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
 										"#get('item').index gives the integer index even in nested blocks");
+
+	$.views.tags({
+		myWrap: {}
+	});
+
+	var templateWithIndex = $.templates(
+			'{{for people}}'
+			+ 'a{{:#index}} '
+			+ '{{if true}}b{{:#index}}{{/if}} '
+			+ 'c{{:#index}} '
+			+ '{{myWrap}}d{{:#index}} {{/myWrap}}'
+		+ '{{/for}}');
+
+		$.views.settings.debugMode = false;
+
+		equal(templateWithIndex.render({people: [1,2]}),
+			"a0 b c0 d a1 b c1 d ",
+			"If debug mode is false, #index gives empty string in nested blocks. No error message");
+
+		$.views.settings.debugMode = true;
+
+		equal(templateWithIndex.render({people: [1,2]}),
+			"a0 bError: #index in nested view: use #getIndex() c0 dError: #index in nested view: use #getIndex() a1 bError: #index in nested view: use #getIndex() c1 dError: #index in nested view: use #getIndex() ",
+			"If debug mode is true, #index gives error message in nested blocks.");
+
+	var templateWithGetIndex = $.templates(
+			'{{for people}}'
+			+ 'a{{:#getIndex()}} '
+			+ '{{if true}}b{{:#getIndex()}}{{/if}} '
+			+ 'c{{:#getIndex()}} '
+			+ '{{myWrap}}d{{:#getIndex()}} {{/myWrap}}'
+		+ '{{/for}}');
+
+		equal(templateWithGetIndex.render({people: [1,2]}),
+			"a0 b0 c0 d0 a1 b1 c1 d1 ",
+			"#getIndex gives inherited index in nested blocks.");
 
 	$.views.helpers({ myKeyIsCorrect: function() {
 		var view = this;
@@ -436,13 +473,13 @@ test("tags", function() {
 		},
 		templateInitIsFalse: {
 			init:false,
-      render: function(){
-        return "Foo" + JSON.stringify(this.__proto__);
-      }
+			render: function(){
+				return "Foo" + JSON.stringify(this.__proto__);
+			}
 		},
 		templateInitIsFalseWithTemplate: {
 			init:false,
-      template: "Foo "
+			template: "Foo "
 		}
 
 	});
@@ -572,8 +609,9 @@ test("delimiters", 1, function() {
 	equal(result, "A_yes_B", "Custom delimiters");
 });
 
-test("template encapsulation", 1, function() {
-	$.templates({
+test("template encapsulation", 8, function() {
+		// =============================== Arrange ===============================
+$.templates({
 		myTmpl6: {
 			markup: "{{sort reverse=true people}}{{:name}}{{/sort}}",
 			tags: {
@@ -581,7 +619,111 @@ test("template encapsulation", 1, function() {
 			}
 		}
 	});
+
+	// ............................... Assert .................................
 	equal($.render.myTmpl6({ people: people }), "BillJo", '$.templates("myTmpl", tmplObjWithNestedItems);');
+
+	// =============================== Arrange ===============================
+	$.views.helpers("h1", "globalHelper");
+
+	var tmpl = $.templates({
+		markup: "{{if true}}{{:~h1}} {{:~h2}} {{:~h3}}{{/if}}",
+		helpers: {
+			h2: "templateHelper"
+		}
+	});
+
+	// ............................... Assert .................................
+	equal(tmpl.render({}, {h3:"optionHelper"}), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: "{{if true}}{{:~h1}}{{/if}}",
+		helpers: {
+			h1: "templateHelper"
+		}
+	});
+
+	// ............................... Assert .................................
+	equal(tmpl.render({}), "templateHelper", 'template helper overrides global helper');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: "{{if true}}{{:~h1}}{{/if}}"
+	});
+
+	// ............................... Assert .................................
+	equal(tmpl.render({}, {h1: "optionHelper"}), "optionHelper", 'option helper overrides global helper');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: "{{if true}}{{:~h2}}{{/if}}",
+		helpers: {
+			h2: "templateHelper"
+		}
+	});
+
+	// ............................... Assert .................................
+	equal(tmpl.render({}, {h2: "optionHelper"}), "templateHelper", 'template helper overrides option helper');
+
+	// =============================== Arrange ===============================
+	$.views.converters("c1", function(val) {return val + "globalCvt";});
+
+	tmpl = $.templates({
+		markup: "{{if true}}{{c1:1}}{{c2:2}}{{/if}}",
+		converters: {
+			c2: function(val) {return val + "templateCvt";}
+		}
+	});
+
+	// ............................... Assert .................................
+	equal(tmpl.render({}), "1globalCvt2templateCvt", 'template converter and global converter');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: "{{if true}}{{c1:1}}{{/if}}",
+		converters: {
+			c1: function(val) {return val + "templateCvt";}
+		}
+	});
+
+	// ............................... Assert .................................
+	equal(tmpl.render({}), "1templateCvt", 'template converter overrides global converter');
+
+	// =============================== Arrange ===============================
+
+	tmpl = $.templates({
+		cascade: "outerCascade",
+		nesting: {
+			markup: "{{if true}} {{c1:~h1}} {{include tmpl='inner'/}}{{/if}} {{include tmpl='cascade'/}}",
+			helpers: {
+				h1: "templateHelper"
+			},
+			converters: {
+				c1: function(val) {return val + " templateCvt";}
+			},
+			templates: {
+				cascade: "innerCascade",
+				inner: {
+					markup: "{{if true}}{{c1:~h1}}{{/if}} {{include tmpl='cascade'/}}",
+					helpers: {
+						h1: "innerTemplateHelper"
+					},
+					converters: {
+						c1: function(val) {return val + " innerTemplateCvt";}
+					},
+					templates: {
+					cascade: "innerInnerCascade"
+					}
+				}
+			}
+		}
+	});
+
+	// ............................... Assert .................................
+	equal($.templates.nesting.render({}, {b: "optionHelper"}), " templateHelper templateCvt innerTemplateHelper innerTemplateCvt innerInnerCascade innerCascade",
+		'Inner template, helper, and converter override outer template, helper, and converter');
+
 });
 
 })();

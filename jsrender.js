@@ -1,12 +1,13 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 45 */
+informal pre V1.0 commit counter: 46 */
 /*
-* Optimized version of jQuery Templates, for rendering to string.
-* Does not require jQuery, or HTML DOM
-* Integrates with JsViews (http://jsviews.com/jsviews)
-* Copyright 2013, Boris Moore
-* Released under the MIT License.
-*/
+ * Optimized version of jQuery Templates, for rendering to string.
+ * Does not require jQuery, or HTML DOM
+ * Integrates with JsViews (http://jsviews.com/jsviews)
+ *
+ * Copyright 2013, Boris Moore
+ * Released under the MIT License.
+ */
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -194,35 +195,49 @@ informal pre V1.0 commit counter: 45 */
 		return found;
 	}
 
-	function getIndex() {
+	function getNestedIndex() {
 		var view = this.get("item");
 		return view ? view.index : undefined;
 	}
 
-	getIndex.depends = function() {
+	getNestedIndex.depends = function() {
 		return [this.get("item"), "index"];
+	};
+
+	function getIndex() {
+		return this.index;
+	}
+
+	getIndex.depends = function() {
+		return ["index"];
 	};
 
 	//==========
 	// View.hlp
 	//==========
 
-	function getHelper(helper, context) {
+	function getHelper(helper) {
 		// Helper method called as view.hlp(key) from compiled template, for helper functions or template parameters ~foo
 		var wrapped,
 			view = this,
-			res = context && context[helper] || (view.ctx || {})[helper];
+			ctx = view.linkCtx,
+			res = (view.ctx || {})[helper];
 
-		res = res === undefined ? view.getRsc("helpers", helper) : res;
+		if (res === undefined && ctx && ctx.ctx) {
+			res = ctx.ctx[helper];
+		}
+		if (res === undefined) {
+			res = $helpers[helper];
+		}
 
 		if (res) {
 			if (typeof res === "function") {
 				wrapped = function() {
-					// If it is of type function, we will wrap it so it gets called with view as 'this' context.
+					// If it is of type function, we will wrap it, so if called with no this pointer it will be called with the view as 'this' context.
 					// If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
-					// However note that helper functions on deeper paths will not have access to view and tagCtx.
+					// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
 					// For example, ~util.foo() will have the ~util object as 'this' pointer
-					return res.apply(view, arguments);
+					return res.apply(this || view, arguments);
 				};
 				$extend(wrapped, res);
 			}
@@ -292,17 +307,14 @@ informal pre V1.0 commit counter: 45 */
 	//=============
 
 	function getResource(resourceType, itemName) {
-		var res,
-			view = this,
-			store = $views[resourceType];
-
-		res = store && store[itemName];
+		var res, store,
+			view = this;
 		while ((res === undefined) && view) {
 			store = view.tmpl[resourceType];
 			res = store && store[itemName];
 			view = view.parent;
 		}
-		return res;
+		return res || $views[resourceType][itemName];
 	}
 
 	function renderTag(tagName, parentView, tmpl, tagCtxs, isRefresh) {
@@ -476,7 +488,6 @@ informal pre V1.0 commit counter: 45 */
 				content: contentTmpl,
 				views: isArray ? [] : {},
 				parent: parentView,
-				ctx: context,
 				type: type,
 				// If the data is an array, this is an 'array view' with a views array for each child 'item view'
 				// If the data is not an array, this is an 'item view' with a views 'map' object for any child nested views
@@ -495,6 +506,8 @@ informal pre V1.0 commit counter: 45 */
 				// Parent is an 'item view'. Add this view to its views object
 				// self._key = is the key in the parent view map
 				views[self_.key = "_" + parentView_.useKey++] = self;
+				self.index = $viewsSettings.debugMode ? noIndex : "";
+				self.getIndex = getNestedIndex;
 				tag = parentView_.tag;
 				self_.bnd = isArray && (!tag || !!tag._.bnd && tag); // For array views that are data bound for collection change events, set the
 				// view._.bnd property to true for top-level link() or data-link="{for}", or to the tag instance for a data-bound tag, e.g. {^{for ...}}
@@ -502,15 +515,14 @@ informal pre V1.0 commit counter: 45 */
 				// Parent is an 'array view'. Add this view to its views array
 				views.splice(
 					// self._.key = self.index - the index in the parent view array
-					self_.key = self.index =
-						key !== undefined
-							? key
-							: views.length,
+					self_.key = self.index = key,
 				0, self);
 			}
 			// If no context was passed in, use parent context
 			// If context was passed in, it should have been merged already with parent context
 			self.ctx = context || parentView.ctx;
+		} else {
+			self.ctx = context;
 		}
 		return self;
 	}
@@ -825,6 +837,9 @@ informal pre V1.0 commit counter: 45 */
 					outerOnRender = undefined;
 					onRender = parentView._.onRender;
 				}
+				context = tmpl.helpers
+					? extendCtx(tmpl.helpers, context)
+					: context;
 				if ($.isArray(data) && !isLayout) {
 					// Create a view for the array, whose child views correspond to each data item. (Note: if key and parentView are passed in
 					// along with parent view, treat as insert -e.g. from view.addViews - so parentView is already the view item for array)
@@ -861,7 +876,7 @@ informal pre V1.0 commit counter: 45 */
 	// (Compile AST then build template function)
 
 	function error(message) {
-		throw new $views.sub.Error(message);
+		throw new $viewsSub.Error(message);
 	}
 
 	function syntaxError(message) {
@@ -1314,7 +1329,7 @@ informal pre V1.0 commit counter: 45 */
 	// Merge objects, in particular contexts which inherit from parent contexts
 	function extendCtx(context, parentContext) {
 		// Return copy of parentContext, unless context is defined and is different, in which case return a new merged context
-		// If neither context nor parentContext are undefined, return undefined
+		// If neither context nor parentContext are defined, return undefined
 		return context && context !== parentContext
 			? (parentContext
 				? $extend($extend({}, parentContext), context)
@@ -1338,7 +1353,8 @@ informal pre V1.0 commit counter: 45 */
 		$helpers = $views.helpers,
 		$tags = $views.tags,
 		$viewsSub = $views.sub,
-		$viewsSettings = $views.settings;
+		$viewsSettings = $views.settings,
+		noIndex = "Error: #index in nested view: use #getIndex()"; // Error string if debugMode, else empty
 
 	if (jQuery) {
 		////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1403,30 +1419,7 @@ informal pre V1.0 commit counter: 45 */
 			flow: true
 		},
 		"for": {
-			render: function(val) {
-				// This function is called once for {{for}} and once for each {{else}}.
-				// We will use the tag.rendering object for carrying rendering state across the calls.
-				var self = this,
-					tagCtx = self.tagCtx,
-					noArg = !arguments.length,
-					result = "",
-					done = noArg || 0;
-
-				if (!self.rendering.done) {
-					if (noArg) {
-						result = undefined;
-					} else if (val !== undefined) {
-						result += tagCtx.render(val);
-						// {{for}} (or {{else}}) with no argument will render the block content
-						done += $.isArray(val) ? val.length : 1;
-					}
-					if (self.rendering.done = done) {
-						self.selected = tagCtx.index;
-					}
-					// If nothing was rendered we will look at the next {{else}}. Otherwise, we are done.
-				}
-				return result;
-			},
+			render: renderForBlock,
 			//onUpdate: function(ev, eventArgs, tagCtxs) {
 				//Consider adding filtering for perf optimization. However the below prevents update on some scenarios which _should_ update - namely when there is another array on which for also depends.
 				//var i, l, tci, prevArg;
@@ -1459,6 +1452,18 @@ informal pre V1.0 commit counter: 45 */
 			},
 			flow: true
 		},
+		props: {
+			prep: function(object) {
+				var key,
+					arr = [];
+				for (key in object) {
+					arr.push({key: key, prop: object[key]});
+				}
+				return arr;
+			},
+			render: renderForBlock,
+			flow: true
+		},
 		include: {
 			flow: true
 		},
@@ -1471,6 +1476,30 @@ informal pre V1.0 commit counter: 45 */
 		}
 	});
 
+	function renderForBlock(val) {
+		// This function is called once for {{for}} and once for each {{else}}.
+		// We will use the tag.rendering object for carrying rendering state across the calls.
+		var self = this,
+			tagCtx = self.tagCtx,
+			noArg = !arguments.length,
+			result = "",
+			done = noArg || 0;
+
+		if (!self.rendering.done) {
+			if (noArg) {
+				result = undefined;
+			} else if (val !== undefined) {
+				val = self.prep ? self.prep(val) : val;
+				result += tagCtx.render(val);
+				done += $.isArray(val) ? val.length : 1;
+			}
+			if (self.rendering.done = done) {
+				self.selected = tagCtx.index;
+			}
+			// If nothing was rendered we will look at the next {{else}}. Otherwise, we are done.
+		}
+		return result;
+	}
 	//========================== Register converters ==========================
 
 	$converters({

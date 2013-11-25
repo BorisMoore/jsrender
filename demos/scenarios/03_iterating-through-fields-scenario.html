@@ -10,16 +10,12 @@
 <body>
 <a href="../demos.html">JsRender Demos</a><br />
 
-<h3>Example Scenario: Creating custom helpers to iterate through fields</h3>
-
-<!---------------------- First Example ---------------------->
-
-<div class="subhead">Using a custom {{fields}} tag:</div>
+<h3>Example Scenario: Using {{props}} tag to iterate through fields</h3>
 
 <pre>
-{{fields details}}
-    &lt;b>{{>~key}}&lt;/b>: {{>#data}}
-{{/fields}}
+{{props details}}
+    &lt;b>{{>key}}&lt;/b>: {{>prop}}
+{{/props}}
 </pre>
 
 <table>
@@ -27,48 +23,19 @@
 	<tbody id="movieList1"></tbody>
 </table>
 
-<!---------------------- Second Example ---------------------->
-
-<div class="subhead">Using a custom ~getFields() helper function:</div>
-
-<pre>
-{{for ~getFields(details)}}
-    &lt;b>{{>key}}&lt;/b>: {{>value}}
-{{/for}}
-</pre>
-
-<table>
-	<thead><tr><th>Title</th><th>Details</th></tr></thead>
-	<tbody id="movieList2"></tbody>
-</table>
-
-
 <!--=================== Demo ===================-->
 
 <!------------------ Templates ------------------>
 
-<script id="movieTemplate1" type="text/x-jsrender">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
 		<td>{{>title}}</td>
 		<td>
-			{{fields details}}
+			{{props details}}
 				<div>
-					<b>{{>~key}}</b>: {{>#data}}
+					<b>{{>key}}</b>: {{>prop}}
 				</div>
-			{{/fields}}
-		</td>
-	</tr>
-</script>
-
-<script id="movieTemplate2" type="text/x-jsrender">
-	<tr>
-		<td>{{>title}}</td>
-		<td>
-			{{for ~getFields(details)}}
-				<div>
-					<b>{{>key}}</b>: {{>value}}
-				</div>
-			{{/for}}
+			{{/props}}
 		</td>
 	</tr>
 </script>
@@ -76,40 +43,6 @@
 <!------------------ Script ------------------>
 
 <script type="text/javascript">
-
-	$.views.tags({
-		fields: function(object) {
-			var key,
-				ret = "";
-			for (key in object) {
-				if (object.hasOwnProperty(key)) {
-					// For each property/field, render the content of the {{fields object}} tag, with "~key" as template parameter
-					ret += this.tagCtx.render(object[key], { key: key });
-				}
-			}
-			return ret;
-		}
-	});
-
-	//Define a custom getFields helper function to iterate over fields and return
-	$.views.helpers({
-		getFields: function(object) {
-			var key, value,
-				fieldsArray = [];
-			for (key in object) {
-				if (object.hasOwnProperty(key)) {
-					value = object[key];
-					// For each property/field add an object to the array, with key and value
-					fieldsArray.push({
-						key: key,
-						value: value
-					});
-				}
-			}
-			// Return the array, to be rendered using {{for ~getFields(object)}}
-			return fieldsArray;
-		}
-	});
 
 	var movies = [
 		{
@@ -130,11 +63,7 @@
 	];
 
 	$("#movieList1").html(
-		$("#movieTemplate1").render(movies)
-	);
-
-	$("#movieList2").html(
-		$("#movieTemplate2").render(movies)
+		$("#movieTemplate").render(movies)
 	);
 
 </script>
