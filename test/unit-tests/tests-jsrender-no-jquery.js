@@ -39,10 +39,11 @@ var tmplString = "A_{{:name}}_B";
 $.views.tags({ sort: sort });
 
 module("tagParser");
-test("{{if}} {{else}}", 3, function() {
+test("{{if}} {{else}}", 4, function() {
 	equal(compileTmpl("A_{{if true}}{{/if}}_B"), "compiled", "Empty if block: {{if}}{{/if}}");
 	equal(compileTmpl("A_{{if true}}yes{{/if}}_B"), "compiled", "{{if}}...{{/if}}");
-	equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\nA_{{if true/}}yes{{/if}}_B");
+	equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\nA_{{if true/}}yes{{/if}}_B", "unmatched or missing tag error");
+	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
 });
 
 module("{{if}}");

@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 46 */
+informal pre V1.0 commit counter: 47 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -662,7 +662,7 @@ informal pre V1.0 commit counter: 46 */
 				// Create template object
 				tmpl = TmplObject(tmplOrMarkup, options);
 				// Compile to AST and then to compiled function
-				tmplFn(tmplOrMarkup, tmpl);
+				tmplFn(tmplOrMarkup.replace(rEscapeQuotes, "\\$&"), tmpl);
 			}
 			compileChildResources(options);
 			return tmpl;
@@ -988,8 +988,6 @@ informal pre V1.0 commit counter: 46 */
 			content = astTop,
 			current = [, , , astTop];
 
-		markup = markup.replace(rEscapeQuotes, "\\$&");
-
 //TODO	result = tmplFnsCache[markup]; // Only cache if template is not named and markup length < ...,
 //and there are no bindings or subtemplates?? Consider standard optimization for data-link="a.b.c"
 //		if (result) {
@@ -999,7 +997,6 @@ informal pre V1.0 commit counter: 46 */
 //		result = markup;
 
 		blockTagCheck(stack[0] && stack[0][3].pop()[0]);
-
 		// Build the AST (abstract syntax tree) under astTop
 		markup.replace(rTag, parseTag);
 
