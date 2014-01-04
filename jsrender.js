@@ -1518,3 +1518,5 @@ informal pre V1.0 commit counter: 47 */
 	$viewsDelimiters();
 
 })(this, this.jQuery);
+
+if (typeof(module) !== 'undefined' && typeof(module.exports) !== 'undefined') { module.exports = this.jsviews; }
