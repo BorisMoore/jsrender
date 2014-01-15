@@ -165,7 +165,7 @@ test("array access", function() {
 test("context", 5, function() {
 	equal($.templates("{{:~val}}").render(1, { val: "myvalue" }), "myvalue", "~val");
 	function format(value, upper) {
-		return value[upper ?  "toUpperCase" : "toLowerCase"]();
+		return value[upper ? "toUpperCase" : "toLowerCase"]();
 	}
 	equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, { format: format }), "joJO", "render(data, { format: formatFn }); ... {{:~format(name, true)}}");
 	equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({ people: people}, { format: format, type: "PascalCase" }), "pascalcaseJO", "render(data, { format: formatFn }); ... {{:~format(name, true)}}");
@@ -232,6 +232,43 @@ test("{{for}}", 17, function() {
 	equal($.render.forPrimitiveDataTypes({people:[0, 1, "abc", "", ,null ,true ,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey');
 });
 
+module("{{props}}");
+test("{{props}}", 15, function() {
+	$.templates({
+		propsTmpl: "header_{{props person}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}_footer",
+		propsTmplObjectArray: "header_{{props people}}Key: {{:key}} - Prop: {{for prop}}{{:name}} {{/for}}{{/props}}_footer",
+		propsTmplPrimitivesArray: "header_{{props people}}Key: {{:key}} - Prop: {{for prop}}{{:name}} {{/for}}{{/props}}_footer",
+		templatePropsArray: "header_{{props #data}}Key: {{:key}} - Prop: {{for prop}}{{:name}} {{/for}}{{/props}}_footer",
+		propTmpl: "Key: {{:key}} - Prop: {{:prop}}",
+		pageTmpl: '{{props person tmpl="propTmpl"/}}',
+		simpleProps: "a{{props people}}Content{{:#data}}|{{/props}}b",
+		propsPrimitiveDataTypes: "a{{props people}}|{{:#data}}{{/props}}b",
+		testTmpl: "xxx{{:name}} {{:~foo}}"
+	});
+
+	equal($.render.propsTmpl({ person: people[0] }), "header_Key: name - Prop: Jo| _footer", '{{props person}}...{{/props}} for an object iterates over properties');
+	equal($.render.propsTmplObjectArray({ people: people }), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", '{{props people}}...{{/props}} for an array iterates over the array - with index as key and object a prop');
+	equal($.render.templatePropsArray([people]), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
+	equal($.render.pageTmpl({ person: people[0] }), "Key: name - Prop: Jo", '{{props person tmpl="propTmpl"/}}');
+	equal($.templates("{{props}}{{:key}} {{:prop}}{{/props}}").render({name: "Jeff"}), "name Jeff", "no parameter - defaults to current data item");
+	equal($.templates("{{props foo}}xxx{{:key}} {{:prop}} {{:~foo}}{{/props}}").render({name: "Jeff"}), "", "undefined arg - renders nothing");
+	equal($.templates("{{props tmpl='propTmpl'/}}").render({name: "Jeff"}), "Key: name - Prop: Jeff", ": {{props tmpl=.../}} no parameter - defaults to current data item");
+
+	equal($.templates("{{props null}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "null - renders nothing");
+	equal($.templates("{{props false}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "false - renders nothing");
+	equal($.templates("{{props 0}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "0 - renders nothing");
+	equal($.templates("{{props 'abc'}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "'abc' - renders nothing");
+	equal($.templates("{{props ''}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "'' - renders nothing");
+	equal($.templates("{{props #data}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(people),
+	"Key: name - Prop: Jo| Key: name - Prop: Bill| ",
+	"If #data is an array, {{props #data}} iterates");
+
+	equal($.render.propsTmpl({person:{}}), "header__footer", 'Empty object renders empty string');
+	equal($.render.propsTmpl({person:{zero: 0, one: 1, str: "abc", emptyStr: "", nullVal: null , trueVal: true , falseVal: false}}),
+	"header_Key: zero - Prop: 0| Key: one - Prop: 1| Key: str - Prop: abc| Key: emptyStr - Prop: | Key: nullVal - Prop: | Key: trueVal - Prop: true| Key: falseVal - Prop: false| _footer",
+	'Primitive types render correctly, even if falsey');
+});
+
 module("api");
 test("templates", 14, function() {
 	var tmpl = $.templates(tmplString);
@@ -282,7 +319,7 @@ test("templates", 14, function() {
 	equal($.templates.myEmptyTmpl.render(), "", '$.templates("myEmptyTmpl", "") is a template with empty string as content');
 
 	$.templates("myTmpl", null);
-	equal($.templates.myTmpl, undefined, 'Remove a named template:  $.templates("myTmpl", null);');
+	equal($.templates.myTmpl, undefined, 'Remove a named template: $.templates("myTmpl", null);');
 });
 
 test("render", 21, function() {
@@ -321,13 +358,13 @@ test("render", 21, function() {
 			+ '{{myWrap}}d{{:#index}} {{/myWrap}}'
 		+ '{{/for}}');
 
-		$.views.settings.debugMode = false;
+		$.views.settings.debugMode(false);
 
 		equal(templateWithIndex.render({people: [1,2]}),
 			"a0 b c0 d a1 b c1 d ",
 			"If debug mode is false, #index gives empty string in nested blocks. No error message");
 
-		$.views.settings.debugMode = true;
+		$.views.settings.debugMode(true);
 
 		equal(templateWithIndex.render({people: [1,2]}),
 			"a0 bError: #index in nested view: use #getIndex() c0 dError: #index in nested view: use #getIndex() a1 bError: #index in nested view: use #getIndex() c1 dError: #index in nested view: use #getIndex() ",
@@ -386,7 +423,7 @@ test("converters", function() {
 	equal($.templates("{{attr:a}}").render({ a: 0 }), "0", '{{attr:0}} returns "0"');
 	equal($.templates("{{attr:a}}").render({}), "", "{{attr:undefined}} returns empty string");
 	equal($.templates("{{attr:a}}").render({ a: "" }), "", "{{attr:''}} returns empty string");
-	equal($.templates("{{attr:a}}").render({ a: null }), "null", '{{attr:null}} returns "null"');
+	equal($.templates("{{attr:a}}").render({ a: null }), "", '{{attr:null}} returns empty string');
 	equal($.templates("{{attr:a}}").render({ a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{attr:"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
 
 	equal($.templates("{{>a}}").render({ a: 0 }), "0", '{{>0}} returns "0"');
@@ -396,11 +433,11 @@ test("converters", function() {
 	equal($.templates("{{>a}}").render({ a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{>"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
 
 	equal($.templates("{{loc:a}}").render({ a: 0 }), "0", '{{cnvt:0}} returns "0"');
-	equal($.templates("{{loc:a}}").render({}), "undefined", '{{cnvt:undefined}} returns empty "undefined"');
+	equal($.templates("{{loc:a}}").render({}), "", '{{cnvt:undefined}} returns empty string');
 	equal($.templates("{{loc:a}}").render({ a: "" }), "", "{{cnvt:''}} returns empty string");
-	equal($.templates("{{loc:a}}").render({ a: null }), "null", "{{cnvt:null}} returns null");
+	equal($.templates("{{loc:a}}").render({ a: null }), "", "{{cnvt:null}} returns empty string");
 
-	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "||undefined|", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
+	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "|||", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:0}), "0|0|0|0", "{{attr:0}}|{{>0}}|{{loc:0}}|{{:0}} returns correct values");
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:false}), "false|false|false|false", "{{attr:false}}|{{>false}}|{{loc:false}}|{{:false}} returns correct values");
 });
@@ -465,7 +502,7 @@ test("tags", function() {
 	$.views.tags({
 		noRenderNoTemplate: {},
 		voidRender: function() {},
-		emptyRender: function() {return ""},
+		emptyRender: function() { return ""; },
 		emptyTemplate: {
 			template: ""
 		},
@@ -521,60 +558,60 @@ test('{{include}} and wrapping content', function() {
 
 	equal(result, "Before headerJofooter AfterBefore headerBillfooter After", 'Using {{include ... tmpl="wrapper"}}}wrapped{{/include}}');
 
-	var result = $.templates({
-			markup:
-					'This replaces:{{myTag override="replacementText" tmpl="wrapper"}}'
-					+ '{{:name}}'
-				+ '{{/myTag}}'
-				+  'This wraps:{{myTag tmpl="wrapper"}}'
-					+ '{{:name}}'
-				+ '{{/myTag}}',
-			tags: {
-				myTag: {
-					template: "add{{include tmpl=#content/}}",
-					render: function() {
-						return this.tagCtx.props.override;
-					}
+	result = $.templates({
+		markup:
+				'This replaces:{{myTag override="replacementText" tmpl="wrapper"}}'
+				+ '{{:name}}'
+			+ '{{/myTag}}'
+			+ 'This wraps:{{myTag tmpl="wrapper"}}'
+				+ '{{:name}}'
+			+ '{{/myTag}}',
+		tags: {
+			myTag: {
+				template: "add{{include tmpl=#content/}}",
+				render: function() {
+					return this.tagCtx.props.override;
 				}
-			},
-			templates: {
-				wrapper: "header{{include tmpl=#content/}}footer"
 			}
-		}).render(people);
+		},
+		templates: {
+			wrapper: "header{{include tmpl=#content/}}footer"
+		}
+	}).render(people);
 
 	equal(result, "This replaces:replacementTextThis wraps:headerJofooterThis replaces:replacementTextThis wraps:headerBillfooter", 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
-	var result = $.templates({
-			markup:
-					'Before {{include tmpl="wrapper"}}'
-					+ '{{:name}}'
-				+ '{{/include}} After',
-			templates: {
-				wrapper: "header{{for people tmpl=#content/}}footer"
-			}
-		}).render({people: people});
+	result = $.templates({
+		markup:
+				'Before {{include tmpl="wrapper"}}'
+				+ '{{:name}}'
+			+ '{{/include}} After',
+		templates: {
+			wrapper: "header{{for people tmpl=#content/}}footer"
+		}
+	}).render({people: people});
 
 	equal(result, "Before headerJoBillfooter After", 'Using {{for ... tmpl="wrapper"}}}wrapped{{/for}}');
 
-	var result = $.templates({
-			markup:
-					'This replaces:{{myTag override="replacementText"}}'
-					+ '{{:name}}'
-				+ '{{/myTag}}'
-				+  'This wraps:{{myTag tmpl="wrapper"}}'
-					+ '{{:name}}'
-				+ '{{/myTag}}',
-			tags: {
-				myTag: {
-					render: function() {
-						return this.tagCtx.props.override;
-					}
+	result = $.templates({
+		markup:
+				'This replaces:{{myTag override="replacementText"}}'
+				+ '{{:name}}'
+			+ '{{/myTag}}'
+			+ 'This wraps:{{myTag tmpl="wrapper"}}'
+				+ '{{:name}}'
+			+ '{{/myTag}}',
+		tags: {
+			myTag: {
+				render: function() {
+					return this.tagCtx.props.override;
 				}
-			},
-			templates: {
-				wrapper: "header{{for people tmpl=#content/}}footer"
 			}
-		}).render({people: people});
+		},
+		templates: {
+			wrapper: "header{{for people tmpl=#content/}}footer"
+		}
+	}).render({people: people});
 
 	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 });
@@ -587,7 +624,7 @@ test("helpers", 4, function() {
 		concat: function() {
 			return "".concat.apply("", arguments) + "top";
 		}
-	})
+	});
 	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({ a: "aVal" }), "aValbtruetop", "~concat('a')");
 
 	function toUpperCase(value) {
