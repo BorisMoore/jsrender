@@ -512,7 +512,7 @@ test("tags", function() {
 		templateInitIsFalse: {
 			init:false,
 			render: function(){
-				return "Foo" + JSON.stringify(this.__proto__);
+				return "Foo" + JSON.stringify(this.__proto__ || {});
 			}
 		},
 		templateInitIsFalseWithTemplate: {
@@ -539,7 +539,7 @@ test("tags", function() {
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	equals($.templates("a{{templateInitIsFalse/}}b{^{templateInitIsFalse/}}c{{templateInitIsFalse}}{{/templateInitIsFalse}}d{^{templateInitIsFalse}}{{/templateInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
-	"Template with init:false renders with render method - and has not prototype or constructor (plain object)");
+	"Template with init:false renders with render method - and has no prototype or constructor (plain object)");
 
 	equals($.templates("a{{templateInitIsFalseWithTemplate/}}b{^{templateInitIsFalseWithTemplate/}}c{{templateInitIsFalseWithTemplate}}{{/templateInitIsFalseWithTemplate}}d{^{templateInitIsFalseWithTemplate}}{{/templateInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
 	"Template with init:false and template renders template");

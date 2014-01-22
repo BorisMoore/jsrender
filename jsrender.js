@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 49 */
+informal pre V1.0 commit counter: 50 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -1406,7 +1406,8 @@ informal pre V1.0 commit counter: 49 */
 		registerStore(jsvStoreName, jsvStores[jsvStoreName]);
 	}
 
-	var $templates = $views.templates,
+	var $observable,
+		$templates = $views.templates,
 		$converters = $views.converters,
 		$helpers = $views.helpers,
 		$tags = $views.tags,
@@ -1418,7 +1419,10 @@ informal pre V1.0 commit counter: 49 */
 		// jQuery is loaded, so make $ the jQuery object
 		$ = jQuery;
 		$.fn.render = renderContent;
-
+		if ($observable = $.observable) {
+			$extend($viewsSub, $observable.sub); // jquery.observable.js was loaded before jsrender.js
+			delete $observable.sub;
+		}
 	} else {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is not loaded.
