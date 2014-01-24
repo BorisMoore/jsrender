@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 50 */
+informal pre V1.0 commit counter: 51 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -1289,7 +1289,7 @@ informal pre V1.0 commit counter: 50 */
 				return allPath;
 			}
 
-			if (err) {
+			if (err && !aposed && !quoted) {
 				syntaxError(params);
 			} else {
 				if (bindings && rtPrnDot && !aposed && !quoted) {
