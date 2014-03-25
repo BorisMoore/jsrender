@@ -3,6 +3,7 @@
 (function(global, $, undefined) {
 "use strict";
 (function() {
+	var isIE8 = window.attachEvent && !window.addEventListener;
 
 function compileTmpl(template) {
 	try {
@@ -34,7 +35,7 @@ var person = { name: "Jo" },
 var tmplString =  "A_{{:name}}_B";
 module("api");
 test("templates", 16, function() {
-	equal($.templates("#myTmpl2").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
+	equal($.templates("#myTmpl2").render(), isIE8 ? "\n' \" \\ \\' \\\"" : "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
 	equal($.templates("' \" \\ \\' \\\"").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template compiled from string");
 
 	$.templates("myTmpl", tmplString);

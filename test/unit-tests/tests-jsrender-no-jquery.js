@@ -322,11 +322,11 @@ test("templates", 14, function() {
 	equal($.templates.myTmpl, undefined, 'Remove a named template: $.templates("myTmpl", null);');
 });
 
-test("render", 21, function() {
+test("render", 25, function() {
 	var tmpl1 = $.templates("myTmpl8", tmplString);
 	$.templates({
 		simple: "Content{{:#data}}|",
-		templateForArray: "Content{{for #data}}{{:#index}}{{/for}}",
+		templateForArray: "Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}",
 		primitiveDataTypes: "|{{:#data}}"
 	});
 
@@ -401,8 +401,12 @@ test("render", 21, function() {
 	equal($.render.simple(0), "Content0|", '0 renders once with #data 0');
 	equal($.render.simple(""), "Content|", '"" renders once with #data ""');
 
-	equal($.render.templateForArray([[null,undefined,1]]), "Content012", 'Can render a template against an array, and render once only, by wrapping array in an array');
-	equal($.render.templateForArray([[]]), "Content", 'Can render a template against an empty array, and render once only, by wrapping array in an array');
+	equal($.render.templateForArray([[null,undefined,1]]), "Content012", 'Can render a template against an array without iteration, by wrapping array in an array');
+	equal($.render.templateForArray([null,undefined,1], true), "Content012", 'render(array, true) renders an array without iteration');
+	equal($.render.templateForArray([null,undefined,1], {foo:"foovalue"}, true), "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
+	equal($.render.templateForArray([[]]), "Content", 'Can render a template against an empty array without iteration, by wrapping array in an array');
+	equal($.render.templateForArray([], true), "Content", 'Can render a template against an empty array without iteration, by passing in true as second parameter');
+	equal($.render.templateForArray([], {foo: "foovalue"}, true), "Contentfoovalue", 'Can render a template against an empty array without iteration, by by passing in true as third parameter');
 	equal($.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey');
 });
 
@@ -440,6 +444,23 @@ test("converters", function() {
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "|||", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:0}), "0|0|0|0", "{{attr:0}}|{{>0}}|{{loc:0}}|{{:0}} returns correct values");
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:false}), "false|false|false|false", "{{attr:false}}|{{>false}}|{{loc:false}}|{{:false}} returns correct values");
+});
+
+test("{{sometag convert=converter}}", function() {
+	function loc(data) {
+		switch (data) { 
+			case "desktop": return "bureau";
+			case "a<b": return "a moins <que b"}
+		return data;
+	}
+	$.views.converters("loc", loc);
+
+	equal($.templates("1{{:#data convert='loc'}} 2{{:'desktop' convert='loc'}} 3{{:#data convert=~myloc}} 4{{:'desktop' convert=~myloc}}").render("desktop", {myloc: loc}), "1bureau 2bureau 3bureau 4bureau", "{{: convert=~myconverter}}");
+	equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
+		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a moins <que b",
+		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}} or {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
+	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
+	equal($.templates("{{for #data convert=~reverse}}{{:#data}}{{/for}}").render([1,2,3], {reverse: function(val) {return val.reverse()}}, true), "321", "{{for expression convert=~myconverter}}");
 });
 
 test("tags", function() {
@@ -507,15 +528,16 @@ test("tags", function() {
 			template: ""
 		},
 		templateReturnsEmpty: {
-			template: "{{:a}}"
+			template: "{{:a}}",
+			autoBind: true
 		},
-		templateInitIsFalse: {
+		tagInitIsFalse: {
 			init:false,
 			render: function(){
 				return "Foo" + JSON.stringify(this.__proto__ || {});
 			}
 		},
-		templateInitIsFalseWithTemplate: {
+		tagInitIsFalseWithTemplate: {
 			init:false,
 			template: "Foo "
 		}
@@ -538,11 +560,101 @@ test("tags", function() {
 	equals($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
-	equals($.templates("a{{templateInitIsFalse/}}b{^{templateInitIsFalse/}}c{{templateInitIsFalse}}{{/templateInitIsFalse}}d{^{templateInitIsFalse}}{{/templateInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
-	"Template with init:false renders with render method - and has no prototype or constructor (plain object)");
+	equals($.views.tags.tagInitIsFalse.constructor === Object && $.templates("a{{tagInitIsFalse/}}b{^{tagInitIsFalse/}}c{{tagInitIsFalse}}{{/tagInitIsFalse}}d{^{tagInitIsFalse}}{{/tagInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
+	"Tag with init:false renders with render method - and has no prototype or constructor (plain object)");
 
-	equals($.templates("a{{templateInitIsFalseWithTemplate/}}b{^{templateInitIsFalseWithTemplate/}}c{{templateInitIsFalseWithTemplate}}{{/templateInitIsFalseWithTemplate}}d{^{templateInitIsFalseWithTemplate}}{{/templateInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
-	"Template with init:false and template renders template");
+	equals($.views.tags.tagInitIsFalseWithTemplate.constructor === Object && $.templates("a{{tagInitIsFalseWithTemplate/}}b{^{tagInitIsFalseWithTemplate/}}c{{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}d{^{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
+	"Tag with init:false and template renders template");
+
+	$.views.tags({
+		tagJustTemplate: {
+			template: "{{:#data ? name||length : 'Not defined'}} ",
+			autoBind: true
+		},
+		tagWithTemplateWhichIteratesAgainstCurrentData: {
+			template: "{{:#data ? name : 'Not defined'}} ",
+			render: function() {
+				return this.tagCtx.render(); // Renders against current data - and iterates if array
+			},
+			autoBind: true
+		},
+		tagJustRender: {
+			render: function(val) {
+				return val.name + " "; 
+			},
+			autoBind: true
+		},
+		tagJustRenderArray: {
+			render: function(val) {
+				return val.length + " "; 
+			},
+			autoBind: true
+		},
+		tagWithTemplateNoIteration: {
+			render: function(val) {
+				return this.tagCtx.render(val, true); // Render without iteration
+			},
+			template: "{{:#data.length}} ",
+			autoBind: true
+		},
+		tagWithTemplateNoIterationWithHelpers: {
+			render: function(val) {
+				return this.tagCtx.render(val, {foo: "foovalue"}, true); // Render without iteration
+			},
+			template: "{{:#data.length}} {{:~foo}}",
+			autoBind: true
+		},
+		tagWithTemplateWhichIteratesFirstArg: {
+			template: "{{:#data ? name : 'Not defined'}} ",
+			render: function(val) {
+				return this.tagCtx.render(val); // Renders against first arg - defaults to current data - and iterates if array
+			},
+			autoBind: true
+		}
+	});
+
+	equals($.templates("a{{include person}}{{tagJustTemplate/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	"Tag with just a template and no param renders once against current data, if object");
+
+	equals($.templates("a{{include person}}{{tagJustTemplate undefinedProperty/}}{{/include}}").render({person: {name: "Jo"}}), "aNot defined ",
+	"Tag with just a template and a parameter which is not defined renders once against 'undefined'");
+
+	equals($.templates("a{{include people}}{{tagJustTemplate/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	"Tag with just a template and no param renders once against current data, even if array - but can add render method with tagCtx.render(val) to iterate - (next test)");
+
+	equals($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array");
+
+	equals($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData thisisignored/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array - and ignores argument if provided");
+
+	equals($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	"Tag with a template and no param and render method calling tagCtx.render(val) renders against first arg - or defaults to current data, and iterates if array");
+
+	equals($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	"Tag with a template and no param and render method calling tagCtx.render(val) iterates against argument if array");
+
+	equals($.templates("a{{include people}}{{tagWithTemplateNoIteration/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	"If current data is an array, a tag with a template and a render method calling tagCtx.render(val, true) and no param renders against array without iteration");
+
+	equals($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
+	"If current data is an array, a tag with a template and a render method calling tagCtx.render(val, helpers, true) and no param renders against array without iteration");
+
+	equals($.templates("a{{include person}}{{tagJustRender/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	"Tag with just a render and no param renders once against current data, if object");
+
+	equals($.templates("a{{include people}}{{tagJustRenderArray/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	"Tag with just a render and no param renders once against current data, even if array - but render method can choose to iterate");
+
+	equals($.templates("a{{tagJustTemplate person/}}").render({person: {name: "Jo"}}), "aJo ",
+	"Tag with just a template and renders once against first argument data, if object");
+
+	equals($.templates("a{{tagJustTemplate people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	"Tag with just a template renders once against first argument data even if it is an array - but can add render method with tagCtx.render(val) to iterate - (next test)");
+
+	equals($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	"Tag with a template and render method calling tagCtx.render(val) renders against first param data, and iterates if array");
+
 });
 
 test('{{include}} and wrapping content', function() {
@@ -571,7 +683,8 @@ test('{{include}} and wrapping content', function() {
 				template: "add{{include tmpl=#content/}}",
 				render: function() {
 					return this.tagCtx.props.override;
-				}
+				},
+				autoBind: true
 			}
 		},
 		templates: {
@@ -605,8 +718,9 @@ test('{{include}} and wrapping content', function() {
 			myTag: {
 				render: function() {
 					return this.tagCtx.props.override;
-				}
-			}
+				},
+				autoBind: true
+			},
 		},
 		templates: {
 			wrapper: "header{{for people tmpl=#content/}}footer"
