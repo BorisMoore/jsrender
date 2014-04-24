@@ -715,6 +715,8 @@ informal pre V1.0 commit counter: 52 */
 						// Use tmpl as options
 						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options);
 					}
+
+					elem = null;
 				}
 				return value;
 			}
