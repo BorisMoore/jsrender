@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 52 */
+informal pre V1.0 commit counter: 53 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -80,13 +80,16 @@ informal pre V1.0 commit counter: 52 */
 			sub: {
 				// subscription, e.g. JsViews integration
 				View: View,
-				Error: JsViewsError,
+				Err: JsViewsError,
 				tmplFn: tmplFn,
 				cvt: convertArgs,
 				parse: parseParams,
 				extend: $extend,
-				error: error,
-				syntaxError: syntaxError,
+				err: error,
+				syntaxErr: syntaxError,
+				isFn: function(ob) {
+					return typeof ob === "function"
+				},
 				DataMap: DataMap
 			},
 			_cnvt: convertVal,
@@ -109,7 +112,7 @@ informal pre V1.0 commit counter: 52 */
 
 	function dbgMode(debugMode) {
 		$viewsSettings._dbgMode = debugMode;
-		indexStr = debugMode ? "Error: #index in nested view: use #getIndex()" : ""; // If in debug mode set #index to a warning when in nested contexts
+		indexStr = debugMode ? "Unavailable (nested view): use #getIndex()" : ""; // If in debug mode set #index to a warning when in nested contexts
 		$tags("dbg", $helpers.dbg = $converters.dbg = debugMode ? dbgBreak : retVal); // If in debug mode, register {{dbg/}}, {{dbg:...}} and ~dbg() to insert break points for debugging.
 	}
 
@@ -141,8 +144,8 @@ informal pre V1.0 commit counter: 52 */
 				return;
 			}
 		}
-		this.name = "JsRender Error";
-		this.message = message || "JsRender error";
+		this.name = ($.link ? "JsViews" : "JsRender") + " Error";
+		this.message = message || this.name;
 	}
 
 	function $extend(target, source) {
@@ -273,7 +276,7 @@ informal pre V1.0 commit counter: 52 */
 		}
 
 		if (res) {
-			if (typeof res === "function" && !res._wrp) {
+			if ($isFunction(res) && !res._wrp) {
 				wrapped = function() {
 					// If it is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
 					// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
@@ -358,7 +361,7 @@ informal pre V1.0 commit counter: 52 */
 		args = !args.length && !tagCtx.index && tag.autoBind // On the opening tag with no args, if autoBind is true, bind the the current data context
 			? [view.data]
 			: converter
-				? args.slice(0) // If there is a converter, use a copy of the tagCtx.args array for rendering, and replace the args[0] in
+				? args.slice() // If there is a converter, use a copy of the tagCtx.args array for rendering, and replace the args[0] in
 				// the copied array with the converted value. But we don not modify the value of tag.tagCtx.args[0] (the original args array)
 				: args; // If no converter, render with the original tagCtx.args
 
@@ -646,7 +649,7 @@ informal pre V1.0 commit counter: 52 */
 
 	function compileTag(name, tagDef, parentTmpl) {
 		var init, tmpl;
-		if (typeof tagDef === "function") {
+		if ($isFunction(tagDef)) {
 			// Simple tag declared as function. No presenter instantation.
 			tagDef = {
 				depends: tagDef.depends,
@@ -715,6 +718,7 @@ informal pre V1.0 commit counter: 52 */
 						// Use tmpl as options
 						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options);
 					}
+					elem = null;
 				}
 				return value;
 			}
@@ -978,7 +982,7 @@ informal pre V1.0 commit counter: 52 */
 	// (Compile AST then build template function)
 
 	function error(message) {
-		throw new $viewsSub.Error(message);
+		throw new $viewsSub.Err(message);
 	}
 
 	function syntaxError(message) {
@@ -1083,7 +1087,7 @@ informal pre V1.0 commit counter: 52 */
 		}
 		//==== /end of nested functions ====
 
-		var newNode, hasHandlers, 
+		var newNode, hasHandlers,
 			allowCode = tmpl && tmpl.allowCode,
 			astTop = [],
 			loc = 0,
@@ -1454,6 +1458,7 @@ informal pre V1.0 commit counter: 52 */
 		$helpers = $views.helpers,
 		$tags = $views.tags,
 		$viewsSub = $views.sub,
+		$isFunction = $viewsSub.isFn,
 		$viewsSettings = $views.settings;
 
 	if (jQuery) {
@@ -1577,7 +1582,7 @@ informal pre V1.0 commit counter: 52 */
 			for (key in source) {
 				prop = source[key];
 				if (!prop || !prop.toJSON || prop.toJSON()) {
-					if (typeof prop !== "function") {
+					if (!$isFunction(prop)) {
 						props.push({ key: key, prop: source[key] });
 					}
 				}

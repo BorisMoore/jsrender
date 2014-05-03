@@ -367,7 +367,7 @@ test("render", 25, function() {
 		$.views.settings.debugMode(true);
 
 		equal(templateWithIndex.render({people: [1,2]}),
-			"a0 bError: #index in nested view: use #getIndex() c0 dError: #index in nested view: use #getIndex() a1 bError: #index in nested view: use #getIndex() c1 dError: #index in nested view: use #getIndex() ",
+			"a0 bUnavailable (nested view): use #getIndex() c0 dUnavailable (nested view): use #getIndex() a1 bUnavailable (nested view): use #getIndex() c1 dUnavailable (nested view): use #getIndex() ",
 			"If debug mode is true, #index gives error message in nested blocks.");
 
 	var templateWithGetIndex = $.templates(
