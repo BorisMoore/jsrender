@@ -50,9 +50,12 @@
 	tmpl_handlebarsEncode( movie);
 	$( "#output" ).html( htmlSample );
 
-	function test( label, times, places, cb ) {
+	function test( label, times, places, cb, before, after ) {
 		var target = $( "<tr><td>" + label + ": </td></tr>" ).appendTo( "#results" );
 		tests.push( function() {
+			if (before) {
+				before();
+			}
 			var endTime, result,
 				count = times,
 				startTime = new Date().getTime();
@@ -61,6 +64,9 @@
 				cb();
 			}
 			endTime = new Date().getTime();
+			if (after) {
+				after();
+			}
 			result = ((( endTime-startTime ) * 1000 ) / times);
 			target.append( "<td class='result'>" + result.toFixed( places ) + "</td>");
 			runNextTest();
@@ -80,7 +86,7 @@
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Optimized render to string</b></td></tr>");
 
-	test( "jQuery Templates", times * 500, 1, function() {
+	test( "jQuery Templates", times * 100, 1, function() {
 		ret = tmpl_jQueryTmpl($, { data: movie }).join("");
 	});
 	test( "doT", times * 500, 1, function() {
@@ -89,12 +95,21 @@
 	test( "Handlebars", times * 500, 1, function() {
 		ret = tmpl_handlebars(movie);
 	});
-	test( "JsRender <em>(optimized .fn() method - for simple templates)</em>", times * 500, 1, function() {
-		ret = tmpl_JsRender.fn( movie );
-	});
-	test( "JsRender <em>(.render() method - full view-hierarchy features)</em>", times * 500, 1, function() {
+	test( "JsRender", times * 500, 1, function() {
 		ret = tmpl_JsRender.render( movie );
 	});
+
+	test( "JsRender: Debug mode off - <em>$.views.settings.debugMode(false)</em>", times * 500, 1,
+		function() {
+			ret = tmpl_JsRender.render( movie );
+		},
+		function() { 
+			$.views.settings.debugMode(false);
+		},
+		function() {
+			$.views.settings.debugMode(true);
+		}
+	);
 
 	// Test html encoding perf
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
@@ -109,22 +124,31 @@
 	test( "Handlebars", times * 50, 1, function() {
 		ret = tmpl_handlebarsEncode( movie );
 	});
-	test( "JsRender <em>(optimized .fn() method)</em>", times * 50, 1, function() {
-		ret = tmpl_JsRenderEncode.fn( movie );
-	});
-	test( "JsRender <em>(.render() method - full view-hierarchy features)</em>", times * 50, 1, function() {
+	test( "JsRender", times * 50, 1, function() {
 		ret = tmpl_JsRenderEncode.render( movie );
 	});
+
+	test( "JsRender: Debug mode off - <em>$.views.settings.debugMode(false)</em>", times * 50, 1,
+		function() {
+			ret = tmpl_JsRenderEncode.render( movie );
+		},
+		function() { 
+			$.views.settings.debugMode(false);
+		},
+		function() {
+			$.views.settings.debugMode(true);
+		}
+	);
 
 	// Test full features perf
 	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
 	$( "#results" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
-	test( "jQuery Templates full features - inserted in DOM", times * 5, 0, function() {
+	test( "jQuery Templates - inserted in DOM", times * 5, 0, function() {
 		$( "#output" ).empty();
 		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
 	});
-	test( "JsRender full features - inserted in DOM", times * 5, 0, function() {
+	test( "JsRender - inserted in DOM", times * 5, 0, function() {
 		$( "#output" ).html( tmpl_JsRender.render( movie ));
 	});
 

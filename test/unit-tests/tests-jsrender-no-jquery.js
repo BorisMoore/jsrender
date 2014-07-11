@@ -117,17 +117,197 @@ test("types", function() {
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
 });
 
-test("noerror = true", function() {
-	equal($.templates("{{:a.b.c.d.e noerror=true}}").render(), "", '{{:a.b.c.d.e noerror=true}} -> ""');
-	equal($.templates("{{>a.b.c.d.e noerror=true}}").render(), "", '{{>a.b.c.d.e noerror=true}} -> ""');
+test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fallback'}}, etc.", function() {
+	equal($.templates("{{:a.missing.object.path}}").render({a:1}).slice(0, 19), "{Error: TypeError: ",
+		"{{:a.missing.object.path}}");
+	equal($.templates("{{:a.missing.object.path onerror='Missing Object'}}").render({a:1}), "Missing Object",
+		'{{:a.missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{:a.missing.object.path onError=''}}").render({a:1}), "",
+		'{{:a.missing.object.path onerror=""}} -> ""');
+	equal($.templates("{{>a.missing.object.path OnError='Missing Object'}}").render({a:1}), "Missing Object",
+		'{{>a.missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{>a.missing.object.path onerror=''}}").render({a:1}), "",
+		'{{>a.missing.object.path onerror=""}} -> ""');
+	equal($.templates("{{>a.missing.object.path onerror=defaultVal}}").render(
+		{
+			a:1,
+			defaultVal: "defaultFromData"
+		}), "defaultFromData",
+		'{{>a.missing.object.path onerror=defaultVal}} -> "defaultFromData"');
+
+	equal($.templates("{{>a.missing.object.path onerror=~myOnErrorFunction}}").render({a:1}, {
+		myOnErrorFunction: function(e, view) {
+			return "Override onError using a callback: " + view.ctx.helperValue + e.message;
+		},
+		helperValue: "hlp"
+	}).slice(0, 38), "Override onError using a callback: hlp",
+		'{{>a.missing.object.path onerror=~myOnErrorFunction}}" >' +
+		' Providing a function "onerror=~myOnErrorFunction" calls the function as onError callback');
+
+	equal($.templates("{{>a.missing.object.path onerror=myOnErrorDataMethod}}").render(
+		{
+			a: "dataValue",
+			myOnErrorDataMethod: function(e, view) {
+				return "Override onError using a callback data method: " + view.data.a;
+			}
+		}), "Override onError using a callback data method: dataValue",
+		'{{>a.missing.object.path onerror=myOnErrorDataMethod}}" >' +
+		' Providing a function "onerror=myOnErrorDataMethod" calls the function as onError callback');
+
+	equal($.templates("1: {{>a.missing.object.path onerror=defaultVal}}" +
+		" 2: {{:a.missing.object.path onerror='Missing Object'}}" +
+		" 3: {{:a.missing.object.path onerror=''}}" +
+		" 4: {{:a onerror='missing'}}" +
+		" 5: {{:a.undefined onerror='missing'}}" +
+		" 6: {{:a.missing.object onerror=myCb}} end").render(
+		{
+			a:"aVal",
+			defaultVal: "defaultFromData",
+			myCb: function(e, view) {
+				return "myCallback: " + view.data.a;
+			}
+		}), "1: defaultFromData 2: Missing Object 3:  4: aVal 5:  6: myCallback: aVal end",
+		'multiple onerror fallbacks in same template - correctly concatenated into output');
+
 	equal($.templates({
-		markup: "{{withfallback:a.b noerror=true fallback='Missing Object'}} and {{withfallback:a noerror=true fallback='xx'}} and {{>a noerror=true}} and {{withfallback:a.x.y noerror=true fallback='xx'}}",
+		markup: "{{withfallback:a.notdefined fallback='fallback for undefined'}}",
 		converters: {
 			withfallback: function(val) {
 				return val || this.tagCtx.props.fallback;
 			}
 		}
-	}).render({a:"yes"}), "Missing Object and yes and yes and xx", '{{withfallback:a.b noerror=true fallback="Missing Object"}} -> "Missing Object"');
+	}).render({a:"yes"}), "fallback for undefined",
+		'{{withfallback:a.notdefined fallback="fallback for undefined"}} using converter to get fallback value for undefined properties');
+
+	equal($.templates({
+		markup: "1: {{withfallback:a.missing.y onerror='Missing object' fallback='undefined prop'}}" +
+			" 2: {{withfallback:a.undefined onerror='Missing object' fallback='undefined prop'}}",
+		converters: {
+			withfallback: function(val) {
+				return val || this.tagCtx.props.fallback;
+			}
+		}
+	}).render({a:"yes"}), "1: Missing object 2: undefined prop",
+		'both fallback for undefined and onerror for missing on same tags');
+
+	equal($.templates({
+		markup: "1: {{>a.missing.object.path onerror=defaultVal}}" +
+		" 2: {{:a.missing.object.path onerror='Missing Object'}}" +
+		" 3: {{:a.missing.object.path onerror=''}}" +
+		" 4: {{:a onerror='missing'}}" +
+		" 5: {{:a.undefined onerror='missing'}}" +
+		" 6: {{:a.missing.object onerror=myCb}}" +
+		" 7: {{withfallback:a.undefined fallback='undefined prop'}} end",
+		converters: {
+			withfallback: function(val) {
+				return val || this.tagCtx.props.fallback;
+			}
+		}
+	}).render(
+		{
+		a:"aVal",
+		defaultVal: "defaultFromData",
+		myCb: function(e, view) {
+			return "myCallback: " + view.data.a;
+		}
+	}), "1: defaultFromData 2: Missing Object 3:  4: aVal 5:  6: myCallback: aVal 7: undefined prop end",
+	'multiple onerror fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
+
+	equal($.templates({
+		markup: "1: {{>a.missing.object.path onerror=defaultVal}}" +
+		" 2: {{:a.missing.object.path onerror='Missing Object'}}" +
+		" 3: {{:a.missing.object.path onerror=''}}" +
+		" 4: {{:a onerror='missing'}}" +
+		" 5: {{:a.missing.thisWillThrow.foo}}" +
+		" 6: {{:a.undefined onerror='missing'}}" +
+		" 7: {{:a.missing.object onerror=myCb}}" +
+		" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
+		converters: {
+			withfallback: function(val) {
+				return val || this.tagCtx.props.fallback;
+			}
+		}
+	}).render(
+		{
+		a:"aVal",
+		defaultVal: "defaultFromData",
+		myCb: function(e, view) {
+			return "myCallback: " + view.data.a;
+		}
+	}).slice(0, 19), "{Error: TypeError: ",
+	'onerror/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+
+	equal($.templates("{{for missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+
+	equal($.templates("{{for true missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for true missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+
+	equal($.templates("{{for true foo=missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for ... foo=missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+
+	equal($.templates("{{for true ~foo=missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for ... ~foo=missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+
+	equal($.templates({
+			markup: "{{myTag foo='a'/}} {{myTag foo=missing.object.path onerror='Missing Object'/}} {{myTag foo='c' bar=missing.object.path onerror='Missing Object'/}} {{myTag foo='c' missing.object.path onerror='Missing Object'/}} {{myTag foo='b'/}}",
+			tags: {
+				myTag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
+			}
+		}).render({a:1}), "MyTag: a end Missing Object Missing Object Missing Object MyTag: b end",
+		'onerror=... for custom tags: e.g. {{myTag foo=missing.object.path onerror="Missing Object"/}}');
+
+	equal($.templates({
+		markup: "1: {{for a.missing.object.path onerror=defaultVal}}yes{{/for}}" +
+		" 2: {{if a.missing.object.path onerror='Missing Object'}}yes{{/if}}" +
+		" 3: {{include a.missing.object.path onerror=''/}}" +
+		" 4: {{if a onerror='missing'}}yes{{/if}}" +
+		" 5: {{for a.undefined onerror='missing'}}yes{{/for}}" +
+		" 6: {{if a.missing.object onerror=myCb}}yes{{/if}}" +
+		" 7: {{withfallback:a.undefined fallback='undefined prop'}} end" +
+		" 8: {{myTag foo=missing.object.path onerror='Missing Object'/}}",
+		converters: {
+			withfallback: function(val) {
+				return val || this.tagCtx.props.fallback;
+			}
+		},
+		tags: {
+			myTag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
+		}
+	}).render(
+		{
+		a:"aVal",
+		defaultVal: "defaultFromData",
+		myCb: function(e, view) {
+			return "myCallback: " + view.data.a;
+		}
+	}), "1: defaultFromData 2: Missing Object 3:  4: yes 5:  6: myCallback: aVal 7: undefined prop end 8: Missing Object",
+	'multiple onerror fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
+
+	equal($.templates({
+		markup: "1: {{for a.missing.object.path onerror=defaultVal}}yes{{/for}}" +
+		" 2: {{if a.missing.object.path onerror='Missing Object'}}yes{{/if}}" +
+		" 3: {{include a.missing.object.path onerror=''/}}" +
+		" 4: {{if a onerror='missing'}}yes{{/if}}" +
+		" 5: {{for missing.thisWillThrow.foo}}yes{{/for}}" +
+		" 6: {{for a.undefined onerror='missing'}}yes{{/for}}" +
+		" 7: {{if a.missing.object onerror=myCb}}yes{{/if}}" +
+		" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
+		converters: {
+			withfallback: function(val) {
+				return val || this.tagCtx.props.fallback;
+			}
+		}
+	}).render(
+		{
+		a:"aVal",
+		defaultVal: "defaultFromData",
+		myCb: function(e, view) {
+			return "myCallback: " + view.data.a;
+		}
+	}).slice(0, 19), "{Error: TypeError: ",
+	'onerror/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+
 });
 
 test("comparisons", 22,function() {
@@ -448,7 +628,7 @@ test("converters", function() {
 
 test("{{sometag convert=converter}}", function() {
 	function loc(data) {
-		switch (data) { 
+		switch (data) {
 			case "desktop": return "bureau";
 			case "a<b": return "a moins <que b"}
 		return data;
@@ -517,7 +697,7 @@ test("tags", function() {
 		}).render(person);
 
 	// ............................... Assert .................................
-	equals(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
+	equal(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
 
 	// =============================== Arrange ===============================
 	$.views.tags({
@@ -545,25 +725,25 @@ test("tags", function() {
 	});
 
 	// ............................... Assert .................................
-	equals($.templates("a{{noRenderNoTemplate/}}b{^{noRenderNoTemplate/}}c{{noRenderNoTemplate}}{{/noRenderNoTemplate}}d{^{noRenderNoTemplate}}{{/noRenderNoTemplate}}e").render(1), "abcde",
+	equal($.templates("a{{noRenderNoTemplate/}}b{^{noRenderNoTemplate/}}c{{noRenderNoTemplate}}{{/noRenderNoTemplate}}d{^{noRenderNoTemplate}}{{/noRenderNoTemplate}}e").render(1), "abcde",
 	"non-rendering tag (no template, no render function) renders empty string");
 
-	equals($.templates("a{{voidRender/}}b{^{voidRender/}}c{{voidRender}}{{/voidRender}}d{^{voidRender}}{{/voidRender}}e").render(1), "abcde",
+	equal($.templates("a{{voidRender/}}b{^{voidRender/}}c{{voidRender}}{{/voidRender}}d{^{voidRender}}{{/voidRender}}e").render(1), "abcde",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
-	equals($.templates("a{{emptyRender/}}b{^{emptyRender/}}c{{emptyRender}}{{/emptyRender}}d{^{emptyRender}}{{/emptyRender}}e").render(1), "abcde",
+	equal($.templates("a{{emptyRender/}}b{^{emptyRender/}}c{{emptyRender}}{{/emptyRender}}d{^{emptyRender}}{{/emptyRender}}e").render(1), "abcde",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
-	equals($.templates("a{{emptyTemplate/}}b{^{emptyTemplate/}}c{{emptyTemplate}}{{/emptyTemplate}}d{^{emptyTemplate}}{{/emptyTemplate}}e").render(1), "abcde",
+	equal($.templates("a{{emptyTemplate/}}b{^{emptyTemplate/}}c{{emptyTemplate}}{{/emptyTemplate}}d{^{emptyTemplate}}{{/emptyTemplate}}e").render(1), "abcde",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
-	equals($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
+	equal($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
-	equals($.views.tags.tagInitIsFalse.constructor === Object && $.templates("a{{tagInitIsFalse/}}b{^{tagInitIsFalse/}}c{{tagInitIsFalse}}{{/tagInitIsFalse}}d{^{tagInitIsFalse}}{{/tagInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
+	equal($.views.tags.tagInitIsFalse.constructor === Object && $.templates("a{{tagInitIsFalse/}}b{^{tagInitIsFalse/}}c{{tagInitIsFalse}}{{/tagInitIsFalse}}d{^{tagInitIsFalse}}{{/tagInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
 	"Tag with init:false renders with render method - and has no prototype or constructor (plain object)");
 
-	equals($.views.tags.tagInitIsFalseWithTemplate.constructor === Object && $.templates("a{{tagInitIsFalseWithTemplate/}}b{^{tagInitIsFalseWithTemplate/}}c{{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}d{^{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
+	equal($.views.tags.tagInitIsFalseWithTemplate.constructor === Object && $.templates("a{{tagInitIsFalseWithTemplate/}}b{^{tagInitIsFalseWithTemplate/}}c{{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}d{^{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
 	"Tag with init:false and template renders template");
 
 	$.views.tags({
@@ -580,13 +760,13 @@ test("tags", function() {
 		},
 		tagJustRender: {
 			render: function(val) {
-				return val.name + " "; 
+				return val.name + " ";
 			},
 			autoBind: true
 		},
 		tagJustRenderArray: {
 			render: function(val) {
-				return val.length + " "; 
+				return val.length + " ";
 			},
 			autoBind: true
 		},
@@ -613,46 +793,46 @@ test("tags", function() {
 		}
 	});
 
-	equals($.templates("a{{include person}}{{tagJustTemplate/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	equal($.templates("a{{include person}}{{tagJustTemplate/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a template and no param renders once against current data, if object");
 
-	equals($.templates("a{{include person}}{{tagJustTemplate undefinedProperty/}}{{/include}}").render({person: {name: "Jo"}}), "aNot defined ",
+	equal($.templates("a{{include person}}{{tagJustTemplate undefinedProperty/}}{{/include}}").render({person: {name: "Jo"}}), "aNot defined ",
 	"Tag with just a template and a parameter which is not defined renders once against 'undefined'");
 
-	equals($.templates("a{{include people}}{{tagJustTemplate/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	equal($.templates("a{{include people}}{{tagJustTemplate/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"Tag with just a template and no param renders once against current data, even if array - but can add render method with tagCtx.render(val) to iterate - (next test)");
 
-	equals($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array");
 
-	equals($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData thisisignored/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData thisisignored/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array - and ignores argument if provided");
 
-	equals($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render(val) renders against first arg - or defaults to current data, and iterates if array");
 
-	equals($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render(val) iterates against argument if array");
 
-	equals($.templates("a{{include people}}{{tagWithTemplateNoIteration/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	equal($.templates("a{{include people}}{{tagWithTemplateNoIteration/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"If current data is an array, a tag with a template and a render method calling tagCtx.render(val, true) and no param renders against array without iteration");
 
-	equals($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
+	equal($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
 	"If current data is an array, a tag with a template and a render method calling tagCtx.render(val, helpers, true) and no param renders against array without iteration");
 
-	equals($.templates("a{{include person}}{{tagJustRender/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	equal($.templates("a{{include person}}{{tagJustRender/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a render and no param renders once against current data, if object");
 
-	equals($.templates("a{{include people}}{{tagJustRenderArray/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	equal($.templates("a{{include people}}{{tagJustRenderArray/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"Tag with just a render and no param renders once against current data, even if array - but render method can choose to iterate");
 
-	equals($.templates("a{{tagJustTemplate person/}}").render({person: {name: "Jo"}}), "aJo ",
+	equal($.templates("a{{tagJustTemplate person/}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a template and renders once against first argument data, if object");
 
-	equals($.templates("a{{tagJustTemplate people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	equal($.templates("a{{tagJustTemplate people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"Tag with just a template renders once against first argument data even if it is an array - but can add render method with tagCtx.render(val) to iterate - (next test)");
 
-	equals($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and render method calling tagCtx.render(val) renders against first param data, and iterates if array");
 
 });
@@ -754,11 +934,59 @@ test("helpers", 4, function() {
 	equal($.views.helpers.toUpperCase2, undefined, '$.views.helpers("toUpperCase2", null) to remove registered helper');
 });
 
-test("delimiters", 1, function() {
+test("settings", function() {
+	// ................................ Act ..................................
 	$.views.settings.delimiters("@%","%@");
 	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
 	$.views.settings.delimiters("{{","}}");
-	equal(result, "A_yes_B", "Custom delimiters");
+	result += "|" +  $.templates("A_{{if true}}YES{{/if}}_B").render();
+	// ............................... Assert .................................
+	equal(result, "A_yes_B|A_YES_B", "Custom delimiters with render()");
+
+	// =============================== Arrange ===============================
+	var app = {choose: true, name: "Jo"};
+	result = "";
+	var oldOnError = $.views.settings.onError;
+
+	$.views.settings({
+		onError: function(e, view, fallback) {
+			return "Override error - " + (fallback ? ("(Fallback string: " + fallback + ") ") : "") + (view ? "Rendering error: " + e.message : "JsViews error: " + e);
+		}
+	});
+
+	// ................................ Act ..................................
+	result = $.templates('{{:missing.object}}').render(app);
+
+	// ............................... Assert .................................
+	equal(result.slice(0, 34), "Override error - Rendering error: ", "Override onError()");
+
+	// ................................ Act ..................................
+	result = $.templates('{{:missing.object onerror="myFallback"}}').render(app);
+
+	// ............................... Assert .................................
+	equal(result.slice(0, 64), "Override error - (Fallback string: myFallback) Rendering error: ", 'Override onError() - with {{:missing.object onerror="myFallback"}}');
+
+	// ................................ Act ..................................
+	try {
+		$.templates('{{if}}').render(app);
+	}
+	catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing tag: "{{/if}}" in template:\n{{if}}', 'Override onError() - with thrown syntax error (missing {{/if}})');
+
+	// ................................ Act ..................................
+	result = $.templates('{{if missing.object onerror="myFallback"}}yes{{/if}}').render(app);
+
+	// ............................... Assert .................................
+	equal(result.slice(0,64), 'Override error - (Fallback string: myFallback) Rendering error: ', 'Override onError() - with {{if missing.object onerror="myFallback"}}');
+
+	// ................................ Reset ..................................
+	$.views.settings({
+		onError: oldOnError
+	});
 });
 
 test("template encapsulation", 8, function() {

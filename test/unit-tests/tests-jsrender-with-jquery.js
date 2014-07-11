@@ -79,7 +79,7 @@ test("templates", 16, function() {
 	$.templates("myTmpl", null);
 	equal($.templates.myTmpl, undefined, 'Remove a named template:  $.templates("myTmpl", null);');
 
-	var tmpl3 = $.templates({
+	$.templates({
 		"scriptTmpl": {
 			markup: "#myTmpl",
 			debug:true
@@ -90,6 +90,11 @@ test("templates", 16, function() {
 		}
 	});
 	equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0 && $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0, true, 'Debug a template:  set debug:true on object');
+
+	// reset
+	$("#myTmpl")[0].removeAttribute("data-jsv-tmpl");
+
+	delete $.templates.scriptTmpl;
 });
 
 test("render", 5, function() {
