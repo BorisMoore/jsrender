@@ -21,8 +21,10 @@ function sort(array) {
 			for (i = arguments.length; i; i--) {
 				ret += sort.call(this, arguments[ i - 1 ]);
 			}
-		} else for (var i = array.length; i; i--) {
-			ret += this.tagCtx.render(array[ i - 1 ]);
+		} else {
+			for (var i = array.length; i; i--) {
+				ret += this.tagCtx.render(array[ i - 1 ]);
+			}
 		}
 	} else {
 		// Render in original order
@@ -117,49 +119,49 @@ test("types", function() {
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
 });
 
-test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fallback'}}, etc.", function() {
+test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fallback'}}, etc.", function() {
 	equal($.templates("{{:a.missing.object.path}}").render({a:1}).slice(0, 19), "{Error: TypeError: ",
 		"{{:a.missing.object.path}}");
-	equal($.templates("{{:a.missing.object.path onerror='Missing Object'}}").render({a:1}), "Missing Object",
-		'{{:a.missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{:a.missing.object.path onError='Missing Object'}}").render({a:1}), "Missing Object",
+		'{{:a.missing.object.path onError="Missing Object"}} -> "Missing Object"');
 	equal($.templates("{{:a.missing.object.path onError=''}}").render({a:1}), "",
-		'{{:a.missing.object.path onerror=""}} -> ""');
-	equal($.templates("{{>a.missing.object.path OnError='Missing Object'}}").render({a:1}), "Missing Object",
-		'{{>a.missing.object.path onerror="Missing Object"}} -> "Missing Object"');
-	equal($.templates("{{>a.missing.object.path onerror=''}}").render({a:1}), "",
-		'{{>a.missing.object.path onerror=""}} -> ""');
-	equal($.templates("{{>a.missing.object.path onerror=defaultVal}}").render(
+		'{{:a.missing.object.path onError=""}} -> ""');
+	equal($.templates("{{>a.missing.object.path onError='Missing Object'}}").render({a:1}), "Missing Object",
+		'{{>a.missing.object.path onError="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{>a.missing.object.path onError=''}}").render({a:1}), "",
+		'{{>a.missing.object.path onError=""}} -> ""');
+	equal($.templates("{{>a.missing.object.path onError=defaultVal}}").render(
 		{
 			a:1,
 			defaultVal: "defaultFromData"
 		}), "defaultFromData",
-		'{{>a.missing.object.path onerror=defaultVal}} -> "defaultFromData"');
+		'{{>a.missing.object.path onError=defaultVal}} -> "defaultFromData"');
 
-	equal($.templates("{{>a.missing.object.path onerror=~myOnErrorFunction}}").render({a:1}, {
+	equal($.templates("{{>a.missing.object.path onError=~myOnErrorFunction}}").render({a:1}, {
 		myOnErrorFunction: function(e, view) {
 			return "Override onError using a callback: " + view.ctx.helperValue + e.message;
 		},
 		helperValue: "hlp"
 	}).slice(0, 38), "Override onError using a callback: hlp",
-		'{{>a.missing.object.path onerror=~myOnErrorFunction}}" >' +
-		' Providing a function "onerror=~myOnErrorFunction" calls the function as onError callback');
+		'{{>a.missing.object.path onError=~myOnErrorFunction}}" >' +
+		' Providing a function "onError=~myOnErrorFunction" calls the function as onError callback');
 
-	equal($.templates("{{>a.missing.object.path onerror=myOnErrorDataMethod}}").render(
+	equal($.templates("{{>a.missing.object.path onError=myOnErrorDataMethod}}").render(
 		{
 			a: "dataValue",
 			myOnErrorDataMethod: function(e, view) {
 				return "Override onError using a callback data method: " + view.data.a;
 			}
 		}), "Override onError using a callback data method: dataValue",
-		'{{>a.missing.object.path onerror=myOnErrorDataMethod}}" >' +
-		' Providing a function "onerror=myOnErrorDataMethod" calls the function as onError callback');
+		'{{>a.missing.object.path onError=myOnErrorDataMethod}}" >' +
+		' Providing a function "onError=myOnErrorDataMethod" calls the function as onError callback');
 
-	equal($.templates("1: {{>a.missing.object.path onerror=defaultVal}}" +
-		" 2: {{:a.missing.object.path onerror='Missing Object'}}" +
-		" 3: {{:a.missing.object.path onerror=''}}" +
-		" 4: {{:a onerror='missing'}}" +
-		" 5: {{:a.undefined onerror='missing'}}" +
-		" 6: {{:a.missing.object onerror=myCb}} end").render(
+	equal($.templates("1: {{>a.missing.object.path onError=defaultVal}}" +
+		" 2: {{:a.missing.object.path onError='Missing Object'}}" +
+		" 3: {{:a.missing.object.path onError=''}}" +
+		" 4: {{:a onError='missing'}}" +
+		" 5: {{:a.undefined onError='missing'}}" +
+		" 6: {{:a.missing.object onError=myCb}} end").render(
 		{
 			a:"aVal",
 			defaultVal: "defaultFromData",
@@ -167,7 +169,7 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fa
 				return "myCallback: " + view.data.a;
 			}
 		}), "1: defaultFromData 2: Missing Object 3:  4: aVal 5:  6: myCallback: aVal end",
-		'multiple onerror fallbacks in same template - correctly concatenated into output');
+		'multiple onError fallbacks in same template - correctly concatenated into output');
 
 	equal($.templates({
 		markup: "{{withfallback:a.notdefined fallback='fallback for undefined'}}",
@@ -180,23 +182,23 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fa
 		'{{withfallback:a.notdefined fallback="fallback for undefined"}} using converter to get fallback value for undefined properties');
 
 	equal($.templates({
-		markup: "1: {{withfallback:a.missing.y onerror='Missing object' fallback='undefined prop'}}" +
-			" 2: {{withfallback:a.undefined onerror='Missing object' fallback='undefined prop'}}",
+		markup: "1: {{withfallback:a.missing.y onError='Missing object' fallback='undefined prop'}}" +
+			" 2: {{withfallback:a.undefined onError='Missing object' fallback='undefined prop'}}",
 		converters: {
 			withfallback: function(val) {
 				return val || this.tagCtx.props.fallback;
 			}
 		}
 	}).render({a:"yes"}), "1: Missing object 2: undefined prop",
-		'both fallback for undefined and onerror for missing on same tags');
+		'both fallback for undefined and onError for missing on same tags');
 
 	equal($.templates({
-		markup: "1: {{>a.missing.object.path onerror=defaultVal}}" +
-		" 2: {{:a.missing.object.path onerror='Missing Object'}}" +
-		" 3: {{:a.missing.object.path onerror=''}}" +
-		" 4: {{:a onerror='missing'}}" +
-		" 5: {{:a.undefined onerror='missing'}}" +
-		" 6: {{:a.missing.object onerror=myCb}}" +
+		markup: "1: {{>a.missing.object.path onError=defaultVal}}" +
+		" 2: {{:a.missing.object.path onError='Missing Object'}}" +
+		" 3: {{:a.missing.object.path onError=''}}" +
+		" 4: {{:a onError='missing'}}" +
+		" 5: {{:a.undefined onError='missing'}}" +
+		" 6: {{:a.missing.object onError=myCb}}" +
 		" 7: {{withfallback:a.undefined fallback='undefined prop'}} end",
 		converters: {
 			withfallback: function(val) {
@@ -211,16 +213,16 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fa
 			return "myCallback: " + view.data.a;
 		}
 	}), "1: defaultFromData 2: Missing Object 3:  4: aVal 5:  6: myCallback: aVal 7: undefined prop end",
-	'multiple onerror fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
+	'multiple onError fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
 
 	equal($.templates({
-		markup: "1: {{>a.missing.object.path onerror=defaultVal}}" +
-		" 2: {{:a.missing.object.path onerror='Missing Object'}}" +
-		" 3: {{:a.missing.object.path onerror=''}}" +
-		" 4: {{:a onerror='missing'}}" +
+		markup: "1: {{>a.missing.object.path onError=defaultVal}}" +
+		" 2: {{:a.missing.object.path onError='Missing Object'}}" +
+		" 3: {{:a.missing.object.path onError=''}}" +
+		" 4: {{:a onError='missing'}}" +
 		" 5: {{:a.missing.thisWillThrow.foo}}" +
-		" 6: {{:a.undefined onerror='missing'}}" +
-		" 7: {{:a.missing.object onerror=myCb}}" +
+		" 6: {{:a.undefined onError='missing'}}" +
+		" 7: {{:a.missing.object onError=myCb}}" +
 		" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
 		converters: {
 			withfallback: function(val) {
@@ -235,37 +237,37 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fa
 			return "myCallback: " + view.data.a;
 		}
 	}).slice(0, 19), "{Error: TypeError: ",
-	'onerror/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+	'onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
 
-	equal($.templates("{{for missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
-		'{{for missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{for missing.object.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for missing.object.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates("{{for true missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
-		'{{for true missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{for true missing.object.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for true missing.object.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates("{{for true foo=missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
-		'{{for ... foo=missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{for true foo=missing.object.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for ... foo=missing.object.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates("{{for true ~foo=missing.object.path onerror='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
-		'{{for ... ~foo=missing.object.path onerror="Missing Object"}} -> "Missing Object"');
+	equal($.templates("{{for true ~foo=missing.object.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+		'{{for ... ~foo=missing.object.path onError="Missing Object"}} -> "Missing Object"');
 
 	equal($.templates({
-			markup: "{{myTag foo='a'/}} {{myTag foo=missing.object.path onerror='Missing Object'/}} {{myTag foo='c' bar=missing.object.path onerror='Missing Object'/}} {{myTag foo='c' missing.object.path onerror='Missing Object'/}} {{myTag foo='b'/}}",
+			markup: "{{myTag foo='a'/}} {{myTag foo=missing.object.path onError='Missing Object'/}} {{myTag foo='c' bar=missing.object.path onError='Missing Object'/}} {{myTag foo='c' missing.object.path onError='Missing Object'/}} {{myTag foo='b'/}}",
 			tags: {
 				myTag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
 			}
 		}).render({a:1}), "MyTag: a end Missing Object Missing Object Missing Object MyTag: b end",
-		'onerror=... for custom tags: e.g. {{myTag foo=missing.object.path onerror="Missing Object"/}}');
+		'onError=... for custom tags: e.g. {{myTag foo=missing.object.path onError="Missing Object"/}}');
 
 	equal($.templates({
-		markup: "1: {{for a.missing.object.path onerror=defaultVal}}yes{{/for}}" +
-		" 2: {{if a.missing.object.path onerror='Missing Object'}}yes{{/if}}" +
-		" 3: {{include a.missing.object.path onerror=''/}}" +
-		" 4: {{if a onerror='missing'}}yes{{/if}}" +
-		" 5: {{for a.undefined onerror='missing'}}yes{{/for}}" +
-		" 6: {{if a.missing.object onerror=myCb}}yes{{/if}}" +
+		markup: "1: {{for a.missing.object.path onError=defaultVal}}yes{{/for}}" +
+		" 2: {{if a.missing.object.path onError='Missing Object'}}yes{{/if}}" +
+		" 3: {{include a.missing.object.path onError=''/}}" +
+		" 4: {{if a onError='missing'}}yes{{/if}}" +
+		" 5: {{for a.undefined onError='missing'}}yes{{/for}}" +
+		" 6: {{if a.missing.object onError=myCb}}yes{{/if}}" +
 		" 7: {{withfallback:a.undefined fallback='undefined prop'}} end" +
-		" 8: {{myTag foo=missing.object.path onerror='Missing Object'/}}",
+		" 8: {{myTag foo=missing.object.path onError='Missing Object'/}}",
 		converters: {
 			withfallback: function(val) {
 				return val || this.tagCtx.props.fallback;
@@ -282,16 +284,16 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fa
 			return "myCallback: " + view.data.a;
 		}
 	}), "1: defaultFromData 2: Missing Object 3:  4: yes 5:  6: myCallback: aVal 7: undefined prop end 8: Missing Object",
-	'multiple onerror fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
+	'multiple onError fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
 
 	equal($.templates({
-		markup: "1: {{for a.missing.object.path onerror=defaultVal}}yes{{/for}}" +
-		" 2: {{if a.missing.object.path onerror='Missing Object'}}yes{{/if}}" +
-		" 3: {{include a.missing.object.path onerror=''/}}" +
-		" 4: {{if a onerror='missing'}}yes{{/if}}" +
+		markup: "1: {{for a.missing.object.path onError=defaultVal}}yes{{/for}}" +
+		" 2: {{if a.missing.object.path onError='Missing Object'}}yes{{/if}}" +
+		" 3: {{include a.missing.object.path onError=''/}}" +
+		" 4: {{if a onError='missing'}}yes{{/if}}" +
 		" 5: {{for missing.thisWillThrow.foo}}yes{{/for}}" +
-		" 6: {{for a.undefined onerror='missing'}}yes{{/for}}" +
-		" 7: {{if a.missing.object onerror=myCb}}yes{{/if}}" +
+		" 6: {{for a.undefined onError='missing'}}yes{{/for}}" +
+		" 7: {{if a.missing.object onError=myCb}}yes{{/if}}" +
 		" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
 		converters: {
 			withfallback: function(val) {
@@ -306,7 +308,7 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onerror = 'fa
 			return "myCallback: " + view.data.a;
 		}
 	}).slice(0, 19), "{Error: TypeError: ",
-	'onerror/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+	'onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
 
 });
 
@@ -961,10 +963,10 @@ test("settings", function() {
 	equal(result.slice(0, 34), "Override error - Rendering error: ", "Override onError()");
 
 	// ................................ Act ..................................
-	result = $.templates('{{:missing.object onerror="myFallback"}}').render(app);
+	result = $.templates('{{:missing.object onError="myFallback"}}').render(app);
 
 	// ............................... Assert .................................
-	equal(result.slice(0, 64), "Override error - (Fallback string: myFallback) Rendering error: ", 'Override onError() - with {{:missing.object onerror="myFallback"}}');
+	equal(result.slice(0, 64), "Override error - (Fallback string: myFallback) Rendering error: ", 'Override onError() - with {{:missing.object onError="myFallback"}}');
 
 	// ................................ Act ..................................
 	try {
@@ -978,10 +980,10 @@ test("settings", function() {
 	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing tag: "{{/if}}" in template:\n{{if}}', 'Override onError() - with thrown syntax error (missing {{/if}})');
 
 	// ................................ Act ..................................
-	result = $.templates('{{if missing.object onerror="myFallback"}}yes{{/if}}').render(app);
+	result = $.templates('{{if missing.object onError="myFallback"}}yes{{/if}}').render(app);
 
 	// ............................... Assert .................................
-	equal(result.slice(0,64), 'Override error - (Fallback string: myFallback) Rendering error: ', 'Override onError() - with {{if missing.object onerror="myFallback"}}');
+	equal(result.slice(0,64), 'Override error - (Fallback string: myFallback) Rendering error: ', 'Override onError() - with {{if missing.object onError="myFallback"}}');
 
 	// ................................ Reset ..................................
 	$.views.settings({

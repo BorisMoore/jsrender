@@ -5,15 +5,6 @@
 (function() {
 	var isIE8 = window.attachEvent && !window.addEventListener;
 
-function compileTmpl(template) {
-	try {
-		return typeof $.templates(null, template).fn === "function" ? "compiled" : "failed compile";
-	}
-	catch(e) {
-		return e.message;
-	}
-}
-
 function sort(array) {
 	var ret = "";
 	if (this.tagCtx.props.reverse) {
@@ -58,7 +49,7 @@ test("templates", 16, function() {
 	});
 	equal($.trim($.render.myTmpl3(person)), "A_Jo_B", 'Named template for template object with selector: { markup: "#myTmpl" }');
 
-	var tmpl2 = $.templates("#myTmpl");
+	tmpl2 = $.templates("#myTmpl");
 	equal($.trim(tmpl2.render(person)), "A_Jo_B", 'var tmpl = $.templates("#myTmpl"); returns compiled template for script element');
 
 	var tmpl3 = $.templates("", {
@@ -71,10 +62,10 @@ test("templates", 16, function() {
 	equal(	tmpl2 === $.templates("", "#myTmpl"), true, '$.templates("#myTmpl") and $.templates("", "#myTmpl") are equivalent');
 
 	var cloned = $.templates("cloned", "#myTmpl");
-	equal(	cloned !== tmpl2 && cloned.tmplName == "cloned", true, '$.templates("cloned", "#myTmpl") will clone the cached template');
+	equal(	cloned !== tmpl2 && cloned.tmplName === "cloned", true, '$.templates("cloned", "#myTmpl") will clone the cached template');
 
 	$.templates({ cloned: "#myTmpl" });
-	equal(	$.templates.cloned !== tmpl2 && $.templates.cloned.tmplName == "cloned", true, '$.templates({ cloned: "#myTmpl" }) will clone the cached template');
+	equal(	$.templates.cloned !== tmpl2 && $.templates.cloned.tmplName === "cloned", true, '$.templates({ cloned: "#myTmpl" }) will clone the cached template');
 
 	$.templates("myTmpl", null);
 	equal($.templates.myTmpl, undefined, 'Remove a named template:  $.templates("myTmpl", null);');
@@ -114,7 +105,7 @@ test("render", 5, function() {
 
 test("converters", 3, function() {
 	function loc(data) {
-		switch (data) { case "desktop": return "bureau"; };
+		switch (data) { case "desktop": return "bureau"; }
 	}
 	$.views.converters({ loc: loc });
 	equal($.templates("{{loc:#data}}:{{loc:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({ loc: locFunction })");
@@ -147,7 +138,7 @@ test("helpers", 3, function() {
 			return !value;
 		},
 		concat: concat
-	})
+	});
 	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({ a: "aVal" }), "aValbtrue", "$.views.helpers({ concat: concatFunction })");
 
 	$.views.helpers({ concat2: concat });
