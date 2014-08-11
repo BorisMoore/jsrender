@@ -1,14 +1,12 @@
-/// <reference path="../qunit/qunit.js" />
-/// <reference path="../../jsrender.js" />
+/*global test, equal, module, test, ok, QUnit, _jsv, viewsAndBindings */
 (function(global, $, undefined) {
 "use strict";
-(function() {
 
 function compileTmpl(template) {
 	try {
 		return typeof $.templates(template).fn === "function" ? "compiled" : "failed compile";
 	}
-	catch(e) {
+	catch (e) {
 		return e.message;
 	}
 }
@@ -126,6 +124,8 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 		'{{:a.missing.object.path onError="Missing Object"}} -> "Missing Object"');
 	equal($.templates("{{:a.missing.object.path onError=''}}").render({a:1}), "",
 		'{{:a.missing.object.path onError=""}} -> ""');
+	equal($.templates("{{:a.missing.object.path onError=null}}").render({a:1}), "",
+		'{{:a.missing.object.path onError=null}} -> ""');
 	equal($.templates("{{>a.missing.object.path onError='Missing Object'}}").render({a:1}), "Missing Object",
 		'{{>a.missing.object.path onError="Missing Object"}} -> "Missing Object"');
 	equal($.templates("{{>a.missing.object.path onError=''}}").render({a:1}), "",
@@ -632,7 +632,7 @@ test("{{sometag convert=converter}}", function() {
 	function loc(data) {
 		switch (data) {
 			case "desktop": return "bureau";
-			case "a<b": return "a moins <que b"}
+			case "a<b": return "a moins <que b";}
 		return data;
 	}
 	$.views.converters("loc", loc);
@@ -641,8 +641,8 @@ test("{{sometag convert=converter}}", function() {
 	equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
 		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a moins <que b",
 		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}} or {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
-	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
-	equal($.templates("{{for #data convert=~reverse}}{{:#data}}{{/for}}").render([1,2,3], {reverse: function(val) {return val.reverse()}}, true), "321", "{{for expression convert=~myconverter}}");
+	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val;}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
+	equal($.templates("{{for #data convert=~reverse}}{{:#data}}{{/for}}").render([1,2,3], {reverse: function(val) {return val.reverse();}}, true), "321", "{{for expression convert=~myconverter}}");
 });
 
 test("tags", function() {
@@ -710,8 +710,7 @@ test("tags", function() {
 			template: ""
 		},
 		templateReturnsEmpty: {
-			template: "{{:a}}",
-			autoBind: true
+			template: "{{:a}}"
 		},
 		tagInitIsFalse: {
 			init:false,
@@ -750,48 +749,37 @@ test("tags", function() {
 
 	$.views.tags({
 		tagJustTemplate: {
-			template: "{{:#data ? name||length : 'Not defined'}} ",
-			autoBind: true
+			template: "{{:#data ? name||length : 'Not defined'}} "
 		},
 		tagWithTemplateWhichIteratesAgainstCurrentData: {
 			template: "{{:#data ? name : 'Not defined'}} ",
 			render: function() {
 				return this.tagCtx.render(); // Renders against current data - and iterates if array
-			},
-			autoBind: true
+			}
 		},
-		tagJustRender: {
-			render: function(val) {
-				return val.name + " ";
-			},
-			autoBind: true
+		tagJustRender: function(val) {
+			return val.name + " ";
 		},
-		tagJustRenderArray: {
-			render: function(val) {
-				return val.length + " ";
-			},
-			autoBind: true
+		tagJustRenderArray: function(val) {
+			return val.length + " ";
 		},
 		tagWithTemplateNoIteration: {
 			render: function(val) {
 				return this.tagCtx.render(val, true); // Render without iteration
 			},
-			template: "{{:#data.length}} ",
-			autoBind: true
+			template: "{{:#data.length}} "
 		},
 		tagWithTemplateNoIterationWithHelpers: {
 			render: function(val) {
 				return this.tagCtx.render(val, {foo: "foovalue"}, true); // Render without iteration
 			},
-			template: "{{:#data.length}} {{:~foo}}",
-			autoBind: true
+			template: "{{:#data.length}} {{:~foo}}"
 		},
 		tagWithTemplateWhichIteratesFirstArg: {
 			template: "{{:#data ? name : 'Not defined'}} ",
 			render: function(val) {
 				return this.tagCtx.render(val); // Renders against first arg - defaults to current data - and iterates if array
-			},
-			autoBind: true
+			}
 		}
 	});
 
@@ -865,8 +853,7 @@ test('{{include}} and wrapping content', function() {
 				template: "add{{include tmpl=#content/}}",
 				render: function() {
 					return this.tagCtx.props.override;
-				},
-				autoBind: true
+				}
 			}
 		},
 		templates: {
@@ -897,11 +884,8 @@ test('{{include}} and wrapping content', function() {
 				+ '{{:name}}'
 			+ '{{/myTag}}',
 		tags: {
-			myTag: {
-				render: function() {
-					return this.tagCtx.props.override;
-				},
-				autoBind: true
+			myTag: function() {
+				return this.tagCtx.props.override;
 			},
 		},
 		templates: {
@@ -941,7 +925,7 @@ test("settings", function() {
 	$.views.settings.delimiters("@%","%@");
 	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
 	$.views.settings.delimiters("{{","}}");
-	result += "|" +  $.templates("A_{{if true}}YES{{/if}}_B").render();
+	result += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render();
 	// ............................... Assert .................................
 	equal(result, "A_yes_B|A_YES_B", "Custom delimiters with render()");
 
@@ -1095,7 +1079,7 @@ $.templates({
 						c1: function(val) {return val + " innerTemplateCvt";}
 					},
 					templates: {
-					cascade: "innerInnerCascade"
+						cascade: "innerInnerCascade"
 					}
 				}
 			}
@@ -1108,5 +1092,4 @@ $.templates({
 
 });
 
-})();
-})(this, this.jsviews);
+})(this, this.jsviews || jQuery);

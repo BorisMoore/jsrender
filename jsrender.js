@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 55 */
+informal pre V1.0 commit counter: 56 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -8,14 +8,14 @@ informal pre V1.0 commit counter: 55 */
  * Copyright 2014, Boris Moore
  * Released under the MIT License.
  */
+
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
 	"use strict";
 
-	if (jQuery && jQuery.views || global.jsviews) { return; } // JsRender is already loaded
+	if (jQuery && jQuery.render || global.jsviews) { return; } // JsRender is already loaded
 
 	//========================== Top-level vars ==========================
-	//onInit versus init? inherit/base/deriveFrom/extend/basetag
 
 	var versionNumber = "v1.0.0-beta",
 
@@ -85,9 +85,11 @@ informal pre V1.0 commit counter: 55 */
 				parse: parseParams,
 				extend: $extend,
 				syntaxErr: syntaxError,
-				DataMap: DataMap,
+				onStore: {},
 				_lnk: retVal
 			},
+//			map: $views.dataMap || dataMap, // If jsObservable loaded first, use that definition of dataMap
+			map: dataMap, // If jsObservable loaded first, use that definition of dataMap
 			_cnvt: convertVal,
 			_tag: renderTag,
 			_err: error
@@ -108,26 +110,6 @@ informal pre V1.0 commit counter: 55 */
 		$tags("dbg", $helpers.dbg = $converters.dbg = debugMode ? dbgBreak : retVal); // If in debug mode, register {{dbg/}}, {{dbg:...}} and ~dbg() to insert break points for debugging.
 	}
 
-	function DataMap(getTarget) {
-		return {
-			getTgt: getTarget,
-			map: function(source) {
-				var target,
-					theMap = this; // Instance of DataMap
-				if (theMap.src !== source) {
-					if (theMap.src) {
-						theMap.unmap();
-					}
-					if (typeof source === "object") {
-						target = getTarget.apply(theMap, arguments);
-						theMap.src = source;
-						theMap.tgt = target;
-					}
-				}
-			}
-		};
-	}
-
 	function JsViewsError(message) {
 		// Error exception type for JsViews/JsRender
 		// Override of $.views.sub.Error is possible
@@ -137,7 +119,6 @@ informal pre V1.0 commit counter: 55 */
 
 	function $extend(target, source) {
 		var name;
-		target = target || {};
 		for (name in source) {
 			target[name] = source[name];
 		}
@@ -357,7 +338,7 @@ informal pre V1.0 commit counter: 55 */
 			? (view.getRsc("converters", converter) || error("Unknown converter: '"+ converter + "'"))
 			: converter);
 
-		args = !args.length && !tagCtx.index && tag.autoBind // On the opening tag with no args, if autoBind is true, bind the the current data context
+		args = !args.length && !tagCtx.index // On the opening tag with no args, bind the the current data context
 			? [view.data]
 			: converter
 				? args.slice() // If there is a converter, use a copy of the tagCtx.args array for rendering, and replace the args[0] in
@@ -393,7 +374,7 @@ informal pre V1.0 commit counter: 55 */
 		// Returns the rendered tag
 
 		var render, tag, tags, attr, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef,
-			callInit, map, thisMap, args, prop, props, initialTmpl,
+			callInit, mapDef, thisMap, args, prop, props, initialTmpl,
 			ret = "",
 			boundTagKey = +tagCtxs === tagCtxs && tagCtxs, // if tagCtxs is an integer, then it is the boundTagKey
 			linkCtx = parentView.linkCtx || 0,
@@ -421,6 +402,7 @@ informal pre V1.0 commit counter: 55 */
 			}
 			tagCtx = tagCtxs[i];
 			if (!linkCtx.tag) {
+				// We are initializing tag, so for block tags, tagCtx.tmpl is an integer > 0
 				content = tagCtx.tmpl;
 				content = tagCtx.content = content && parentTmpl.tmpls[content - 1];
 
@@ -505,7 +487,7 @@ informal pre V1.0 commit counter: 55 */
 				}
 			}
 			tagCtx.tag = tag;
-			if (tag.map && tag.tagCtxs) {
+			if (tag.dataMap && tag.tagCtxs) {
 				tagCtx.map = tag.tagCtxs[i].map; // Copy over the compiled map instance from the previous tagCtxs to the refreshed ones
 			}
 			if (!tag.flow) {
@@ -527,14 +509,14 @@ informal pre V1.0 commit counter: 55 */
 			props = tagCtx.props;
 			args = convertArgs(tag, tag.convert);
 
-			if ((map = props.map || tag).map) {
-				if (args.length || props.map) {
-					thisMap = tagCtx.map = $extend(tagCtx.map || { unmap: map.unmap }, props); // Compiled map instance
-					if (thisMap.src !== args[0]) {
-						if (thisMap.src) {
-							thisMap.unmap();
+			if (mapDef = props.dataMap || tag.dataMap) {
+				if (args.length || props.dataMap) {
+					thisMap = tagCtx.map;
+					if (!thisMap || thisMap.src !== args[0] || isUpdate) {
+						if (thisMap && thisMap.src) {
+							thisMap.unmap(); // only called if observable map - not when only used in JsRender, e.g. by {{props}}
 						}
-						map.map.apply(thisMap, args);
+						thisMap = tagCtx.map = mapDef.map(args[0], props);
 					}
 					args = [thisMap.tgt];
 				}
@@ -604,8 +586,8 @@ informal pre V1.0 commit counter: 55 */
 		self.parent = parentView;
 		self.type = type;
 		// If the data is an array, this is an 'array view' with a views array for each child 'item view'
-		// If the data is not an array, this is an 'item view' with a views 'map' object for any child nested views
-		// ._.useKey is non zero if is not an 'array view' (owning a data array). Uuse this as next key for adding to child views map
+		// If the data is not an array, this is an 'item view' with a views 'hash' object for any child nested views
+		// ._.useKey is non zero if is not an 'array view' (owning a data array). Use this as next key for adding to child views hash
 		self._ = self_;
 		self.linked = !!onRender;
 		if (parentView) {
@@ -613,7 +595,7 @@ informal pre V1.0 commit counter: 55 */
 			parentView_ = parentView._;
 			if (parentView_.useKey) {
 				// Parent is an 'item view'. Add this view to its views object
-				// self._key = is the key in the parent view map
+				// self._key = is the key in the parent view hash
 				views[self_.key = "_" + parentView_.useKey++] = self;
 				self.index = indexStr;
 				self.getIndex = getNestedIndex;
@@ -648,16 +630,16 @@ informal pre V1.0 commit counter: 55 */
 	//=============
 
 	function compileChildResources(parentTmpl) {
-		var storeName, resources, resourceName, settings, compile, onStore;
+		var storeName, resources, resourceName, resource, settings, compile, onStore;
 		for (storeName in jsvStores) {
 			settings = jsvStores[storeName];
 			if ((compile = settings.compile) && (resources = parentTmpl[storeName + "s"])) {
 				for (resourceName in resources) {
-					// compile child resource declarations (templates, tags, tags.for or helpers)
-					resources[resourceName] = compile(resourceName, resources[resourceName], parentTmpl, storeName, settings);
-					if (onStore = $sub.onStoreItem) {
+					// compile child resource declarations (templates, tags, tags["for"] or helpers)
+					resource = resources[resourceName] = compile(resourceName, resources[resourceName], parentTmpl);
+					if (resource && (onStore = $sub.onStore[storeName])) {
 						// e.g. JsViews integration
-						onStore(storeName, resourceName, resources[resourceName], compile);
+						onStore(resourceName, resource, compile);
 					}
 				}
 			}
@@ -673,6 +655,10 @@ informal pre V1.0 commit counter: 55 */
 				render: tagDef
 			};
 		} else {
+			if (tagDef.baseTag) {
+				tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
+				tagDef = $extend($extend({}, tagDef.baseTag), tagDef);
+			}
 			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
 			if ((tmpl = tagDef.template) !== undefined) {
 				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
@@ -690,7 +676,7 @@ informal pre V1.0 commit counter: 55 */
 		return tagDef;
 	}
 
-	function compileTmpl(name, tmpl, parentTmpl, storeName, storeSettings, options) {
+	function compileTmpl(name, tmpl, parentTmpl, options) {
 		// tmpl is either a template object, a selector for a template script block, the name of a compiled template, or a template object
 
 		//==== nested functions ====
@@ -723,7 +709,7 @@ informal pre V1.0 commit counter: 55 */
 						name = name || "_" + autoTmplName++;
 						elem.setAttribute(tmplAttr, name);
 						// Use tmpl as options
-						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options);
+						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, options);
 					}
 					elem = undefined;
 				}
@@ -779,6 +765,29 @@ informal pre V1.0 commit counter: 55 */
 			return tmpl;
 		}
 	}
+
+	function dataMap(mapDef) {
+		function newMap(source, options) {
+			this.tgt = mapDef.getTgt(source, options);
+		}
+
+		if ($isFunction(mapDef)) {
+			// Simple map declared as function
+			mapDef = {
+				getTgt: mapDef,
+			};
+		}
+
+		if (mapDef.baseMap) {
+			mapDef = $extend($extend({}, mapDef.baseMap), mapDef);
+		}
+
+		mapDef.map = function(source, options) {
+			return new newMap(source, options);
+		};
+		return mapDef;
+	}
+
 	//==== /end of function compile ====
 
 	function TmplObject(markup, options) {
@@ -824,11 +833,11 @@ informal pre V1.0 commit counter: 55 */
 
 			var onStore, compile, itemName, thisStore;
 
-			if (name && "" + name !== name && !name.nodeType && !name.markup) {
+			if (name && typeof name === "object" && !name.nodeType && !name.markup && !name.getTgt) {
 				// Call to $.views.things(items[, parentTmpl]),
 
 				// Adding items to the store
-				// If name is a map, then item is parentTmpl. Iterate over map and call store for key.
+				// If name is a hash, then item is parentTmpl. Iterate over hash and call store for key.
 				for (itemName in name) {
 					theStore(itemName, name[itemName], item);
 				}
@@ -846,20 +855,19 @@ informal pre V1.0 commit counter: 55 */
 			}
 			thisStore = parentTmpl ? parentTmpl[storeNames] = parentTmpl[storeNames] || {} : theStore;
 			compile = storeSettings.compile;
-			if (!name) {
-				item = compile(undefined, item);
-			} else if (item === null) {
+			if (item === null) {
 				// If item is null, delete this entry
-				delete thisStore[name];
+				name && delete thisStore[name];
 			} else {
-				thisStore[name] = compile ? (item = compile(name, item, parentTmpl, storeName, storeSettings)) : item;
+				item = compile ? (item = compile(name, item, parentTmpl)) : item;
+				name && (thisStore[name] = item);
 			}
 			if (compile && item) {
 				item._is = storeName; // Only do this for compiled objects (tags, templates...)
 			}
-			if (onStore = $sub.onStoreItem) {
+			if (item && (onStore = $sub.onStore[storeName])) {
 				// e.g. JsViews integration
-				onStore(storeName, name, item, compile);
+				onStore(name, item, compile);
 			}
 			return item;
 		}
@@ -1507,8 +1515,7 @@ informal pre V1.0 commit counter: 55 */
 		registerStore(jsvStoreName, jsvStores[jsvStoreName]);
 	}
 
-	var $observable,
-		$templates = $views.templates,
+	var $templates = $views.templates,
 		$converters = $views.converters,
 		$helpers = $views.helpers,
 		$tags = $views.tags,
@@ -1520,9 +1527,9 @@ informal pre V1.0 commit counter: 55 */
 		// jQuery is loaded, so make $ the jQuery object
 		$ = jQuery;
 		$.fn.render = $fastRender;
-		if ($observable = $.observable) {
-			$extend($sub, $observable.sub); // jquery.observable.js was loaded before jsrender.js
-			delete $observable.sub;
+		if ($.observable) {
+			$extend($sub, $.views.sub); // jquery.observable.js was loaded before jsrender.js
+			$views.map = $.views.map;
 		}
 	} else {
 		////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1556,7 +1563,7 @@ informal pre V1.0 commit counter: 55 */
 					: $isFunction(fallback)
 						? fallback(e, view) : fallback;
 			}
-			return e;
+			return e == undefined ? "" : e;
 		},
 		_dbgMode: true
 	});
@@ -1622,12 +1629,10 @@ informal pre V1.0 commit counter: 55 */
 				}
 				return result;
 			},
-			flow: true,
-			autoBind: true
+			flow: true
 		},
 		include: {
-			flow: true,
-			autoBind: true
+			flow: true
 		},
 		"*": {
 			// {{* code... }} - Ignored if template.allowCode is false. Otherwise include code in compiled template
@@ -1647,7 +1652,7 @@ informal pre V1.0 commit counter: 55 */
 				prop = source[key];
 				if (!prop || !prop.toJSON || prop.toJSON()) {
 					if (!$isFunction(prop)) {
-						props.push({ key: key, prop: source[key] });
+						props.push({ key: key, prop: prop });
 					}
 				}
 			}
@@ -1655,13 +1660,10 @@ informal pre V1.0 commit counter: 55 */
 		return props;
 	}
 
-	$tags({
-		props: $extend($extend({}, $tags.for),
-			DataMap(getTargetProps)
-		)
+	$tags("props", {
+		baseTag: $tags["for"],
+		dataMap: dataMap(getTargetProps)
 	});
-
-	$tags.props.autoBind = true;
 
 	//========================== Register converters ==========================
 
