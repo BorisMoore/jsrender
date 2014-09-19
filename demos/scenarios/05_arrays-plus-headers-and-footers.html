@@ -16,14 +16,14 @@ wrap the array - as <em>render([myArray])</em> - and include <em>{{for #data}}</
 <div class="subhead">Top-level layout:</div>
 <pre>
 $( "#movieList" ).html(
-    // Wrap movies array in an array
-    $("#movieTemplate").render( [movies] )
+    // Pass second parameter <em>true</em> to choose noIteration even for arrays.
+    $("#movieTemplate").render(movies, true)
 );
 
 Template:
 
    header
-   {{for #data}}
+   {{for}}
       item
    {{/for}}
    footer
@@ -31,9 +31,9 @@ Template:
 
 <div class="subhead">Nested layout:</div>
 <pre>
-{{for [languages]}}
+{{include languages}}
     header
-    {{for #data}}
+    {{for}}
         item
     {{/for}}
     footer
@@ -45,14 +45,14 @@ Template:
 <script id="movieTemplate" type="text/x-jsrender">
 	<thead>
 		<tr><th colspan="2">{{:length}} movies available:</th></tr>
-		<tr><th>Title</th><th>Languages</th></tr>
+		<tr><th>Title</th><th>Languages {{:~foo}}</th></tr>
 	</thead>
 	<tbody>
 		{{for}}
 			<tr>
 				<td>{{>title}}</td>
 				<td>
-					{{for [languages]}}
+					{{include languages}}
 						<div>
 							{{if #data}}
 								<strong>{{:length}}</strong> languages available:
@@ -68,7 +68,7 @@ Template:
 								Additional languages also in stock
 							{{/if}}
 						</div>
-					{{/for}}
+					{{/include}}
 				</td>
 			</tr>
 		{{/for}}
@@ -101,7 +101,7 @@ Template:
 	];
 	$( "#movieList" ).html(
 		// Wrap movies array in an array
-		$( "#movieTemplate" ).render( [movies] )
+		$( "#movieTemplate" ).render(movies, {foo: "xxx"}, true)
 	);
 </script>
 

@@ -23,7 +23,9 @@ var person = { name: "Jo" },
 	towns = [{ name: "Seattle" },{ name: "Paris" },{ name: "Delhi" }];
 
 var tmplString =  "A_{{:name}}_B";
+
 module("api");
+
 test("templates", 17, function() {
 	equal($.templates("#my_tmpl2").render(), isIE8 ? "\n' \" \\ \\' \\\"" : "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
 	equal($.templates("' \" \\ \\' \\\"").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template compiled from string");
@@ -92,7 +94,7 @@ test("templates", 17, function() {
 	delete $.templates.scriptTmpl;
 });
 
-test("render", 5, function() {
+test("render", 7, function() {
 	equal($.trim($("#my_tmpl").render(person)), "A_Jo_B", '$(tmplSelector).render(data);'); // Trimming because IE adds whitespace
 
 	var tmpl3 = $.templates("my_tmpl4", tmplString);
@@ -105,6 +107,13 @@ test("render", 5, function() {
 
 	$.templates("my_tmpl5", "A_{{for}}inner{{:name}}content{{/for}}_B");
 	equal($.templates.my_tmpl5.tmpls[0].render(person), "innerJocontent", 'Nested template objects: $.templates.my_tmpl.tmpls');
+
+	$("#result").html("<script id='tmpl' type='text/x-jsrender'>Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}</script>");
+	equal($("#tmpl").render([null,undefined,1], {foo:"foovalue"}, true), (isIE8 ? "\n" : "") + "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
+
+	$("#result").html("<script id='tmpl' type='text/x-jsrender'>Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}</script>");
+	equal($("#tmpl").render([null, undefined, 1], true), (isIE8 ? "\n" : "") + "Content012", 'render(array, true) renders an array without iteration');
+	$("#result").empty();
 });
 
 test("converters", 3, function() {
