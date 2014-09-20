@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 57 */
+informal pre V1.0 commit counter: 58 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -9,7 +9,7 @@ informal pre V1.0 commit counter: 57 */
  * Released under the MIT License.
  */
 
-(function (global, jQuery, undefined) {
+(function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
 	"use strict";
 
@@ -69,7 +69,7 @@ informal pre V1.0 commit counter: 57 */
 		// jsviews object ($.views if jQuery is loaded)
 		$views = {
 			jsviews: versionNumber,
-			settings: function (settings) {
+			settings: function(settings) {
 				$extend($viewsSettings, settings);
 				dbgMode($viewsSettings._dbgMode);
 				if ($viewsSettings.jsv) {
@@ -182,7 +182,7 @@ informal pre V1.0 commit counter: 57 */
 		var views, i, l, found,
 			view = this,
 			root = !type || type === "root";
-		// If type is undefined, returns root view (view under top view).
+			// If type is undefined, returns root view (view under top view).
 
 		if (inner) {
 			// Go through views - this one, and all nested ones, depth-first - and return first one with given type.
@@ -221,7 +221,7 @@ informal pre V1.0 commit counter: 57 */
 		return view ? view.index : undefined;
 	}
 
-	getNestedIndex.depends = function () {
+	getNestedIndex.depends = function() {
 		return [this.get("item"), "index"];
 	};
 
@@ -229,7 +229,7 @@ informal pre V1.0 commit counter: 57 */
 		return this.index;
 	}
 
-	getIndex.depends = function () {
+	getIndex.depends = function() {
 		return ["index"];
 	};
 
@@ -253,7 +253,7 @@ informal pre V1.0 commit counter: 57 */
 
 		if (res) {
 			if ($isFunction(res) && !res._wrp) {
-				wrapped = function () {
+				wrapped = function() {
 					// If it is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
 					// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
 					// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
@@ -279,7 +279,7 @@ informal pre V1.0 commit counter: 57 */
 
 		if (boundTagCtx) {
 			// This is a bound tag: {^{xx:yyy}}. Call compiled function which returns the tagCtxs for current data
-			tagCtx = (boundTagCtx = view.tmpl.bnds[boundTagCtx - 1])(view.data, view, $views);
+			tagCtx = (boundTagCtx = view.tmpl.bnds[boundTagCtx-1])(view.data, view, $views);
 		}
 
 		value = tagCtx.args[0];
@@ -392,7 +392,7 @@ informal pre V1.0 commit counter: 57 */
 		if (boundTagKey) {
 			// if tagCtxs is an integer, we are data binding
 			// Call compiled function which returns the tagCtxs for current data
-			tagCtxs = (boundTagFn = parentTmpl.bnds[boundTagKey - 1])(parentView.data, parentView, $views);
+			tagCtxs = (boundTagFn = parentTmpl.bnds[boundTagKey-1])(parentView.data, parentView, $views);
 		}
 
 		l = tagCtxs.length;
@@ -443,10 +443,6 @@ informal pre V1.0 commit counter: 57 */
 					// From child/descendant tags, can access using ~tag.parent, or ~parentTags.tagName
 					tag = new tagDef._ctr();
 					callInit = !!tag.init;
-
-					// Set attr on linkCtx to ensure outputting to the correct target attribute.
-					tag.attr = tag.attr || tagDef.attr || undefined;
-					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
 				} else {
 					// This is a simple tag declared as a function, or with init set to false. We won't instantiate a specific tag constructor - just a standard instance object.
 					$sub._lnk(tag = {
@@ -458,8 +454,6 @@ informal pre V1.0 commit counter: 57 */
 					inline: !linkCtx
 				};
 				if (linkCtx) {
-					// Set attr on linkCtx to ensure outputting to the correct target attribute.
-					linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
 				}
@@ -530,6 +524,11 @@ informal pre V1.0 commit counter: 57 */
 				if (tag.template !== initialTmpl) {
 					tag._.tmpl = tag.template; // This will override the tag.template and also tagCtx.props.tmpl for all tagCtxs
 				}
+				if (linkCtx) {
+					// Set attr on linkCtx to ensure outputting to the correct target attribute.
+					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
+					linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
+				}
 			}
 
 			itemRet = undefined;
@@ -541,7 +540,7 @@ informal pre V1.0 commit counter: 57 */
 			itemRet = itemRet !== undefined
 				? itemRet // Return result of render function unless it is undefined, in which case return rendered template
 				: tagCtx.render(args[0], true) || (isUpdate ? undefined : "");
-			// No return value from render, and no template/content tagCtx.render(...), so return undefined
+				// No return value from render, and no template/content tagCtx.render(...), so return undefined
 			ret = ret ? ret + (itemRet || "") : itemRet; // If no rendered content, this will be undefined
 		}
 
@@ -666,7 +665,7 @@ informal pre V1.0 commit counter: 57 */
 			if (tagDef.init !== false) {
 				// Set int: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
 				// so equivalent to setting tag to render function, except you can also provide a template.
-				init = tagDef._ctr = function () { };
+				init = tagDef._ctr = function() {};
 				(init.prototype = tagDef).constructor = init;
 			}
 		}
@@ -693,7 +692,7 @@ informal pre V1.0 commit counter: 57 */
 						&& jQuery && jQuery(global.document).find(value)[0]; // TODO address case where DOM is not available
 					// If selector is valid and returns at least one element, get first element
 					// If invalid, jQuery will throw. We will stay with the original string.
-				} catch (e) { }
+				} catch (e) {}
 
 				if (elem) {
 					// Generally this is a script element.
@@ -741,7 +740,7 @@ informal pre V1.0 commit counter: 57 */
 		}
 		if (tmplOrMarkup !== undefined) {
 			if (name && !parentTmpl) {
-				$render[name] = function () {
+				$render[name] = function() {
 					return tmpl.render.apply(tmpl, arguments);
 				};
 			}
@@ -782,7 +781,7 @@ informal pre V1.0 commit counter: 57 */
 			mapDef = $extend($extend({}, mapDef.baseMap), mapDef);
 		}
 
-		mapDef.map = function (source, options) {
+		mapDef.map = function(source, options) {
 			return new newMap(source, options);
 		};
 		return mapDef;
@@ -904,7 +903,7 @@ informal pre V1.0 commit counter: 57 */
 	function fastRender(data, context, noIteration, parentView, key, onRender) {
 		var self = this;
 		if (!parentView && self.fn._nvw && !$.isArray(data)) {
-			return tryFn(self, data, { tmpl: self });
+			return tryFn(self, data, {tmpl: self});
 		}
 		return renderContent.call(self, data, context, noIteration, parentView, key, onRender);
 	}
@@ -1096,7 +1095,7 @@ informal pre V1.0 commit counter: 57 */
 				if (params) {
 					// remove newlines from the params string, to avoid compiled code errors for unterminated strings
 					parseParams(params.replace(rNewLine, " "), pathBindings, tmpl)
-						.replace(rBuildHash, function (all, onerror, isCtx, key, keyToken, keyValue, arg, param) {
+						.replace(rBuildHash, function(all, onerror, isCtx, key, keyToken, keyValue, arg, param) {
 							if (arg) {
 								args += keyValue + ",";
 								paramsArgs += "'" + param + "',";
@@ -1130,7 +1129,7 @@ informal pre V1.0 commit counter: 57 */
 						onError,
 						useTrigger,
 						pathBindings || 0
-				];
+					];
 				content.push(newNode);
 				if (block) {
 					stack.push(current);
@@ -1153,15 +1152,15 @@ informal pre V1.0 commit counter: 57 */
 			loc = 0,
 			stack = [],
 			content = astTop,
-			current = [, , astTop];
+			current = [,,astTop];
 
-		//TODO	result = tmplFnsCache[markup]; // Only cache if template is not named and markup length < ...,
-		//and there are no bindings or subtemplates?? Consider standard optimization for data-link="a.b.c"
-		//		if (result) {
-		//			tmpl.fn = result;
-		//		} else {
+//TODO	result = tmplFnsCache[markup]; // Only cache if template is not named and markup length < ...,
+//and there are no bindings or subtemplates?? Consider standard optimization for data-link="a.b.c"
+//		if (result) {
+//			tmpl.fn = result;
+//		} else {
 
-		//		result = markup;
+//		result = markup;
 		if (isLinkExpr) {
 			markup = delimOpenChar0 + markup + delimCloseChar1;
 		}
@@ -1175,8 +1174,8 @@ informal pre V1.0 commit counter: 57 */
 		if (loc = astTop[astTop.length - 1]) {
 			blockTagCheck("" + loc !== loc && (+loc[8] === loc[8]) && loc[0]);
 		}
-		//			result = tmplFnsCache[markup] = buildCode(astTop, tmpl);
-		//		}
+//			result = tmplFnsCache[markup] = buildCode(astTop, tmpl);
+//		}
 
 		if (isLinkExpr) {
 			result = buildCode(astTop, markup, isLinkExpr);
@@ -1275,10 +1274,10 @@ informal pre V1.0 commit counter: 57 */
 							if (!exprFn) {
 								tmplLinks[rtPrnDot] = true; // Flag that this exprFn (for rtPrnDot) is being compiled
 								tmplLinks[rtPrnDot] = exprFn = tmplFn(rtPrnDot, tmpl || bindings, true); // Compile the expression (or use cached copy already in tmpl.links)
-								exprFn.paths.push({ _jsvOb: exprFn }); //list.push({_jsvOb: rtPrnDot});
+								exprFn.paths.push({_jsvOb: exprFn}); //list.push({_jsvOb: rtPrnDot});
 							}
 							if (exprFn !== true) { // If not reentrant call during compilation
-								(bindto || bindings).push({ _jsvOb: exprFn }); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
+								(bindto || bindings).push({_jsvOb: exprFn}); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
 							}
 						}
 					}
@@ -1337,7 +1336,7 @@ informal pre V1.0 commit counter: 57 */
 			paramIndex = 0, // list,
 			tmplLinks = tmpl ? tmpl.links : bindings && (bindings.links = bindings.links || {}),
 			fnCall = {},
-			pathStart = { 0: -1 },
+			pathStart = {0: -1},
 			parenDepth = 0;
 		//pushBindings();
 		return (params + (tmpl ? " " : ""))
@@ -1553,14 +1552,14 @@ informal pre V1.0 commit counter: 57 */
 
 		$ = global.jsviews = {};
 
-		$.isArray = Array && Array.isArray || function (obj) {
+		$.isArray = Array && Array.isArray || function(obj) {
 			return Object.prototype.toString.call(obj) === "[object Array]";
 		};
 
-		//	//========================== Future Node.js support ==========================
-		//	if ((nodeJsModule = global.module) && nodeJsModule.exports) {
-		//		nodeJsModule.exports = $;
-		//	}
+	//	//========================== Future Node.js support ==========================
+	//	if ((nodeJsModule = global.module) && nodeJsModule.exports) {
+	//		nodeJsModule.exports = $;
+	//	}
 	}
 
 	$.render = $render;
@@ -1570,7 +1569,7 @@ informal pre V1.0 commit counter: 57 */
 	$viewsSettings({
 		debugMode: dbgMode,
 		delimiters: $viewsDelimiters,
-		onError: function (e, view, fallback) {
+		onError: function(e, view, fallback) {
 			// Can override using $.views.settings({onError: function(...) {...}});
 			if (view) {
 				// For render errors, e is an exception thrown in compiled template, and view is the current view. For other errors, e is an error string.
@@ -1587,9 +1586,9 @@ informal pre V1.0 commit counter: 57 */
 	//========================== Register tags ==========================
 
 	$tags({
-		"else": function () { }, // Does nothing but ensures {{else}} tags are recognized as valid
+		"else": function() {}, // Does nothing but ensures {{else}} tags are recognized as valid
 		"if": {
-			render: function (val) {
+			render: function(val) {
 				// This function is called once for {{if}} and once for each {{else}}.
 				// We will use the tag.rendering object for carrying rendering state across the calls.
 				// If not done (a previous block has not been rendered), look at expression for this block and render the block if expression is truthy
@@ -1603,7 +1602,7 @@ informal pre V1.0 commit counter: 57 */
 							self.tagCtx.render(self.tagCtx.view, true)); // no arg, so renders against parentView.data
 				return ret;
 			},
-			onUpdate: function (ev, eventArgs, tagCtxs) {
+			onUpdate: function(ev, eventArgs, tagCtxs) {
 				var tci, prevArg, different;
 				for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
 					prevArg = prevArg.args[0];
@@ -1621,7 +1620,7 @@ informal pre V1.0 commit counter: 57 */
 			flow: true
 		},
 		"for": {
-			render: function (val) {
+			render: function(val) {
 				// This function is called once for {{for}} and once for each {{else}}.
 				// We will use the tag.rendering object for carrying rendering state across the calls.
 				var finalElse,
@@ -1691,7 +1690,7 @@ informal pre V1.0 commit counter: 57 */
 	$converters({
 		html: htmlEncode,
 		attr: htmlEncode, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
-		url: function (text) {
+		url: function(text) {
 			// URL encoding helper.
 			return text != undefined ? encodeURI("" + text) : text === null ? text : ""; // null returns null, e.g. to remove attribute. undefined returns ""
 		}
