@@ -45,7 +45,7 @@ Template:
 <script id="movieTemplate" type="text/x-jsrender">
 	<thead>
 		<tr><th colspan="2">{{:length}} movies available:</th></tr>
-		<tr><th>Title</th><th>Languages {{:~foo}}</th></tr>
+		<tr><th>Title</th><th>Languages</th></tr>
 	</thead>
 	<tbody>
 		{{for}}
@@ -101,7 +101,7 @@ Template:
 	];
 	$( "#movieList" ).html(
 		// Wrap movies array in an array
-		$( "#movieTemplate" ).render(movies, {foo: "xxx"}, true)
+		$( "#movieTemplate" ).render(movies, true)
 	);
 </script>
 

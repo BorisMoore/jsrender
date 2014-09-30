@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 58 */
+informal pre V1.0 commit counter: 59 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -86,13 +86,23 @@ informal pre V1.0 commit counter: 58 */
 				extend: $extend,
 				syntaxErr: syntaxError,
 				onStore: {},
-				_lnk: retVal
+				_lnk: retVal,
+				_ths: tagHandlersFromProps
 			},
 			map: dataMap, // If jsObservable loaded first, use that definition of dataMap
 			_cnvt: convertVal,
 			_tag: renderTag,
 			_err: error
 		};
+
+	function tagHandlersFromProps(tag, tagCtx) {
+		for (var prop in tagCtx.props) {
+			if (rHasHandlers.test(prop)) {
+				tag[prop] = tagCtx.props[prop]; // Copy over the onFoo props, convert and convertBack from tagCtx.props to tag (overrides values in tagDef).
+				// Note: unsupported scenario: if handlers are dynamically added ^onFoo=expression this will work, but dynamically removing will not work.
+			}
+		}
+	}
 
 	function retVal(val) {
 		return val;
@@ -271,25 +281,25 @@ informal pre V1.0 commit counter: 58 */
 	// jsviews._cnvt
 	//==============
 
-	function convertVal(converter, view, tagCtx) {
+	function convertVal(converter, view, tagCtx, onError) {
 		// self is template object or linkCtx object
-		var tag, value, prop,
-			boundTagCtx = +tagCtx === tagCtx && tagCtx, // if tagCtx is an integer, then it is the key for the boundTagCtx (compiled function to return the tagCtx)
+		var tag, value,
+			// if tagCtx is an integer, then it is the key for the compiled function to return the boundTag tagCtx
+			boundTag = +tagCtx === tagCtx && view.tmpl.bnds[tagCtx-1],
 			linkCtx = view.linkCtx; // For data-link="{cvt:...}"...
 
-		if (boundTagCtx) {
-			// This is a bound tag: {^{xx:yyy}}. Call compiled function which returns the tagCtxs for current data
-			tagCtx = (boundTagCtx = view.tmpl.bnds[boundTagCtx-1])(view.data, view, $views);
-		}
+		onError = onError !== undefined && {props: {}, args: [onError]};
+
+		tagCtx = onError || (boundTag ? boundTag(view.data, view, $views) : tagCtx);
 
 		value = tagCtx.args[0];
-		if (converter || boundTagCtx) {
+		if (converter || boundTag) {
 			tag = linkCtx && linkCtx.tag;
 			if (!tag) {
 				tag = {
 					_: {
 						inline: !linkCtx,
-						bnd: boundTagCtx
+						bnd: boundTag
 					},
 					tagName: ":",
 					cvt: converter,
@@ -304,12 +314,8 @@ informal pre V1.0 commit counter: 58 */
 				}
 				$sub._lnk(tag);
 			}
-			for (prop in tagCtx.props) {
-				if (rHasHandlers.test(prop)) {
-					tag[prop] = tagCtx.props[prop]; // Copy over the onFoo props from tagCtx.props to tag (overrides values in tagDef).
-					// Note: unsupported scenario: if handlers are dynamically added ^onFoo=expression this will work, but dynamically removing will not work.
-				}
-			}
+			tag._er = onError && value;
+			tagHandlersFromProps(tag, tagCtx);
 
 			tagCtx.view = view;
 
@@ -321,8 +327,8 @@ informal pre V1.0 commit counter: 58 */
 			value = convertArgs(tag, tag.convert || converter !== "true" && converter)[0]; // If there is a convertBack but no convert, converter will be "true"
 
 			// Call onRender (used by JsViews if present, to add binding annotations around rendered content)
-			value = boundTagCtx && view._.onRender
-				? view._.onRender(value, view, boundTagCtx)
+			value = boundTag && view._.onRender
+				? view._.onRender(value, view, boundTag)
 				: value;
 			view._.tag = undefined;
 		}
@@ -369,17 +375,18 @@ informal pre V1.0 commit counter: 58 */
 		return res || $views[resourceType][itemName];
 	}
 
-	function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate) {
+	function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		// Called from within compiled template function, to render a template tag
 		// Returns the rendered tag
 
-		var render, tag, tags, attr, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef,
-			callInit, mapDef, thisMap, args, prop, props, initialTmpl,
+		var tag, tags, attr, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, tagDef,
+			callInit, mapDef, thisMap, args, props, initialTmpl,
 			ret = "",
-			boundTagKey = +tagCtxs === tagCtxs && tagCtxs, // if tagCtxs is an integer, then it is the boundTagKey
 			linkCtx = parentView.linkCtx || 0,
 			ctx = parentView.ctx,
-			parentTmpl = tmpl || parentView.tmpl;
+			parentTmpl = tmpl || parentView.tmpl,
+			// if tagCtx is an integer, then it is the key for the compiled function to return the boundTag tagCtxs
+			boundTag = +tagCtxs === tagCtxs && parentTmpl.bnds[tagCtxs-1];
 
 		if (tagName._is === "tag") {
 			tag = tagName;
@@ -388,12 +395,9 @@ informal pre V1.0 commit counter: 58 */
 		}
 		tag = tag || linkCtx.tag;
 
-		// Provide tagCtx, linkCtx and ctx access from tag
-		if (boundTagKey) {
-			// if tagCtxs is an integer, we are data binding
-			// Call compiled function which returns the tagCtxs for current data
-			tagCtxs = (boundTagFn = parentTmpl.bnds[boundTagKey-1])(parentView.data, parentView, $views);
-		}
+		onError = onError !== undefined && (ret += onError, [{props: {}, args: []}]);
+
+		tagCtxs = onError || (boundTag ? boundTag(parentView.data, parentView, $views) : tagCtxs);
 
 		l = tagCtxs.length;
 		for (i = 0; i < l; i++) {
@@ -401,7 +405,7 @@ informal pre V1.0 commit counter: 58 */
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{" + tagName + "}}");
 			}
 			tagCtx = tagCtxs[i];
-			if (!linkCtx.tag) {
+			if (!linkCtx.tag || tag._er) {
 				// We are initializing tag, so for block tags, tagCtx.tmpl is an integer > 0
 				content = tagCtx.tmpl;
 				content = tagCtx.content = content && parentTmpl.tmpls[content - 1];
@@ -409,9 +413,12 @@ informal pre V1.0 commit counter: 58 */
 				$extend(tagCtx, {
 					tmpl: (tag ? tag : tagDef).template || content, // Set the tmpl property to the content of the block tag
 					render: renderContent,
+					index: i,
+					view: parentView,
+					ctx: extendCtx(tagCtx.ctx, ctx) // Extend parentView.ctx
+
 					// Possible future feature:
 					//var updatedValueOfArg0 = this.tagCtx.get(0);
-					//var test3 = this.tagCtx.get(0);
 					//var updatedValueOfPropFoo = this.tagCtx.get("foo");
 					//var updatedValueOfCtxPropFoo = this.tagCtx.get("~foo");
 					//_fns: {},
@@ -420,9 +427,6 @@ informal pre V1.0 commit counter: 58 */
 					//		"return " + $.views.sub.parse(this.params[+key === key ? "args" : (key.charAt(0) === "~" ? (key = key.slice(1), "ctx") : "props")][key]) + ";")
 					//	)(this.view.data, this.view, $views);
 					//},
-					index: i,
-					view: parentView,
-					ctx: extendCtx(tagCtx.ctx, ctx) // Extend parentView.ctx
 				});
 			}
 			if (tmpl = tagCtx.props.tmpl) {
@@ -457,7 +461,7 @@ informal pre V1.0 commit counter: 58 */
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
 				}
-				if (tag._.bnd = boundTagFn || linkCtx.fn) {
+				if (tag._.bnd = boundTag || linkCtx.fn) {
 					// Bound if {^{tag...}} or data-link="{tag...}"
 					tag._.arrVws = {};
 				} else if (tag.dataBoundOnly) {
@@ -472,13 +476,6 @@ informal pre V1.0 commit counter: 58 */
 				//TODO better perf for childTags() - keep child tag.tags array, (and remove child, when disposed)
 				// tag.tags = [];
 				// Provide this tag on view, for addBindingMarkers on bound tags to add the tag to view._.bnds, associated with the tag id
-			}
-			if (!i) {
-				for (prop in props = tagCtx.props) {
-					if (rHasHandlers.test(prop)) {
-						tag[prop] = props[prop]; // Copy over the onFoo or convert or convertBack props from tagCtx.props to tag (overrides values in tagDef).
-					}
-				}
 			}
 			tagCtx.tag = tag;
 			if (tag.dataMap && tag.tagCtxs) {
@@ -497,55 +494,56 @@ informal pre V1.0 commit counter: 58 */
 			}
 		}
 		parentView._.tag = tag;
-		tag.rendering = {}; // Provide object for state during render calls to tag and elses. (Used by {{if}} and {{for}}...)
-		for (i = 0; i < l; i++) {
-			tagCtx = tag.tagCtx = tag.tagCtxs[i];
-			props = tagCtx.props;
-			args = convertArgs(tag, tag.convert);
+		if (!(tag._er = onError)) {
+			tagHandlersFromProps(tag, tagCtxs[0]);
+			tag.rendering = {}; // Provide object for state during render calls to tag and elses. (Used by {{if}} and {{for}}...)
+			for (i = 0; i < l; i++) {
+				tagCtx = tag.tagCtx = tag.tagCtxs[i];
+				props = tagCtx.props;
+				args = convertArgs(tag, tag.convert);
 
-			if (mapDef = props.dataMap || tag.dataMap) {
-				if (args.length || props.dataMap) {
-					thisMap = tagCtx.map;
-					if (!thisMap || thisMap.src !== args[0] || isUpdate) {
-						if (thisMap && thisMap.src) {
-							thisMap.unmap(); // only called if observable map - not when only used in JsRender, e.g. by {{props}}
+				if (mapDef = props.dataMap || tag.dataMap) {
+					if (args.length || props.dataMap) {
+						thisMap = tagCtx.map;
+						if (!thisMap || thisMap.src !== args[0] || isUpdate) {
+							if (thisMap && thisMap.src) {
+								thisMap.unmap(); // only called if observable map - not when only used in JsRender, e.g. by {{props}}
+							}
+							thisMap = tagCtx.map = mapDef.map(args[0], props);
 						}
-						thisMap = tagCtx.map = mapDef.map(args[0], props);
+						args = [thisMap.tgt];
 					}
-					args = [thisMap.tgt];
 				}
-			}
-			tag.ctx = tagCtx.ctx;
+				tag.ctx = tagCtx.ctx;
 
-			if (!i && callInit) {
-				initialTmpl = tag.template;
-				tag.init(tagCtx, linkCtx, tag.ctx);
-				callInit = undefined;
-				if (tag.template !== initialTmpl) {
-					tag._.tmpl = tag.template; // This will override the tag.template and also tagCtx.props.tmpl for all tagCtxs
+				if (!i && callInit) {
+					initialTmpl = tag.template;
+					tag.init(tagCtx, linkCtx, tag.ctx);
+					callInit = undefined;
+					if (tag.template !== initialTmpl) {
+						tag._.tmpl = tag.template; // This will override the tag.template and also tagCtx.props.tmpl for all tagCtxs
+					}
+					if (linkCtx) {
+						// Set attr on linkCtx to ensure outputting to the correct target attribute.
+						// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
+						linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
+					}
 				}
-				if (linkCtx) {
-					// Set attr on linkCtx to ensure outputting to the correct target attribute.
-					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
-					linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
+			
+				itemRet = undefined;
+				if (tag.render) {
+					itemRet = tag.render.apply(tag, args);
 				}
-			}
-
-			itemRet = undefined;
-			render = tag.render;
-			if (render = tag.render) {
-				itemRet = render.apply(tag, args);
-			}
-			args = args.length ? args : [parentView]; // no arguments - get data context from view.
-			itemRet = itemRet !== undefined
-				? itemRet // Return result of render function unless it is undefined, in which case return rendered template
-				: tagCtx.render(args[0], true) || (isUpdate ? undefined : "");
+				args = args.length ? args : [parentView]; // no arguments - get data context from view.
+				itemRet = itemRet !== undefined
+					? itemRet // Return result of render function unless it is undefined, in which case return rendered template
+					: tagCtx.render(args[0], true) || (isUpdate ? undefined : "");
 				// No return value from render, and no template/content tagCtx.render(...), so return undefined
-			ret = ret ? ret + (itemRet || "") : itemRet; // If no rendered content, this will be undefined
+				ret = ret ? ret + (itemRet || "") : itemRet; // If no rendered content, this will be undefined
+			}
+
+			delete tag.rendering;
 		}
-
-		delete tag.rendering;
-
 		tag.tagCtx = tag.tagCtxs[0];
 		tag.ctx = tag.tagCtx.ctx;
 
@@ -555,9 +553,9 @@ informal pre V1.0 commit counter: 58 */
 				? $converters.html(ret)
 				: "";
 		}
-		return boundTagKey && parentView._.onRender
+		return boundTag && parentView._.onRender
 			// Call onRender (used by JsViews if present, to add binding annotations around rendered content)
-			? parentView._.onRender(ret, parentView, boundTagKey)
+			? parentView._.onRender(ret, parentView, boundTag)
 			: ret;
 	}
 
@@ -583,7 +581,7 @@ informal pre V1.0 commit counter: 58 */
 		self.content = contentTmpl;
 		self.views = isArray ? [] : {};
 		self.parent = parentView;
-		self.type = type;
+		self.type = type || "top";
 		// If the data is an array, this is an 'array view' with a views array for each child 'item view'
 		// If the data is not an array, this is an 'item view' with a views 'hash' object for any child nested views
 		// ._.useKey is non zero if is not an 'array view' (owning a data array). Use this as next key for adding to child views hash
@@ -1348,8 +1346,8 @@ informal pre V1.0 commit counter: 58 */
 	function buildCode(ast, tmpl, isLinkExpr) {
 		// Build the template function code from the AST nodes, and set as property on the passed-in template object
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
-		var i, node, tagName, converter, tagCtx, hasTag, hasEncoder, getsVal, hasCnvt, needView, useCnvt, tmplBindings, pathBindings, params,
-			nestedTmpls, tmplName, nestedTmpl, tagAndElses, content, markup, nextIsElse, oldCode, isElse, isGetVal, tagCtxFn, onError, tagStart, trigger,
+		var i, node, tagName, converter, tagCtx, hasTag, hasEncoder, getsVal, hasCnvt, needView, useCnvt, tmplBindings, pathBindings, params, boundOnErrStart, boundOnErrEnd,
+			tagRender, nestedTmpls, tmplName, nestedTmpl, tagAndElses, content, markup, nextIsElse, oldCode, isElse, isGetVal, tagCtxFn, onError, tagStart, trigger,
 			tmplBindingKey = 0,
 			code = "",
 			tmplOptions = {},
@@ -1420,16 +1418,20 @@ informal pre V1.0 commit counter: 58 */
 						nextIsElse = ast[i + 1];
 						nextIsElse = nextIsElse && nextIsElse[0] === "else";
 					}
-					tagStart = (onError ? ";\ntry{\nret+=" : "\n+");
-
+					tagStart = onError ? ";\ntry{\nret+=" : "\n+";
+					boundOnErrStart = "";
+					boundOnErrEnd= "";
+					
 					if (isGetVal && (pathBindings || trigger || converter && converter !== htmlStr)) {
 						// For convertVal we need a compiled function to return the new tagCtx(s)
 						tagCtxFn = "return {" + tagCtx + "};";
-						if (onError) {
-							tagCtxFn = "try {\n" + tagCtxFn + '\n}catch(e){return {error: j._err(e,view,' + onError + ')}}\n';
-						}
+						tagRender = 'c("' + converter + '",view,';
 						tagCtxFn = new Function("data,view,j,u", " // " + tmplName + " " + tmplBindingKey + " " + tagName
 											+ "\n" + tagCtxFn);
+						tagCtxFn._er = onError;
+
+						boundOnErrStart = tagRender + tmplBindingKey + ",";
+						boundOnErrEnd = ")";
 
 						tagCtxFn._tag = tagName;
 						if (isLinkExpr) {
@@ -1440,7 +1442,7 @@ informal pre V1.0 commit counter: 58 */
 					}
 					code += (isGetVal
 						? (isLinkExpr ? (onError ? "\ntry{\n" : "") + "return " : tagStart) + (useCnvt // Call _cnvt if there is a converter: {{cnvt: ... }} or {^{cnvt: ... }}
-							? (useCnvt = undefined, needView = hasCnvt = true, 'c("' + converter + '",view,' + (pathBindings
+							? (useCnvt = undefined, needView = hasCnvt = true, tagRender + (pathBindings
 								? ((tmplBindings[tmplBindingKey - 1] = tagCtxFn), tmplBindingKey) // Store the compiled tagCtxFn in tmpl.bnds, and pass the key to convertVal()
 								: "{" + tagCtx + "}") + ")")
 							: tagName === ">"
@@ -1452,29 +1454,35 @@ informal pre V1.0 commit counter: 58 */
 							+ tagCtx + "},"));
 
 					if (tagAndElses && !nextIsElse) {
-						code = "[" + code.slice(0, -1) + "]"; // This is a data-link expression or the last {{else}} of an inline bound tag. We complete the code for returning the tagCtxs array
+						// This is a data-link expression or an inline bound tag without any elses, or the last {{else}} of an inline bound tag
+						// We complete the code for returning the tagCtxs array
+						code = "[" + code.slice(0, -1) + "]"; 
+						tagRender = 't("' + tagAndElses + '",view,this,';
 						if (isLinkExpr || pathBindings) {
 							// This is a bound tag (data-link expression or inline bound tag {^{tag ...}}) so we store a compiled tagCtxs function in tmp.bnds
 							code = new Function("data,view,j,u", " // " + tmplName + " " + tmplBindingKey + " " + tagAndElses + "\nreturn " + code + ";");
+							code._er = onError;
+							code._tag = tagName;
 							if (pathBindings) {
 								setPaths(tmplBindings[tmplBindingKey - 1] = code, pathBindings);
 							}
-							code._tag = tagName;
 							if (isLinkExpr) {
 								return code; // For a data-link expression we return the compiled tagCtxs function
 							}
+							boundOnErrStart = tagRender + tmplBindingKey + ",undefined,";
+							boundOnErrEnd = ")";
 						}
 
 						// This is the last {{else}} for an inline tag.
 						// For a bound tag, pass the tagCtxs fn lookup key to renderTag.
 						// For an unbound tag, include the code directly for evaluating tagCtxs array
-						code = oldCode + tagStart + 't("' + tagAndElses + '",view,this,' + (tmplBindingKey || code) + ")";
+						code = oldCode + tagStart + tagRender + (tmplBindingKey || code) + ")";
 						pathBindings = 0;
 						tagAndElses = 0;
 					}
 					if (onError) {
 						needView = true;
-						code += ';\n}catch(e){ret' + (isLinkExpr ? "urn " : "+=") + 'j._err(e,view,' + onError + ');}\n' + (isLinkExpr ? "" : 'ret=ret');
+						code += ';\n}catch(e){ret' + (isLinkExpr ? "urn " : "+=") + boundOnErrStart + 'j._err(e,view,' + onError + ')' + boundOnErrEnd + ';}\n' + (isLinkExpr ? "" : 'ret=ret');
 					}
 				}
 			}

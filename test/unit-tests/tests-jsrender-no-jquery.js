@@ -474,7 +474,6 @@ test("templates", 14, function() {
 	$.templates({ myTmpl4: "A_B" });
 	equal($.render.myTmpl4(person), "A_B", '$.templates({ myTmpl: htmlWithNoTags });');
 
-
 	$.templates({
 		myTmpl5: {
 			markup: tmplString
