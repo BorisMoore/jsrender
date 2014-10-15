@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 59 */
+informal pre V1.0 commit counter: 60 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -529,7 +529,7 @@ informal pre V1.0 commit counter: 59 */
 						linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
 					}
 				}
-			
+
 				itemRet = undefined;
 				if (tag.render) {
 					itemRet = tag.render.apply(tag, args);
@@ -1267,7 +1267,9 @@ informal pre V1.0 commit counter: 59 */
 						expr = pathStart[parenDepth];
 						if (fullLength > index - expr) { // We need to compile a subexpression
 							expr = full.slice(expr, index + 1);
-							rtPrnDot = delimOpenChar1 + ":" + expr + delimCloseChar0; // The parameter or function subexpression
+							rtPrnDot = delimOpenChar1 + ":" + expr // The parameter or function subexpression
+								+ " onerror=''" // set onerror='' in order to wrap generated code with a try catch - returning '' as object instance if there is an error/missing parent
+								+ delimCloseChar0;
 							exprFn = tmplLinks[rtPrnDot];
 							if (!exprFn) {
 								tmplLinks[rtPrnDot] = true; // Flag that this exprFn (for rtPrnDot) is being compiled
@@ -1421,7 +1423,7 @@ informal pre V1.0 commit counter: 59 */
 					tagStart = onError ? ";\ntry{\nret+=" : "\n+";
 					boundOnErrStart = "";
 					boundOnErrEnd= "";
-					
+
 					if (isGetVal && (pathBindings || trigger || converter && converter !== htmlStr)) {
 						// For convertVal we need a compiled function to return the new tagCtx(s)
 						tagCtxFn = "return {" + tagCtx + "};";
@@ -1456,7 +1458,7 @@ informal pre V1.0 commit counter: 59 */
 					if (tagAndElses && !nextIsElse) {
 						// This is a data-link expression or an inline bound tag without any elses, or the last {{else}} of an inline bound tag
 						// We complete the code for returning the tagCtxs array
-						code = "[" + code.slice(0, -1) + "]"; 
+						code = "[" + code.slice(0, -1) + "]";
 						tagRender = 't("' + tagAndElses + '",view,this,';
 						if (isLinkExpr || pathBindings) {
 							// This is a bound tag (data-link expression or inline bound tag {^{tag ...}}) so we store a compiled tagCtxs function in tmp.bnds
