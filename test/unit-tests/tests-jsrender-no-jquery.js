@@ -115,6 +115,8 @@ test("types", function() {
 	equal($.templates("{{: -33.33 }}").render(), "-33.33", "| -33.33 |");
 	equal($.templates("{{:-33.33 - 2.2}}").render(), "-35.53", "-33.33 - 2.2");
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
+	equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
+	equal($.templates("{{:x=22}}").render("aString"), "aString", "{{:x=...}} returns current data item");
 });
 
 test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fallback'}}, etc.", function() {

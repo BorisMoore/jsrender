@@ -1,5 +1,5 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 60 */
+informal pre V1.0 commit counter: 61 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
@@ -25,10 +25,10 @@ informal pre V1.0 commit counter: 60 */
 		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", linkChar = "^",
 
 		rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-		//                                     none   object     helper    view  viewProperty pathTokens      leafToken
+		//        not                               object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^|\s*$)|[)\]])([([]?))|(\s+)/g,
-		//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2  space
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|[^\(\[])|[)\]])([([]?))|(\s+)/g,
+		//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                           prn2  space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
 		rNewLine = /[ \t]*(\r\n|\n|\r)/g,
@@ -53,6 +53,7 @@ informal pre V1.0 commit counter: 60 */
 			"`": "&#96;"
 		},
 		htmlStr = "html",
+		objectStr = "object",
 		tmplAttr = "data-jsv-tmpl",
 		$render = {},
 		jsvStores = {
@@ -239,9 +240,7 @@ informal pre V1.0 commit counter: 60 */
 		return this.index;
 	}
 
-	getIndex.depends = function() {
-		return ["index"];
-	};
+	getIndex.depends = "index";
 
 	//==========
 	// View.hlp
@@ -310,8 +309,8 @@ informal pre V1.0 commit counter: 60 */
 				if (linkCtx) {
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
-					tagCtx.ctx = extendCtx(tagCtx.ctx, linkCtx.view.ctx);
 				}
+				tagCtx.ctx = extendCtx(tagCtx.ctx, (linkCtx ? linkCtx.view : view).ctx);
 				$sub._lnk(tag);
 			}
 			tag._er = onError && value;
@@ -577,7 +576,7 @@ informal pre V1.0 commit counter: 60 */
 			};
 
 		self.data = data;
-		self.tmpl = template,
+		self.tmpl = template;
 		self.content = contentTmpl;
 		self.views = isArray ? [] : {};
 		self.parent = parentView;
@@ -644,7 +643,7 @@ informal pre V1.0 commit counter: 60 */
 	}
 
 	function compileTag(name, tagDef, parentTmpl) {
-		var init, tmpl;
+		var init, tmpl, baseTag;
 		if ($isFunction(tagDef)) {
 			// Simple tag declared as function. No presenter instantation.
 			tagDef = {
@@ -652,16 +651,19 @@ informal pre V1.0 commit counter: 60 */
 				render: tagDef
 			};
 		} else {
-			if (tagDef.baseTag) {
+			if (baseTag = tagDef.baseTag) {
+				tagDef.baseTag = baseTag = "" + baseTag === baseTag
+					? (parentTmpl && parentTmpl.tags[baseTag] || $.views.tags[baseTag])
+					: baseTag;
 				tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
-				tagDef = $extend($extend({}, tagDef.baseTag), tagDef);
+				tagDef = $extend($extend({}, baseTag), tagDef);
 			}
 			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
 			if ((tmpl = tagDef.template) !== undefined) {
 				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
 			}
 			if (tagDef.init !== false) {
-				// Set int: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
+				// Set init: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
 				// so equivalent to setting tag to render function, except you can also provide a template.
 				init = tagDef._ctr = function() {};
 				(init.prototype = tagDef).constructor = init;
@@ -830,7 +832,7 @@ informal pre V1.0 commit counter: 60 */
 
 			var onStore, compile, itemName, thisStore;
 
-			if (name && typeof name === "object" && !name.nodeType && !name.markup && !name.getTgt) {
+			if (name && typeof name === objectStr && !name.nodeType && !name.markup && !name.getTgt) {
 				// Call to $.views.things(items[, parentTmpl]),
 
 				// Adding items to the store
@@ -916,6 +918,9 @@ informal pre V1.0 commit counter: 60 */
 		if (!!context === context) {
 			noIteration = context; // passing boolean as second param - noIteration
 			context = undefined;
+		}
+		if (typeof context !== objectStr) {
+			context = undefined; // context must be a boolean (noIteration) or a plain object
 		}
 
 		if (key === true) {
@@ -1191,10 +1196,10 @@ informal pre V1.0 commit counter: 60 */
 		fn.deps = [];
 		for (var key in paths) {
 			if (key !== "_jsvto" && paths[key].length) {
-				fn.deps = fn.deps.concat(paths[key]);
+				fn.deps = fn.deps.concat(paths[key]); // deps is the concatenation of the paths arrays for the different bindings
 			}
 		}
-		fn.paths = paths;
+		fn.paths = paths; // The array of paths arrays for the different bindings
 	}
 
 	function parsedParam(args, props, ctx) {
@@ -1208,32 +1213,29 @@ informal pre V1.0 commit counter: 60 */
 	function parseParams(params, pathBindings, tmpl) {
 
 		function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-			//rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
-			//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                    prn2   space
+		// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|\s)|[)\]])([([]?))|(\s+)/g,
+		//   lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                    prn2  space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+			if (bound && !eq) {
+				path = bound + path; // e.g. some.fn(...)^some.path - so here path is "^some.path"
+			}
 			operator = operator || "";
 			lftPrn = lftPrn || lftPrn0 || lftPrn2;
 			path = path || path2;
+			// Could do this - but not worth perf cost?? :-
+			// if (!path.lastIndexOf("#data.", 0)) { path = path.slice(6); } // If path starts with "#data.", remove that.
 			prn = prn || prn2 || "";
 
-			var expr, isFn, exprFn,
-				fullLength = full.length - 1;
+			var expr, exprFn, binds, theOb, newOb;
 
 			function parsePath(allPath, not, object, helper, view, viewProperty, pathTokens, leafToken) {
 				// rPath = /^(?:null|true|false|\d[\d.]*|(!*?)([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 				//                                        none   object     helper    view  viewProperty pathTokens      leafToken
+				var subPath = object === ".";
 				if (object) {
-					if (bindings) {
-						if (named === "linkTo") {
-							bindto = pathBindings._jsvto = pathBindings._jsvto || [];
-							bindto.push(path);
-						}
-						if (!named || boundName) {
-							bindings.push(path.slice(not.length)); // Add path binding for paths on props and args
-						}
-					}
-					if (object !== ".") {
-						var ret = (helper
+					path = path.slice(not.length);
+					if (!subPath) {
+						allPath = (helper
 								? 'view.hlp("' + helper + '")'
 								: view
 									? "view"
@@ -1247,11 +1249,29 @@ informal pre V1.0 commit counter: 60 */
 									) + (pathTokens || "")
 								: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
 
-						ret = ret + (leafToken ? "." + leafToken : "");
+						allPath = allPath + (leafToken ? "." + leafToken : "");
 
-						return not + (ret.slice(0, 9) === "view.data"
-							? ret.slice(5) // convert #view.data... to data...
-							: ret);
+						allPath = not + (allPath.slice(0, 9) === "view.data"
+							? allPath.slice(5) // convert #view.data... to data...
+							: allPath);
+					}
+					if (bindings) {
+						binds = named === "linkTo" ? (bindto = pathBindings._jsvto = pathBindings._jsvto || []) : bndCtx.bd;
+						if (theOb = subPath && binds[binds.length-1]) {
+							if (theOb._jsv) {
+								while (theOb.sb) {
+									theOb = theOb.sb;
+								}
+								if (theOb.bnd) {
+									path = "^" + path.slice(1);
+								}
+								theOb.sb = path;
+								theOb.bnd = theOb.bnd || path.charAt(0) === "^";
+							}
+						} else {
+							binds.push(path);
+						}
+						pathStart[parenDepth] = index + (subPath ? 1 : 0);
 					}
 				}
 				return allPath;
@@ -1264,20 +1284,35 @@ informal pre V1.0 commit counter: 60 */
 					// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
 					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
 					if (!named || boundName || bindto) {
-						expr = pathStart[parenDepth];
-						if (fullLength > index - expr) { // We need to compile a subexpression
-							expr = full.slice(expr, index + 1);
+						expr = pathStart[parenDepth - 1];
+						if (full.length - 1 > index - (expr || 0)) { // We need to compile a subexpression
+							expr = full.slice(expr, index + all.length);
+							if (exprFn !== true) { // If not reentrant call during compilation
+								binds = bindto || bndStack[parenDepth-1].bd;
+								// Insert exprOb object, to be used during binding to return the computed object
+								theOb = binds[binds.length-1];
+								if (theOb && theOb.prm) {
+									while (theOb.sb && theOb.sb.prm) {
+										theOb = theOb.sb;
+									}
+									newOb = theOb.sb = {path: theOb.sb, bnd: theOb.bnd};
+								} else {
+									binds.push(newOb = {path: binds.pop()}); // Insert exprOb object, to be used during binding to return the computed object
+								}											 // (e.g. "some.object()" in "some.object().a.b" - to be used as context for binding the following tokens "a.b")
+							}
 							rtPrnDot = delimOpenChar1 + ":" + expr // The parameter or function subexpression
 								+ " onerror=''" // set onerror='' in order to wrap generated code with a try catch - returning '' as object instance if there is an error/missing parent
 								+ delimCloseChar0;
 							exprFn = tmplLinks[rtPrnDot];
 							if (!exprFn) {
 								tmplLinks[rtPrnDot] = true; // Flag that this exprFn (for rtPrnDot) is being compiled
-								tmplLinks[rtPrnDot] = exprFn = tmplFn(rtPrnDot, tmpl || bindings, true); // Compile the expression (or use cached copy already in tmpl.links)
-								exprFn.paths.push({_jsvOb: exprFn}); //list.push({_jsvOb: rtPrnDot});
+								tmplLinks[rtPrnDot] = exprFn = tmplFn(rtPrnDot, tmpl, true); // Compile the expression (or use cached copy already in tmpl.links)
 							}
-							if (exprFn !== true) { // If not reentrant call during compilation
-								(bindto || bindings).push({_jsvOb: exprFn}); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
+							if (exprFn !== true && newOb) {
+								// If not reentrant call during compilation
+								newOb._jsv = exprFn;
+								newOb.prm = bndCtx.bd;
+								newOb.bnd = newOb.bnd || newOb.path && newOb.path.indexOf("^") >= 0;
 							}
 						}
 					}
@@ -1291,33 +1326,35 @@ informal pre V1.0 commit counter: 60 */
 						:
 					(
 						(lftPrn
-								? (parenDepth++, pathStart[parenDepth] = index++, lftPrn)
-								: "")
+							? (pathStart[parenDepth] = index++, bndCtx = bndStack[++parenDepth] = {bd: []}, lftPrn)
+							: "")
 						+ (space
 							? (parenDepth
 								? ""
 					// New arg or prop - so insert backspace \b (\x08) as separator for named params, used subsequently by rBuildHash, and prepare new bindings array
 								: (paramIndex = full.slice(paramIndex, index), named
 									? (named = boundName = bindto = false, "\b")
-									: "\b,") + paramIndex + (paramIndex = index + all.length, bindings && pathBindings.push(bindings = []), "\b")
+									: "\b,") + paramIndex + (paramIndex = index + all.length, bindings && pathBindings.push(bndCtx.bd = []), "\b")
 							)
 							: eq
 					// named param. Remove bindings for arg and create instead bindings array for prop
-								? (parenDepth && syntaxError(params), bindings && pathBindings.pop(), named = path, boundName = bound, paramIndex = index + all.length, bound && (bindings = pathBindings[named] = []), path + ':')
+								? (parenDepth && syntaxError(params), bindings && pathBindings.pop(), named = path, boundName = bound, paramIndex = index + all.length, bound && (bindings = bndCtx.bd = pathBindings[named] = []), path + ':')
 								: path
 					// path
 									? (path.split("^").join(".").replace(rPath, parsePath)
 										+ (prn
-											? (fnCall[++parenDepth] = true, path.charAt(0) !== "." && (pathStart[parenDepth] = index), isFn ? "" : prn)
+					// some.fncall(
+											? (bndCtx = bndStack[++parenDepth] = {bd: []}, fnCall[parenDepth] = true, prn)
 											: operator)
 									)
 									: operator
+					// operator
 										? operator
 										: rtPrn
 					// function
-											? ((fnCall[parenDepth--] = false, rtPrn)
-												+ (prn
-													? (fnCall[++parenDepth] = true, prn)
+											? ((fnCall[parenDepth] = false, bndCtx = bndStack[--parenDepth], rtPrn)
+												+ (prn // rtPrn and prn, e.g )( in (a)() or a()(), or )[ in a()[]
+													? (bndCtx = bndStack[++parenDepth], fnCall[parenDepth] = true, prn)
 													: "")
 											)
 											: comma
@@ -1329,19 +1366,22 @@ informal pre V1.0 commit counter: 60 */
 				);
 			}
 		}
+
 		var named, bindto, boundName,
 			quoted, // boolean for string content in double quotes
 			aposed, // or in single quotes
 			bindings = pathBindings && pathBindings[0], // bindings array for the first arg
+			bndCtx = {bd: bindings},
+			bndStack = {0: bndCtx},
 			paramIndex = 0, // list,
 			tmplLinks = tmpl ? tmpl.links : bindings && (bindings.links = bindings.links || {}),
-			fnCall = {},
-			pathStart = {0: -1},
-			parenDepth = 0;
-		//pushBindings();
+			// The following are used for tracking path parsing including nested paths, such as "a.b(c^d + (e))^f", and chained computed paths such as
+			// "a.b().c^d().e.f().g" - which has four chained paths, "a.b()", "^c.d()", ".e.f()" and ".g"
+			parenDepth = 0,
+			fnCall = {}, // We are in a function call
+			pathStart = {}; // tracks the start of the current path such as c^d() in the above example
+
 		return (params + (tmpl ? " " : ""))
-			.replace(/\)\^/g, ").") // Treat "...foo()^bar..." as equivalent to "...foo().bar..."
-								//since preceding computed observables in the path will always be updated if their dependencies change
 			.replace(rParams, parseTokens);
 	}
 
@@ -1449,7 +1489,7 @@ informal pre V1.0 commit counter: 60 */
 								: "{" + tagCtx + "}") + ")")
 							: tagName === ">"
 								? (hasEncoder = true, "h(" + params[0] + ')')
-								: (getsVal = true, "((v=" + params[0] + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
+								: (getsVal = true, "((v=" + (params[0] || 'data') + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
 						)
 						: (needView = hasTag = true, "\n{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 							+ (content ? nestedTmpls.length : "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
@@ -1484,7 +1524,7 @@ informal pre V1.0 commit counter: 60 */
 					}
 					if (onError) {
 						needView = true;
-						code += ';\n}catch(e){ret' + (isLinkExpr ? "urn " : "+=") + boundOnErrStart + 'j._err(e,view,' + onError + ')' + boundOnErrEnd + ';}\n' + (isLinkExpr ? "" : 'ret=ret');
+						code += ';\n}catch(e){ret' + (isLinkExpr ? "urn " : "+=") + boundOnErrStart + 'j._err(e,view,' + onError + ')' + boundOnErrEnd + ';}' + (isLinkExpr ? "" : 'ret=ret');
 					}
 				}
 			}
@@ -1672,7 +1712,7 @@ informal pre V1.0 commit counter: 60 */
 		var key, prop,
 			props = [];
 
-		if (typeof source === "object") {
+		if (typeof source === objectStr) {
 			for (key in source) {
 				prop = source[key];
 				if (!prop || !prop.toJSON || prop.toJSON()) {
@@ -1686,7 +1726,7 @@ informal pre V1.0 commit counter: 60 */
 	}
 
 	$tags("props", {
-		baseTag: $tags["for"],
+		baseTag: "for",
 		dataMap: dataMap(getTargetProps)
 	});
 
