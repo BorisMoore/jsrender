@@ -830,6 +830,158 @@ test("tags", function() {
 
 });
 
+test("derived tags", function() {
+	// =============================== Arrange ===============================
+	var tmpl = $.templates("a:{{A 1/}} b:{{B 2/}}"),
+
+		tagA = $.views.tags("A",
+			function(val) { return "A" + val; },
+			tmpl
+		);
+
+		$.views.tags("B",
+			{
+				baseTag: tagA,
+				render: function(val) {
+					return "B" + val + this.base(val);
+				}
+			},
+			tmpl
+		);
+
+	// ................................ Act ..................................
+	var result = tmpl.render({});
+
+	// ............................... Assert .................................
+	equal(result, "a:A1 b:B2A2", "One level tag inheritance chain - calling base method");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}} d:{{D 31 32 33/}} e:{{E 41 42 43/}}");
+
+		tagA = $.views.tags("A",
+			function(val) { return "A" + val; },
+			tmpl
+		);
+
+		$.views.tags("B",
+			{
+				baseTag: tagA,
+				foo: function(val) {
+					return "FOO-B:" + val;
+				},
+				render: function(val) {
+					return "B" + val + this.base(val);
+				}
+			},
+			tmpl
+		);
+
+		var tagC = $.views.tags("C",
+			{
+				baseTag: "A",
+				foo: function(val) {
+					return "FOO-C:" + val;
+				},
+				bar: function(x, y, z) {
+					return "BAR-C" + x + y + z;
+				},
+				render: function(val) {
+					return "C" + val + this.base(val) + this.foo(val) + this.bar.apply(this, this.tagCtx.args);
+				}
+			},
+			tmpl
+		);
+
+		$.views.tags("D",
+			{
+				baseTag: tagC,
+				render: function(val) {
+					return "D" + val + this.base(val);
+				}
+			},
+			tmpl
+		),
+
+		$.views.tags("E",
+			{
+				baseTag: "D",
+				foo: function(val) {
+					return "FOO-E" + val + this.base(val);
+				},
+				bar: function(x, y, z) {
+					return "BAR-E" + x + y + z + this.baseApply(arguments);
+				},
+				render: function(val) {
+					return "E" + val + this.base(val);
+				}
+			},
+			tmpl
+		);
+
+	// ................................ Act ..................................
+	result = tmpl.render({});
+
+	// ............................... Assert .................................
+	equal(result, "a:A1 b:B11A11 c:C21A21FOO-C:21BAR-C212223 d:D31C31A31FOO-C:31BAR-C313233 e:E41D41C41A41FOO-E41FOO-C:41BAR-E414243BAR-C414243", "Complex multi-level inheritance chain");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates("a:{{A 1 2 3/}}");
+
+		tagA = $.views.tags("A",
+			function(val) {
+				return "A" + val + this.baseApply(arguments);
+			},
+			tmpl
+		);
+
+	// ................................ Act ..................................
+	result = tmpl.render({});
+
+	// ............................... Assert .................................
+	equal(result.slice(0, 18), "{Error: TypeError:", "Calling base or baseApply when there is no base tag: Type Error");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}}");
+
+		tagA = $.views.tags("A",
+			function(val) {
+				return "A" + val;
+			},
+			tmpl
+		);
+
+		$.views.tags("B",
+			{
+				baseTag: tagA,
+				render: function(val) {
+					return "B" + val + this.base(val);
+				}
+			},
+			tmpl
+		);
+
+		var tagC = $.views.tags("C",
+			{
+				baseTag: "A",
+				bar: function(x, y, z) {
+					return "BAR-C" + x + y + z + " Missing base method call: " + this.base(x) + this.baseApply(arguments) + ".";
+				},
+				render: function(val) {
+					return "C" + val + this.bar.apply(this, this.tagCtx.args);
+				}
+			},
+			tmpl
+		);
+
+	// ................................ Act ..................................
+	result = tmpl.render({});
+
+	// ............................... Assert .................................
+	equal(result, "a:A1 b:B11A11 c:C21BAR-C212223 Missing base method call: .",
+	'Calling base or baseApply when there is no corresponding method on base tag implementation: noop - returning ""');
+
+});
+
 test('{{include}} and wrapping content', function() {
 	var result = $.templates({
 			markup:

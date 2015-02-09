@@ -1,4 +1,4 @@
-﻿Copyright (c) 2012 Boris Moore https://github.com/BorisMoore/jsrender
+﻿Copyright (c) 2015 Boris Moore https://github.com/BorisMoore/jsrender
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

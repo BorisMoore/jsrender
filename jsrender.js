@@ -1,11 +1,11 @@
 /*! JsRender v1.0.0-beta: http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 61 */
+informal pre V1.0 commit counter: 62 */
 /*
  * Optimized version of jQuery Templates, for rendering to string.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/jsviews)
  *
- * Copyright 2014, Boris Moore
+ * Copyright 2015, Boris Moore
  * Released under the MIT License.
  */
 
@@ -96,10 +96,47 @@ informal pre V1.0 commit counter: 61 */
 			_err: error
 		};
 
+	function baseApply(args) {
+		// In derived method (or handler declared declaratively as in {{:foo onChange=~fooChanged}} can call base method,
+		// using this.baseApply(arguments) (Equivalent to this._superApply(arguments) in jQuery UI)
+		return this.base.apply(this, args);
+	}
+
+	function getDerivedMethod(baseMethod, method) {
+		return function () {
+			var ret,
+				tag = this,
+				prevBase = tag.base;
+
+			tag.base = baseMethod; // Within method call, calling this.base will call the base method
+			ret = method.apply(tag, arguments); // Call the method
+			tag.base = prevBase; // Replace this.base to be the base method of the previous call, for chained calls
+			return ret;
+		};
+	}
+
+	function getMethod(baseMethod, method) {
+		// For derived methods (or handlers declared declaratively as in {{:foo onChange=~fooChanged}} replace by a derived method, to allow using this.base(...)
+		// or this.baseApply(arguments) to call the base implementation. (Equivalent to this._super(...) and this._superApply(arguments) in jQuery UI)
+		if ($isFunction(method)) {
+			method = getDerivedMethod(
+					!baseMethod
+						? noop // no base method implementation, so use noop as base method
+						: baseMethod._d
+							? baseMethod // baseMethod is a derived method, so us it
+							: getDerivedMethod(noop, baseMethod), // baseMethod is not derived so make its base method be the noop method
+					method
+				);
+			method._d = 1; // Add flag that this is a derived method
+		}
+		return method;
+	}
+
 	function tagHandlersFromProps(tag, tagCtx) {
 		for (var prop in tagCtx.props) {
 			if (rHasHandlers.test(prop)) {
-				tag[prop] = tagCtx.props[prop]; // Copy over the onFoo props, convert and convertBack from tagCtx.props to tag (overrides values in tagDef).
+				tag[prop] = getMethod(tag[prop], tagCtx.props[prop]);
+				// Copy over the onFoo props, convert and convertBack from tagCtx.props to tag (overrides values in tagDef).
 				// Note: unsupported scenario: if handlers are dynamically added ^onFoo=expression this will work, but dynamically removing will not work.
 			}
 		}
@@ -109,10 +146,15 @@ informal pre V1.0 commit counter: 61 */
 		return val;
 	}
 
+	function noop() {
+		return "";
+	}
+
 	function dbgBreak(val) {
 		debugger; // Insert breakpoint for debugging JsRender or JsViews.
-		// Consider https://github.com/BorisMoore/jsrender/issues/239: eval("debugger; //dbg"); // Insert breakpoint for debugging JsRender or JsViews. Using eval to prevent issue with minifiers (YUI Compressor)
-		return val;
+		// Consider https://github.com/BorisMoore/jsrender/issues/239:
+		// Usage examples: {{dbg:...}}, {{:~dbg(...)}}, {{for ... onAfterLink=~dbg}}, {{dbg .../}} etc.
+		return this.base ? this.baseApply(arguments) : val;
 	}
 
 	function dbgMode(debugMode) {
@@ -298,12 +340,14 @@ informal pre V1.0 commit counter: 61 */
 				tag = {
 					_: {
 						inline: !linkCtx,
-						bnd: boundTag
+						bnd: boundTag,
+						unlinked: true
 					},
 					tagName: ":",
 					cvt: converter,
 					flow: true,
 					tagCtx: tagCtx,
+					baseApply: baseApply,
 					_is: "tag"
 				};
 				if (linkCtx) {
@@ -404,8 +448,9 @@ informal pre V1.0 commit counter: 61 */
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{" + tagName + "}}");
 			}
 			tagCtx = tagCtxs[i];
-			if (!linkCtx.tag || tag._er) {
-				// We are initializing tag, so for block tags, tagCtx.tmpl is an integer > 0
+			if (!linkCtx.tag || i && !linkCtx.tag._.inline || tag._er) {
+				// Initialize tagCtx
+				// For block tags, tagCtx.tmpl is an integer > 0
 				content = tagCtx.tmpl;
 				content = tagCtx.content = content && parentTmpl.tmpls[content - 1];
 
@@ -454,7 +499,8 @@ informal pre V1.0 commit counter: 61 */
 					});
 				}
 				tag._ = {
-					inline: !linkCtx
+					inline: !linkCtx,
+					unlinked: true
 				};
 				if (linkCtx) {
 					linkCtx.tag = tag;
@@ -466,10 +512,11 @@ informal pre V1.0 commit counter: 61 */
 				} else if (tag.dataBoundOnly) {
 					error("{^{" + tagName + "}} tag must be data-bound");
 				}
+
 				tag.tagName = tagName;
 				tag.parent = parentTag = ctx && ctx.tag;
 				tag._is = "tag";
-				tag._def = tagDef;
+				tag._def = tagDef; // same as tag.constructor.prototype
 				tag.tagCtxs = tagCtxs;
 
 				//TODO better perf for childTags() - keep child tag.tags array, (and remove child, when disposed)
@@ -522,11 +569,11 @@ informal pre V1.0 commit counter: 61 */
 					if (tag.template !== initialTmpl) {
 						tag._.tmpl = tag.template; // This will override the tag.template and also tagCtx.props.tmpl for all tagCtxs
 					}
-					if (linkCtx) {
-						// Set attr on linkCtx to ensure outputting to the correct target attribute.
-						// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
-						linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
-					}
+				}
+				if (linkCtx) {
+					// Set attr on linkCtx to ensure outputting to the correct target attribute.
+					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
+					linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
 				}
 
 				itemRet = undefined;
@@ -643,36 +690,47 @@ informal pre V1.0 commit counter: 61 */
 	}
 
 	function compileTag(name, tagDef, parentTmpl) {
-		var init, tmpl, baseTag;
+		var constructor, tmpl, baseTag, prop, method,
+			compiledDef = {};
+
 		if ($isFunction(tagDef)) {
 			// Simple tag declared as function. No presenter instantation.
 			tagDef = {
 				depends: tagDef.depends,
 				render: tagDef
 			};
-		} else {
-			if (baseTag = tagDef.baseTag) {
+		}
+		if (baseTag = tagDef.baseTag) {
+			tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
 				tagDef.baseTag = baseTag = "" + baseTag === baseTag
 					? (parentTmpl && parentTmpl.tags[baseTag] || $.views.tags[baseTag])
 					: baseTag;
-				tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
-				tagDef = $extend($extend({}, baseTag), tagDef);
+
+			compiledDef = $extend({}, baseTag);
+
+			for (prop in tagDef) {
+				compiledDef[prop] = getMethod(baseTag[prop], tagDef[prop]);
 			}
-			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
-			if ((tmpl = tagDef.template) !== undefined) {
-				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
-			}
-			if (tagDef.init !== false) {
-				// Set init: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
-				// so equivalent to setting tag to render function, except you can also provide a template.
-				init = tagDef._ctr = function() {};
-				(init.prototype = tagDef).constructor = init;
-			}
+		} else {
+			compiledDef = $extend({}, tagDef);
 		}
+		compiledDef.baseApply = baseApply;
+
+		// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
+		if ((tmpl = compiledDef.template) !== undefined) {
+			compiledDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
+		}
+		if (compiledDef.init !== false) {
+			// Set init: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
+			// so equivalent to setting tag to render function, except you can also provide a template.
+			constructor = compiledDef._ctr = function() {};
+			(constructor.prototype = compiledDef).constructor = constructor;
+		}
+
 		if (parentTmpl) {
-			tagDef._parentTmpl = parentTmpl;
+			compiledDef._parentTmpl = parentTmpl;
 		}
-		return tagDef;
+		return compiledDef;
 	}
 
 	function compileTmpl(name, tmpl, parentTmpl, options) {
@@ -935,7 +993,7 @@ informal pre V1.0 commit counter: 61 */
 			tag_ = self._;
 			tmplName = self.tagName;
 			tmpl = tag_.tmpl || tagCtx.tmpl;
-			noViews = self.attr && self.attr !== htmlStr,
+			tag_.noVws = noViews = self.attr && self.attr !== htmlStr,
 			context = extendCtx(context, self.ctx);
 			contentTmpl = tagCtx.content; // The wrapped content - to be added to views, below
 			if (tagCtx.props.link === false) {
@@ -1037,7 +1095,7 @@ informal pre V1.0 commit counter: 61 */
 		error("Syntax error\n" + message);
 	}
 
-	function tmplFn(markup, tmpl, isLinkExpr, convertBack) {
+	function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 		// Compile markup to AST (abtract syntax tree) then build the template function code from the AST nodes
 		// Used for compiling templates, and also by JsViews to build functions for data link expressions
 
@@ -1062,7 +1120,7 @@ informal pre V1.0 commit counter: 61 */
 				colon = ":";
 				converter = htmlStr;
 			}
-			slash = slash || isLinkExpr;
+			slash = slash || isLinkExpr && !hasElse;
 
 			var pathBindings = (bind || isLinkExpr) && [[]],
 				props = "",
@@ -1089,7 +1147,7 @@ informal pre V1.0 commit counter: 61 */
 					if (rTestElseIf.test(params)) {
 						syntaxError('for "{{else if expr}}" use "{{else expr}}"');
 					}
-					pathBindings = current[7];
+					pathBindings = current[7] && [[]];
 					current[8] = markup.substring(current[8], index); // contentMarkup for block tag
 					current = stack.pop();
 					content = current[2];
@@ -1117,10 +1175,10 @@ informal pre V1.0 commit counter: 61 */
 							}
 							return "";
 						}).slice(0, -1);
+				}
 
-					if (pathBindings && pathBindings[0]) {
-						pathBindings.pop(); // Remove the bindings that was prepared for next arg. (There is always an extra one ready).
-					}
+				if (pathBindings && pathBindings[0]) {
+					pathBindings.pop(); // Remove the bindings that was prepared for next arg. (There is always an extra one ready).
 				}
 
 				newNode = [
@@ -1182,7 +1240,7 @@ informal pre V1.0 commit counter: 61 */
 
 		if (isLinkExpr) {
 			result = buildCode(astTop, markup, isLinkExpr);
-			setPaths(result, astTop[0][7]); // With data-link expressions, pathBindings array is astTop[0][7]
+			setPaths(result, [astTop[0][7]]); // With data-link expressions, pathBindings array is astTop[0][7]
 		} else {
 			result = buildCode(astTop, tmpl);
 		}
@@ -1192,15 +1250,21 @@ informal pre V1.0 commit counter: 61 */
 		return result;
 	}
 
-	function setPaths(fn, paths) {
+	function setPaths(fn, pathsArr) {
+		var key, paths,
+			i = 0,
+			l = pathsArr.length;
 		fn.deps = [];
-		for (var key in paths) {
-			if (key !== "_jsvto" && paths[key].length) {
-				fn.deps = fn.deps.concat(paths[key]); // deps is the concatenation of the paths arrays for the different bindings
+		for (; i < l; i++) {
+			paths = pathsArr[i];
+			for (key in paths) {
+				if (key !== "_jsvto" && paths[key].length) {
+					fn.deps = fn.deps.concat(paths[key]); // deps is the concatenation of the paths arrays for the different bindings
+				}
 			}
 		}
 		fn.paths = paths; // The array of paths arrays for the different bindings
-	}
+}
 
 	function parsedParam(args, props, ctx) {
 		return [args.slice(0, -1), props.slice(0, -1), ctx.slice(0, -1)];
@@ -1216,6 +1280,7 @@ informal pre V1.0 commit counter: 61 */
 		// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|\s)|[)\]])([([]?))|(\s+)/g,
 		//   lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                    prn2  space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+			bound = bindings && bound;
 			if (bound && !eq) {
 				path = bound + path; // e.g. some.fn(...)^some.path - so here path is "^some.path"
 			}
@@ -1425,15 +1490,18 @@ informal pre V1.0 commit counter: 61 */
 					code += ";\n" + node[1] + "\nret=ret";
 				} else {
 					converter = node[1];
-					content = node[2];
+					content = !isLinkExpr && node[2];
 					tagCtx = paramStructure(node[3], 'params') + '},' + paramStructure(params = node[4]);
 					onError = node[5];
 					trigger = node[6];
 					markup = node[8];
-					if (!(isElse = tagName === "else")) {
+					if (isElse = tagName === "else") {
+						pathBindings && pathBindings.push(node[7]);
+					} else {
 						tmplBindingKey = 0;
 						if (tmplBindings && (pathBindings = node[7])) { // Array of paths, or false if not data-bound
-							tmplBindingKey = tmplBindings.push(pathBindings);
+							pathBindings = [pathBindings];
+							tmplBindingKey = tmplBindings.push(1); // Add placeholder in tmplBindings for compiled function
 						}
 					}
 					if (isGetVal = tagName === ":") {
@@ -1441,7 +1509,7 @@ informal pre V1.0 commit counter: 61 */
 							tagName = converter === htmlStr ? ">" : converter + tagName;
 						}
 					} else {
-						if (content) {
+						if (content) { // TODO optimize - if content.length === 0 or if there is a tmpl="..." specified - set content to null / don't run this compilation code - since content won't get used!!
 							// Create template object for nested template
 							nestedTmpl = TmplObject(markup, tmplOptions);
 							nestedTmpl.tmplName = tmplName + "/" + tagName;
@@ -1504,7 +1572,7 @@ informal pre V1.0 commit counter: 61 */
 							// This is a bound tag (data-link expression or inline bound tag {^{tag ...}}) so we store a compiled tagCtxs function in tmp.bnds
 							code = new Function("data,view,j,u", " // " + tmplName + " " + tmplBindingKey + " " + tagAndElses + "\nreturn " + code + ";");
 							code._er = onError;
-							code._tag = tagName;
+							code._tag = tagAndElses;
 							if (pathBindings) {
 								setPaths(tmplBindings[tmplBindingKey - 1] = code, pathBindings);
 							}
