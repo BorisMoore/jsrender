@@ -120,7 +120,7 @@ test("types", function() {
 });
 
 test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fallback'}}, etc.", function() {
-	equal($.templates("{{:a.missing.willThrow.path}}").render({a:1}).slice(0, 19), "{Error: TypeError: ",
+	equal($.templates("{{:a.missing.willThrow.path}}").render({a:1}).slice(0, 8), "{Error: ",
 		"{{:a.missing.willThrow.path}} throws");
 	equal($.templates("{{:a.missing.willThrow.path onError='Missing Object'}}").render({a:1}), "Missing Object",
 		'{{:a.missing.willThrow.path onError="Missing Object"}} renders "Missing Object"');
@@ -239,7 +239,7 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 		myCb: function(e, view) {
 			return "myCallback: " + view.data.a;
 		}
-	}).slice(0, 19), "{Error: TypeError: ",
+	}).slice(0, 8), "{Error: ",
 	'onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
 
 	equal($.templates("{{for missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
@@ -310,7 +310,7 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 		myCb: function(e, view) {
 			return "myCallback: " + view.data.a;
 		}
-	}).slice(0, 19), "{Error: TypeError: ",
+	}).slice(0, 8), "{Error: ",
 	'onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
 
 });
@@ -352,10 +352,15 @@ test("context", 5, function() {
 	function format(value, upper) {
 		return value[upper ? "toUpperCase" : "toLowerCase"]();
 	}
-	equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, { format: format }), "joJO", "render(data, { format: formatFn }); ... {{:~format(name, true)}}");
-	equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({ people: people}, { format: format, type: "PascalCase" }), "pascalcaseJO", "render(data, { format: formatFn }); ... {{:~format(name, true)}}");
-	equal($.templates("{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}").render({ people: people, town:"Redmond" }, { format: format }), "Jo lives in REDMOND. Bill lives in REDMOND. ", "Passing in context to nested templates: {{for people ~twn=town}}");
-	equal($.templates("{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({ people: people}), "JoJo", "{{:~root}} returns the top-level data");
+	equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, { format: format }), "joJO",
+		"render(data, { format: formatFn }); ... {{:~format(name, true)}}");
+	equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({ people: people}, { format: format, type: "PascalCase" }), "pascalcaseJO",
+		"render(data, { format: formatFn }); ... {{:~format(name, true)}}");
+	equal($.templates("{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}").render({ people: people, town:"Redmond" }, { format: format }),
+		"Jo lives in REDMOND. Bill lives in REDMOND. ",
+		"Passing in context to nested templates: {{for people ~twn=town}}");
+	equal($.templates("{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({ people: people}), "JoJo",
+		"{{:~root}} returns the top-level data");
 });
 
 test("values", 4, function() {
@@ -452,6 +457,146 @@ test("{{props}}", 15, function() {
 	equal($.render.propsTmpl({person:{zero: 0, one: 1, str: "abc", emptyStr: "", nullVal: null , trueVal: true , falseVal: false}}),
 	"header_Key: zero - Prop: 0| Key: one - Prop: 1| Key: str - Prop: abc| Key: emptyStr - Prop: | Key: nullVal - Prop: | Key: trueVal - Prop: true| Key: falseVal - Prop: false| _footer",
 	'Primitive types render correctly, even if falsey');
+});
+
+module("All tags");
+test("itemVar", 10, function() {
+	var otherPeople = [
+		{name: "Jo", otherTels: [1, 2]},
+		{name: "Bill", tels: [91,92]},
+		{name: "Fred"}
+	];
+
+	equal($.templates(
+		"{{for people itemVar='person'}}"
+			+ "{{:~person.name}} "
+		+ "{{/for}}"
+		).render({ people: people}),
+		"{Error: Syntax error\nUse itemVar='~myItem'}",
+		"Setting itemVar='something' without initial '~' throws syntax error");
+
+	equal($.templates(
+		"{{for people itemVar='~person'}}"
+			+ "{{:~person.name}} "
+		+ "{{/for}}"
+		).render({ people: people}),
+		"Jo Bill ",
+		"Setting {{for people itemVar='~person'}} creates ~person contextual variable");
+
+	equal($.templates(
+		"{{for people}}"
+			+ "{{:name}}"
+		+ "{{else others itemVar='~otherPerson'}}"
+			+ "{{:~otherPerson.name}} "
+		+ "{{/for}}"
+		).render({others: people}),
+		"Jo Bill ",
+		"Can use itemVar on {{for}}{{else}} too: {{else others itemVar='~otherPerson'}}");
+
+	equal($.templates(
+		"{{for people}}"
+			+ "{{if tels itemVar='~person'}}"
+				+ "{{:name}} {{:~person.name}} "
+			+ "{{else otherTels itemVar='~sameperson'}}"
+				+ "{{:~sameperson.name}} "
+			+ "{{else itemVar='~stillperson'}}"
+				+ "{{:~stillperson.name}} "
+			+ "{{/if}}"
+		+ "{{/for}}"
+		).render({ people: otherPeople }),
+		"Jo Bill Bill Fred ",
+		"itemVar works also on {{if}}{{else}}{{/if}} even though the context is same as outer context for {{if}}.");
+
+	equal($.templates(
+		"{{for people itemVar='~person'}}"
+			+ "{{for tels itemVar='~tel'}}"
+				+ "{{:~person.name}} "
+				+ "{{:~tel}} "
+			+ "{{else otherTels itemVar='~othertel'}}"
+				+ "{{:~person.name}} "
+				+ "{{:~othertel}} "
+			+ "{{else itemVar='~theperson'}}"
+				+ "{{:~theperson===~person&&~person===#data}} "
+				+ "{{:~theperson.name}} "
+				+ "no phones"
+			+ "{{/for}}"
+		+ "{{/for}}"
+		).render({ people: otherPeople }),
+		"Jo 1 Jo 2 Bill 91 Bill 92 true Fred no phones",
+		"itemVar works also on {{for arr1}}{{else arr2}}{{else}}{{/for}} even though the context for the final {{else}} is the same as outer context for {{if}}.");
+
+	equal($.templates(
+		"{{for people itemVar='~person'}}"
+			+ "{{:~person.name}}"
+			+ "{{if ~person.tels itemVar='~ifVar'}}"
+					+ " Phones:"
+					+ "{{for ~ifVar.tels itemVar='~tel'}}"
+						+ " {{:~tel}}"
+					+ "{{/for}}"
+				+ "{{/if}}. "
+			+ "{{/for}}"
+		).render({ people: otherPeople }),
+		"Jo. Bill Phones: 91 92. Fred. ",
+		"Using itemVar and passing context to nested templates");
+
+	equal($.templates(
+		"{{for people itemVar='~person'}}"
+			+ "{{:~person.name}}"
+			+ "{{for ~person.tels itemVar='~tel'}}"
+				+ " {{:~tel}}"
+			+ "{{else otherTels itemVar='~tel'}}"
+				+ " {{:~tel}}"
+			+ "{{else}}"
+				+ " (No phones)"
+			+ "{{/for}}"
+			+ ". "
+		+ "{{/for}}"
+		).render({ people: otherPeople }),
+		"Jo 1 2. Bill 91 92. Fred (No phones). ",
+		"Additional example using itemVar and passing context to nested templates");
+
+	equal($.templates({
+		markup: 
+			"{{wrappedFor people 'u' itemVar='~person'}}"
+				+ "{{:~person.name}} "
+				+ "{{wrappedFor ~person.tels 'i' itemVar='~tel'}}"
+					+ "{{:~tel}} "
+				+ "{{else otherTels 'b' itemVar='~tel'}}"
+					+ "{{:~tel}} "
+				+ "{{/wrappedFor}}"
+			+ "{{/wrappedFor}}",
+			tags: {
+				wrappedFor: function(val, wrapTag) {
+					if (val) {
+						return "<" + wrapTag + ">" + this.tagCtx.render(val) + "</" + wrapTag + ">";
+					}
+				}
+			}
+		}).render({ people: otherPeople }),
+		"<u>Jo  <b>1 2 </b>Bill <i>91 92 </i> Fred   </u>",
+		"itemVar with custom tags {{wrappedFor}}{{else}}{{/wrappedFor}}, and passing context to nested templates");
+
+	equal($.templates(
+		"{{for people itemVar='~person'}}"
+			+ "{{props ~person itemVar='~prop'}}"
+				+ "{{:~prop.key}}: {{:~prop.prop}} "
+			+ "{{/props}}"
+		+ "{{/for}}"
+		).render({ people: otherPeople }),
+		"name: Jo otherTels: 1,2 name: Bill tels: 91,92 name: Fred ",
+		"itemVar with {{props}}, and passing context to nested templates");
+
+	equal($.templates(
+		"{{for people itemVar='~person'}}"
+			+ "{{props ~person.tels itemVar='~prop'}}"
+				+ "{{:~person.name}} Tel: {{:~prop.key}}: {{:~prop.prop}} "
+			+ "{{else itemVar='~personWithoutTels'}}"
+				+ "{{:~personWithoutTels.name}}: has no tels "
+			+ "{{/props}}"
+		+ "{{/for}}"
+		).render({ people: otherPeople }),
+		"Jo: has no tels Bill Tel: 0: 91 Bill Tel: 1: 92 Fred: has no tels ",
+		"itemVar with {{props}}{{else}}{{/props}}, and passing context to nested templates");
 });
 
 module("api");
@@ -714,16 +859,6 @@ test("tags", function() {
 		},
 		templateReturnsEmpty: {
 			template: "{{:a}}"
-		},
-		tagInitIsFalse: {
-			init:false,
-			render: function(){
-				return "Foo" + JSON.stringify(this.__proto__ || {});
-			}
-		},
-		tagInitIsFalseWithTemplate: {
-			init:false,
-			template: "Foo "
 		}
 
 	});
@@ -743,12 +878,6 @@ test("tags", function() {
 
 	equal($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
-
-	equal($.views.tags.tagInitIsFalse.constructor === Object && $.templates("a{{tagInitIsFalse/}}b{^{tagInitIsFalse/}}c{{tagInitIsFalse}}{{/tagInitIsFalse}}d{^{tagInitIsFalse}}{{/tagInitIsFalse}}e").render(1), "aFoo{}bFoo{}cFoo{}dFoo{}e",
-	"Tag with init:false renders with render method - and has no prototype or constructor (plain object)");
-
-	equal($.views.tags.tagInitIsFalseWithTemplate.constructor === Object && $.templates("a{{tagInitIsFalseWithTemplate/}}b{^{tagInitIsFalseWithTemplate/}}c{{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}d{^{tagInitIsFalseWithTemplate}}{{/tagInitIsFalseWithTemplate}}e").render(1), "aFoo bFoo cFoo dFoo e",
-	"Tag with init:false and template renders template");
 
 	$.views.tags({
 		tagJustTemplate: {
@@ -938,7 +1067,7 @@ test("derived tags", function() {
 	result = tmpl.render({});
 
 	// ............................... Assert .................................
-	equal(result.slice(0, 18), "{Error: TypeError:", "Calling base or baseApply when there is no base tag: Type Error");
+	equal(result.slice(0, 8), "{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}}");
