@@ -1,4 +1,4 @@
-/*global test, equal, module, test, ok, QUnit, _jsv, viewsAndBindings */
+/*global test, equal, module, ok, QUnit, _jsv, viewsAndBindings */
 (function(global, $, undefined) {
 "use strict";
 
@@ -26,7 +26,7 @@ var tmplString =  "A_{{:name}}_B";
 
 module("api");
 
-test("templates", 17, function() {
+test("templates", function() {
 	equal($.templates("#my_tmpl2").render(), isIE8 ? "\n' \" \\ \\' \\\"" : "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
 	equal($.templates("' \" \\ \\' \\\"").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template compiled from string");
 
@@ -41,6 +41,7 @@ test("templates", 17, function() {
 	equal($.templates(tmplString).render(person), "A_Jo_B", 'Compile without registering as named template: $.templates(tmplString).render(person);');
 
 	var tmpl2 = $.templates("#my_tmpl");
+	tmpl2 = $.templates("#my_tmpl");
 	equal($.trim(tmpl2.render(person)), "A_Jo_B", 'var tmpl = $.templates("#my_tmpl"); returns compiled template for script element');
 
 	$.templates({
@@ -49,9 +50,6 @@ test("templates", 17, function() {
 		}
 	});
 	equal($.trim($.render.my_tmpl3(person)), "A_Jo_B", 'Named template for template object with selector: { markup: "#my_tmpl" }');
-
-	tmpl2 = $.templates("#my_tmpl");
-	equal($.trim(tmpl2.render(person)), "A_Jo_B", 'var tmpl = $.templates("#my_tmpl"); returns compiled template for script element');
 
 	var tmpl3 = $.templates("", {
 		markup: "#my_tmpl"
@@ -63,15 +61,23 @@ test("templates", 17, function() {
 	});
 	equal($.trim(tmpl4.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: { markup: "#my_tmpl" }');
 
-	equal(	$.templates("#my_tmpl").fn === tmpl2.fn && tmpl2.fn === tmpl3.fn, true, '$.templates("#my_tmpl") caches compiled template, and does not recompile each time;');
+	equal($.templates("#my_tmpl"), $.templates("#my_tmpl"), '$.templates("#my_tmpl") caches compiled template, and does not recompile each time;');
 
-	equal(	tmpl2 === $.templates("", "#my_tmpl") && tmpl4 === tmpl2, true, '$.templates("#my_tmpl"), $.templates({markup: "#my_tmpl"}) and $.templates("", "#my_tmpl") are equivalent');
+	ok($.templates({markup: "#my_tmpl"}) !== $.templates({markup: "#my_tmpl"}), '$.templates({markup: "#my_tmpl" ...}) recompiles template, so as to merge additional options;');
 
-	var cloned = $.templates("cloned", "#my_tmpl");
-	equal(	cloned !== tmpl2 && cloned.tmplName === "cloned", true, '$.templates("cloned", "#my_tmpl") will clone the cached template');
+	equal($.templates("", "#my_tmpl"), $.templates("#my_tmpl"), '$.templates("#my_tmpl") and $.templates("", "#my_tmpl") are equivalent');
 
-	$.templates({ cloned: "#my_tmpl" });
-	equal(	$.templates.cloned !== tmpl2 && $.templates.cloned.tmplName === "cloned", true, '$.templates({ cloned: "#my_tmpl" }) will clone the cached template');
+	var renamed = $.templates("renamed", "#my_tmpl");
+	ok(renamed === tmpl2 && renamed.tmplName === "renamed", '$.templates("renamed", "#my_tmpl") will rename the cached template');
+
+	$.templates({ renamed2: "#my_tmpl" });
+	ok($.templates.renamed2 === tmpl2 && $.templates.renamed2.tmplName === "renamed2", '$.templates({ renamed2: "#my_tmpl" }) will rename the cached template');
+
+	$.templates("cloned", {markup: "#my_tmpl"});
+	ok($.templates.cloned !== tmpl2 && $.templates.cloned.tmplName === "cloned", '$.templates("cloned", {markup: "#my_tmpl" } }) will clone the cached template');
+
+	$.templates({ cloned2: {markup: "#my_tmpl"} });
+	ok($.templates.cloned2 !== tmpl2 && $.templates.cloned2.tmplName === "cloned2", '$.templates({ cloned: {markup: "#my_tmpl" } }) will clone the cached template');
 
 	$.templates("my_tmpl", null);
 	equal($.templates.my_tmpl, undefined, 'Remove a named template:  $.templates("my_tmpl", null);');

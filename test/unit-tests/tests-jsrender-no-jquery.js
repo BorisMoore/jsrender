@@ -1,4 +1,4 @@
-/*global test, equal, module, test, ok, QUnit, _jsv, viewsAndBindings */
+/*global test, equal, module, ok, QUnit, _jsv, viewsAndBindings */
 (function(global, $, undefined) {
 "use strict";
 
@@ -42,7 +42,9 @@ module("tagParser");
 test("{{if}} {{else}}", 4, function() {
 	equal(compileTmpl("A_{{if true}}{{/if}}_B"), "compiled", "Empty if block: {{if}}{{/if}}");
 	equal(compileTmpl("A_{{if true}}yes{{/if}}_B"), "compiled", "{{if}}...{{/if}}");
-	equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\nA_{{if true/}}yes{{/if}}_B", "unmatched or missing tag error");
+$.views.settings.debugMode(true);
+	equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing {{/if}}, in template:\nA_{{if true/}}yes{{/if}}_B", "unmatched or missing tag error");
+$.views.settings.debugMode(false);
 	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
 });
 
@@ -106,6 +108,7 @@ test("paths", 17, function() {
 
 test("types", function() {
 	equal($.templates("{{:'abc'}}").render(), "abc", "'abc'");
+	equal($.templates('{{:"abc"}}').render(), "abc", '"abc"');
 	equal($.templates("{{:true}}").render(), "true", "true");
 	equal($.templates("{{:false}}").render(), "false", "false");
 	equal($.templates("{{:null}}").render(), "", 'null -> ""');
@@ -117,11 +120,22 @@ test("types", function() {
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
 	equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
 	equal($.templates("{{:x=22}}").render("aString"), "aString", "{{:x=...}} returns current data item");
+	equal($.templates("{{:'abc('}}").render(), "abc(", "'abc(': final paren in string is rendered correctly"); // https://github.com/BorisMoore/jsviews/issues/300
+	equal($.templates('{{:"abc("}}').render(), "abc(", '"abc(": final paren in string is rendered correctly');
+	equal($.templates("{{:(('(abc('))}}").render(), "(abc(", "(('(abc('))");
+	equal($.templates('{{:((")abc)"))}}').render(), ")abc)", '((")abc)"))');
 });
 
 test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fallback'}}, etc.", function() {
-	equal($.templates("{{:a.missing.willThrow.path}}").render({a:1}).slice(0, 8), "{Error: ",
-		"{{:a.missing.willThrow.path}} throws");
+	var message;
+	try {
+		$.templates("{{:a.missing.willThrow.path}}").render({a:1});
+	} catch (e) {
+		message = e.message;
+	}
+	ok(!!message,
+		"{{:a.missing.willThrow.path}} throws: " + message);
+
 	equal($.templates("{{:a.missing.willThrow.path onError='Missing Object'}}").render({a:1}), "Missing Object",
 		'{{:a.missing.willThrow.path onError="Missing Object"}} renders "Missing Object"');
 	equal($.templates('{{:a.missing.willThrow.path onError=""}}').render({a:1}), "",
@@ -218,29 +232,35 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 	}), "1: defaultFromData 2: Missing Object 3:  4: aVal 5:  6: myCallback: aVal 7: undefined prop end",
 	'multiple onError fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
 
-	equal($.templates({
-		markup: "1: {{>a.missing.willThrow.path onError=defaultVal}}" +
-		" 2: {{:a.missing.willThrow.path onError='Missing Object'}}" +
-		" 3: {{:a.missing.willThrow.path onError=''}}" +
-		" 4: {{:a onError='missing'}}" +
-		" 5: {{:a.missing.willThrow.foo}}" +
-		" 6: {{:a.undefined onError='missing'}}" +
-		" 7: {{:a.missing.willThrow onError=myCb}}" +
-		" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
-		converters: {
-			withfallback: function(val) {
-				return val || this.tagCtx.props.fallback;
+	try {
+		message = "";
+		$.templates({
+			markup: "1: {{>a.missing.willThrow.path onError=defaultVal}}" +
+			" 2: {{:a.missing.willThrow.path onError='Missing Object'}}" +
+			" 3: {{:a.missing.willThrow.path onError=''}}" +
+			" 4: {{:a onError='missing'}}" +
+			" 5: {{:a.missing.willThrow.foo}}" +
+			" 6: {{:a.undefined onError='missing'}}" +
+			" 7: {{:a.missing.willThrow onError=myCb}}" +
+			" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
+			converters: {
+				withfallback: function(val) {
+					return val || this.tagCtx.props.fallback;
+				}
 			}
-		}
-	}).render(
-		{
-		a:"aVal",
-		defaultVal: "defaultFromData",
-		myCb: function(e, view) {
-			return "myCallback: " + view.data.a;
-		}
-	}).slice(0, 8), "{Error: ",
-	'onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+		}).render({
+			a:"aVal",
+			defaultVal: "defaultFromData",
+			myCb: function(e, view) {
+				return "myCallback: " + view.data.a;
+			}
+		});
+	} catch (e) {
+		message = e.message;
+	}
+	
+	ok(!!message,
+		'onError/fallback converter and regular thrown error message in same template: throws: "' + message + '"');
 
 	equal($.templates("{{for missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
 		'{{for missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
@@ -289,6 +309,37 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 	}), "1: defaultFromData 2: Missing Object 3:  4: yes 5:  6: myCallback: aVal 7: undefined prop end 8: Missing Object",
 	'multiple onError fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
 
+	try {
+		message = "";
+		$.templates({
+			markup: "1: {{for a.missing.willThrow.path onError=defaultVal}}yes{{/for}}" +
+			" 2: {{if a.missing.willThrow.path onError='Missing Object'}}yes{{/if}}" +
+			" 3: {{include a.missing.willThrow.path onError=''/}}" +
+			" 4: {{if a onError='missing'}}yes{{/if}}" +
+			" 5: {{for missing.willThrow.foo}}yes{{/for}}" +
+			" 6: {{for a.undefined onError='missing'}}yes{{/for}}" +
+			" 7: {{if a.missing.willThrow onError=myCb}}yes{{/if}}" +
+			" 8: {{withfallback:a.undefined fallback='undefined prop'}} end",
+			converters: {
+				withfallback: function(val) {
+					return val || this.tagCtx.props.fallback;
+				}
+			}
+		}).render({
+			a:"aVal",
+			defaultVal: "defaultFromData",
+			myCb: function(e, view) {
+				return "myCallback: " + view.data.a;
+			}
+		});
+	} catch (e) {
+		message = e.message;
+	}
+	
+	ok(!!message,
+		'onError/fallback converter and regular thrown error message in same template: throws: "' + message + '"');
+
+	$.views.settings.debugMode(true);
 	equal($.templates({
 		markup: "1: {{for a.missing.willThrow.path onError=defaultVal}}yes{{/for}}" +
 		" 2: {{if a.missing.willThrow.path onError='Missing Object'}}yes{{/if}}" +
@@ -311,7 +362,8 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 			return "myCallback: " + view.data.a;
 		}
 	}).slice(0, 8), "{Error: ",
-	'onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+	'In debug mode, onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+	$.views.settings.debugMode(false);
 
 });
 
@@ -459,6 +511,117 @@ test("{{props}}", 15, function() {
 	'Primitive types render correctly, even if falsey');
 });
 
+module("allowCode");
+test("{{*}}", function() {
+	// =============================== Arrange ===============================
+	window.glob = {a: "AA"};
+
+	var tmpl = $.templates("_{{*:glob.a}}_");
+
+	// ................................ Assert ..................................
+	equal(tmpl.render(), "__",
+		"{{*:expression}} returns nothing if allowCode not set to true");
+
+	// =============================== Arrange ===============================
+	$.views.settings.allowCode = true;
+
+	var result = "" + !!tmpl.allowCode + " " + tmpl.render(); // Still returns "__" until we recompile
+
+	tmpl.allowCode = true;
+
+	result += "|" + !!tmpl.allowCode + " " + tmpl.render(); // Still returns "__" until we recompile
+
+	// ................................ Assert ..................................
+	equal(result, "false __|true __",
+		"If $.settings.allowCode or tmpl.allowCode are set to true, previously compiled template is unchanged, so {{*}} still inactive");
+
+	// ................................ Act ..................................
+	tmpl = $.templates("_{{*:glob.a}}_");
+
+	result = "" + !!tmpl.allowCode + " " + tmpl.render(); // Now {{*}} is active
+
+	// ................................ Assert ..................................
+	equal(result, "true _AA_",
+		"If $.settings.allowCode set to true, {{*: expression}} returns evaluated expression, with access to globals");
+	
+	// =============================== Arrange ===============================
+	$.views.settings.allowCode = false;
+
+	tmpl = $.templates({
+		markup: "_{{*:glob.a}}_",
+		allowCode: true
+	});
+
+	// ................................ Assert ..................................
+	equal(tmpl.render(), "_AA_",
+		"If template allowCode property set to true, {{*: expression}} returns evaluated expression, with access to globals");
+
+	// ................................ Act ..................................
+	tmpl = $.templates({
+		markup: "_{{*:glob.a}}_",
+	});
+
+	result = "" + !!tmpl.allowCode + ":" + tmpl();
+
+	tmpl = $.templates({markup: tmpl, allowCode: true});
+
+	result += "|" + tmpl.allowCode + ":" + tmpl();
+
+	// ................................ Assert ..................................
+	equal(result, "false:__|true:_AA_",
+		"Can recompile tmpl to allow code, using tmpl = $.templates({markup: tmpl, allowCode: true})");
+
+	// ................................ Act ..................................
+	$.templates("myTmpl", {
+		markup: "_{{*:glob.a}}_",
+	});
+
+	tmpl = $.templates.myTmpl;
+	
+	result = "" + !!tmpl.allowCode + ":" + tmpl();
+
+	$.templates("myTmpl", {markup: $.templates.myTmpl, allowCode: true});
+
+	tmpl = $.templates.myTmpl;
+
+	result += "|" + tmpl.allowCode + ":" + tmpl();
+
+	// ................................ Assert ..................................
+	equal(result, "false:__|true:_AA_",
+		'Can recompile named tmpl to allow code, using $.templates("myTemplateName", {markup: $.templates.myTmpl, allowCode:true})"');
+
+	// =============================== Arrange ===============================
+	$.views.settings.allowCode = true;
+	window.people = people;
+	tmpl = $.templates("{{:start}}"
+
+		+ "{{* for (var i=0, l=people.length; i<l; i++) { }}"
+			+ " {{:title}} = {{*: people[i].name + ' ' + data.sep + ' '}}!"
+		+ "{{* } }}"
+
+		+ "{{:end}}");
+
+	// ................................ Assert ..................................
+	equal(tmpl.render({title: "name", start: "Start", end: "End", sep: "..."}), "Start name = Jo ... ! name = Bill ... !End",
+		"If allowCode set to true, on recompiling the template, {{*:expression}} returns evaluated expression, with access to globals");
+
+	// ................................ Act ..................................
+	window.myFunction = function() {
+		return "myGlobalfunction ";
+	};
+	document.title = "myTitle";
+	tmpl = $.templates("{{for people}}"
+		+ "{{*: ' ' + glob.a}} {{*: data.name}} {{*: view.index}} {{*: view.ctx.myHelper}} {{*: myFunction() + document.title}}"
+	+ "{{/for}}"
+
+	);
+	// ................................ Assert ..................................
+	equal(tmpl.render({people: people}, {myHelper: "hi"}), " AA Jo 0 hi myGlobalfunction myTitle AA Bill 1 hi myGlobalfunction myTitle",
+		"{{* expression}} or {{*: expression}} can access globals, the data, the view, the view context, global functions etc.");
+
+	document.title = "";
+});
+
 module("All tags");
 test("itemVar", 10, function() {
 	var otherPeople = [
@@ -466,13 +629,19 @@ test("itemVar", 10, function() {
 		{name: "Bill", tels: [91,92]},
 		{name: "Fred"}
 	];
+	var message = "";
+	try {
+		$.templates(
+			"{{for people itemVar='person'}}"
+				+ "{{:~person.name}} "
+			+ "{{/for}}"
+			).render({ people: people});
+	}
+	catch (e) {
+		message = e.message;	
+	}
 
-	equal($.templates(
-		"{{for people itemVar='person'}}"
-			+ "{{:~person.name}} "
-		+ "{{/for}}"
-		).render({ people: people}),
-		"{Error: Syntax error\nUse itemVar='~myItem'}",
+	equal(message, "Syntax error\nUse itemVar='~myItem'",
 		"Setting itemVar='something' without initial '~' throws syntax error");
 
 	equal($.templates(
@@ -556,7 +725,7 @@ test("itemVar", 10, function() {
 		"Additional example using itemVar and passing context to nested templates");
 
 	equal($.templates({
-		markup: 
+		markup:
 			"{{wrappedFor people 'u' itemVar='~person'}}"
 				+ "{{:~person.name}} "
 				+ "{{wrappedFor ~person.tels 'i' itemVar='~tel'}}"
@@ -600,55 +769,127 @@ test("itemVar", 10, function() {
 });
 
 module("api");
-test("templates", 14, function() {
+test("templates", function() {
+	// =============================== Arrange ===============================
+	tmplString = "A_{{:name}}_B";
+
 	var tmpl = $.templates(tmplString);
-	equal(tmpl.render(person), "A_Jo_B", 'Compile from string: var tmpl = $.templates(tmplString);');
+	// ............................... Assert .................................
+	equal(tmpl.render(person), "A_Jo_B",
+		'Compile from string: var tmpl = $.templates(tmplString);');
 
+	// ............................... Assert .................................
+	equal(tmpl(person), "A_Jo_B",
+		'Compiled template is itself the render function: html = tmpl(data);');
+
+	// =============================== Arrange ===============================
 	var fnToString = tmpl.fn.toString();
+
+	// ............................... Assert .................................
 	equal($.templates("", tmplString).fn.toString() === fnToString && $.templates(null, tmplString).fn.toString() === fnToString && $.templates(undefined, tmplString).fn.toString() === fnToString, true,
-	'if name is "", null, or undefined, then $.templates(name, tmplString) = $.templates(tmplString);');
+		'if name is "", null, or undefined, then var tmpl = $.templates(name, tmplString) is equivalent to var tmpl = $.templates(tmplString);');
 
+	// =============================== Arrange ===============================
 	$.templates("myTmpl", tmplString);
-	equal($.render.myTmpl(person), "A_Jo_B", 'Compile and register named template: $.templates("myTmpl", tmplString);');
 
+	// ............................... Assert .................................
+	equal($.render.myTmpl(person), "A_Jo_B",
+		'Compile and register named template: $.templates("myTmpl", tmplString);');
+
+	// =============================== Arrange ===============================
 	$.templates({ myTmpl2: tmplString, myTmpl3: "X_{{:name}}_Y" });
-	equal($.render.myTmpl2(person) + $.render.myTmpl3(person), "A_Jo_BX_Jo_Y", 'Compile and register named templates: $.templates({ myTmpl: tmplString, myTmpl2: tmplString2 });');
 
+	// ............................... Assert .................................
+	equal($.render.myTmpl2(person) + $.render.myTmpl3(person), "A_Jo_BX_Jo_Y",
+		'Compile and register named templates: $.templates({ myTmpl: tmplString, myTmpl2: tmplString2 });');
+
+	// =============================== Arrange ===============================
 	$.templates("!'-#==", "x");
 	$.templates({ '&^~>"2': "y" });
-	equal($.render["!'-#=="](person) + $.render['&^~>"2'](person), "xy", 'Named templates can have arbitrary names;');
+	equal($.render["!'-#=="](person) + $.render['&^~>"2'](person), "xy",
+		'Named templates can have arbitrary names;');
 
 	$.templates({ myTmpl4: "A_B" });
-	equal($.render.myTmpl4(person), "A_B", '$.templates({ myTmpl: htmlWithNoTags });');
 
-	$.templates({
-		myTmpl5: {
-			markup: tmplString
-		}
+	// ............................... Assert .................................
+	equal($.render.myTmpl4(person), "A_B",
+		'$.templates({ myTmpl: htmlWithNoTags });');
+
+	// =============================== Arrange ===============================
+	$.templates("myTmpl5", {
+		markup: tmplString
 	});
-	equal($.render.myTmpl5(person), "A_Jo_B", '$.templates("myTmpl", tmplObjWithMarkupString);');
 
-	equal($.templates("", { markup: tmplString }).render(person), "A_Jo_B", 'Compile from template object without registering: $.templates("", tmplObjWithMarkupString);');
+	// ............................... Assert .................................
+	equal($.render.myTmpl5(person), "A_Jo_B",
+		'$.templates("myTmpl", {markup: markupString});');
 
+	// ............................... Assert .................................
+	equal($.templates("", { markup: tmplString }).render(person), "A_Jo_B",
+		'Compile from template object without registering: var tmpl = $.templates("", {markup: markupString});');
+
+	// ............................... Assert .................................
+	equal($.templates({ markup: tmplString }).render(person), "A_Jo_B",
+		'Compile from template object without registering: var tmpl = $.templates({markup: markupString});');
+
+	// =============================== Arrange ===============================
 	$.templates({
 		myTmpl6: {
 			markup: tmplString
 		}
 	});
-	equal($.render.myTmpl6(person), "A_Jo_B", '$.templates("myTmpl", tmplObjWithMarkupString);');
 
+	// ............................... Assert .................................
+	equal($.render.myTmpl6(person), "A_Jo_B",
+		'$.templates({myTmpl: {markup: markupString}});');
+
+	// =============================== Arrange ===============================
 	$.templates("myTmpl7", tmpl);
-	equal($.render.myTmpl7(person), "A_Jo_B", 'Cloning a template: $.templates("newName", tmpl);');
 
-	equal($.templates("", tmpl) === tmpl, true, '$.templates(tmpl) returns tmpl');
+	// ............................... Assert .................................
+	equal($.render.myTmpl7(person), "A_Jo_B",
+		'Cloning a template: $.templates("newName", tmpl);');
 
-	equal($.templates("").render(), "", '$.templates("") is a template with empty string as content');
+	// ............................... Assert .................................
+	equal($.templates(tmpl) === tmpl, true,
+		'$.templates(tmpl) returns tmpl');
 
+	// ............................... Assert .................................
+	equal($.templates("", tmpl) === tmpl, true,
+		'$.templates("", tmpl) returns tmpl');
+
+	// =============================== Arrange ===============================
+	var tmplWithHelper = $.templates("A_{{:name}}_B{{:~foo}}");
+	var result = tmplWithHelper(person, {foo: "thisFoo"});
+
+	var tmplWithHelper2 = $.templates({markup: tmplWithHelper, helpers: {foo: "thatFoo"}});
+	result += "|" + tmplWithHelper2(person)
+
+	// ............................... Assert .................................
+	equal(result, "A_Jo_BthisFoo|A_Jo_BthatFoo",
+		'Cloning a template to add/replace/change some template properties: var tmpl2 = $.templates({markup: tmpl1, otherOptions...});');
+
+	// ............................... Assert .................................
+	equal($.templates("", tmpl) === tmpl, true,
+		'$.templates(tmpl) returns tmpl');
+
+	// ............................... Assert .................................
+	equal($.templates("").render(), "",
+		'$.templates("") is a template with empty string as content');
+
+	// =============================== Arrange ===============================
 	$.templates("myEmptyTmpl", "");
-	equal($.templates.myEmptyTmpl.render(), "", '$.templates("myEmptyTmpl", "") is a template with empty string as content');
 
+	// ............................... Assert .................................
+	equal($.templates.myEmptyTmpl.render(), "",
+		'$.templates("myEmptyTmpl", "") is a template with empty string as content');
+
+	// =============================== Arrange ===============================
 	$.templates("myTmpl", null);
-	equal($.templates.myTmpl, undefined, 'Remove a named template: $.templates("myTmpl", null);');
+
+	// ............................... Assert .................................
+	equal($.templates.myTmpl === undefined && $.render.myTmpl === undefined, false,
+		'Remove a named template: $.templates("myTmpl", null);');
 });
 
 test("render", 26, function() {
@@ -687,17 +928,17 @@ test("render", 26, function() {
 			+ '{{myWrap}}d{{:#index}} {{/myWrap}}'
 		+ '{{/for}}');
 
-		$.views.settings.debugMode(false);
+	$.views.settings.debugMode(true);
 
-		equal(templateWithIndex.render({people: [1,2]}),
-			"a0 b c0 d a1 b c1 d ",
-			"If debug mode is false, #index gives empty string in nested blocks. No error message");
+	equal(templateWithIndex.render({people: [1,2]}),
+		"a0 bFor #index in nested block use #getIndex(). c0 dFor #index in nested block use #getIndex(). a1 bFor #index in nested block use #getIndex(). c1 dFor #index in nested block use #getIndex(). ",
+		"If debug mode is true, #index gives error message in nested blocks.");
 
-		$.views.settings.debugMode(true);
+	$.views.settings.debugMode(false);
 
-		equal(templateWithIndex.render({people: [1,2]}),
-			"a0 bUnavailable (nested view): use #getIndex() c0 dUnavailable (nested view): use #getIndex() a1 bUnavailable (nested view): use #getIndex() c1 dUnavailable (nested view): use #getIndex() ",
-			"If debug mode is true, #index gives error message in nested blocks.");
+	equal(templateWithIndex.render({people: [1,2]}),
+		"a0 bFor #index in nested block use #getIndex(). c0 dFor #index in nested block use #getIndex(). a1 bFor #index in nested block use #getIndex(). c1 dFor #index in nested block use #getIndex(). ",
+		"If debug mode is false, #index still gives error message in nested blocks");
 
 	var templateWithGetIndex = $.templates(
 			'{{for people}}'
@@ -707,9 +948,9 @@ test("render", 26, function() {
 			+ '{{myWrap}}d{{:#getIndex()}} {{/myWrap}}'
 		+ '{{/for}}');
 
-		equal(templateWithGetIndex.render({people: [1,2]}),
-			"a0 b0 c0 d0 a1 b1 c1 d1 ",
-			"#getIndex gives inherited index in nested blocks.");
+	equal(templateWithGetIndex.render({people: [1,2]}),
+		"a0 b0 c0 d0 a1 b1 c1 d1 ",
+		"#getIndex gives inherited index in nested blocks.");
 
 	$.views.helpers({ myKeyIsCorrect: function() {
 		var view = this;
@@ -860,7 +1101,6 @@ test("tags", function() {
 		templateReturnsEmpty: {
 			template: "{{:a}}"
 		}
-
 	});
 
 	// ............................... Assert .................................
@@ -1054,6 +1294,7 @@ test("derived tags", function() {
 	equal(result, "a:A1 b:B11A11 c:C21A21FOO-C:21BAR-C212223 d:D31C31A31FOO-C:31BAR-C313233 e:E41D41C41A41FOO-E41FOO-C:41BAR-E414243BAR-C414243", "Complex multi-level inheritance chain");
 
 	// =============================== Arrange ===============================
+	$.views.settings.debugMode(true);
 	tmpl = $.templates("a:{{A 1 2 3/}}");
 
 		tagA = $.views.tags("A",
@@ -1062,10 +1303,11 @@ test("derived tags", function() {
 			},
 			tmpl
 		);
+	$.views.settings.debugMode(false);
 
 	// ................................ Act ..................................
 	result = tmpl.render({});
-
+	
 	// ............................... Assert .................................
 	equal(result.slice(0, 8), "{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
 
@@ -1089,7 +1331,7 @@ test("derived tags", function() {
 			tmpl
 		);
 
-		var tagC = $.views.tags("C",
+		tagC = $.views.tags("C",
 			{
 				baseTag: "A",
 				bar: function(x, y, z) {
@@ -1225,7 +1467,9 @@ test("settings", function() {
 	});
 
 	// ................................ Act ..................................
+	$.views.settings.debugMode(true);
 	result = $.templates('{{:missing.willThrow}}').render(app);
+	$.views.settings.debugMode();
 
 	// ............................... Assert .................................
 	equal(result.slice(0, 34), "Override error - Rendering error: ", "Override onError()");
@@ -1245,7 +1489,7 @@ test("settings", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing tag: "{{/if}}" in template:\n{{if}}', 'Override onError() - with thrown syntax error (missing {{/if}})');
+	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing {{/if}}, in template:\n{{if}}', 'Override onError() - with thrown syntax error (missing {{/if}})');
 
 	// ................................ Act ..................................
 	result = $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
@@ -1374,6 +1618,12 @@ $.templates({
 	equal($.templates.nesting.render({}, {b: "optionHelper"}), " templateHelper templateCvt innerTemplateHelper innerTemplateCvt innerInnerCascade innerCascade",
 		'Inner template, helper, and converter override outer template, helper, and converter');
 
+});
+
+module("noConflict");
+
+test("jsviews.noConflict()", function() {
+	ok(noConflictTest === true, "jsviews.noConflict() works correctly");
 });
 
 })(this, this.jsviews || jQuery);
