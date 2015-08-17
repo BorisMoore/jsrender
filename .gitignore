@@ -1,0 +1,6 @@
+﻿**/.*
+node_modules
+bower_components
+test/browserify/bundles/*.js
+*.config
+Scripts

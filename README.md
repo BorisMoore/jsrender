@@ -1,7 +1,8 @@
 ## JsRender: best-of-breed templating
 _Simple and intuitive, powerful and extensible, lightning fast_<br/>
+_For templated content in the browser or on Node.js (with Express 4, Hapi and Browserify integration)_<br/>
 
-**JsRender** is a light-weight but powerful templating engine, highly extensible, and optimized for high-performance pure string-based rendering, without DOM or jQuery dependency.
+**JsRender** is a light-weight but powerful templating engine, highly extensible, and optimized for high-performance pure string-based rendering, without DOM or jQuery dependency (but with powerful optional jQuery integration).
 
 **JSRender** and **JsViews** together provide the next-generation implementation of both _JQuery Templates_, and _JQuery Data Link_ - and supersede those libraries.
 
@@ -22,4 +23,4 @@ see also:
 - the [demos](https://github.com/BorisMoore/jsviews/tree/master/demos) folder of the JsViews GitHub repository - or [here](http://borismoore.github.io/jsviews/demos/index.html) as live samples.
 
 <h3>Current Status</h3>
-JsRender is now a beta release, currently moving towards V1.0.
+JsRender is now a V1.0 release candidate.

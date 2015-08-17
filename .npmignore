@@ -1,0 +1,11 @@
+﻿**/.*
+
+/test/browserify/bundles/*.js
+*.config
+gulpfile.js
+
+/Scripts
+/node_modules
+/bower_components
+/demos
+/test

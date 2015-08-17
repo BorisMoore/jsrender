@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="requirejs/require.js"></script>
+<script>
+	require(["../jsrender"], function($) {
+		alert($.templates("Name: {{:name}}").render({name: "Jo"}) + "\nNo globals and no jQuery: " + (!window.jsrender && !window.jQuery && !$.fn && !!$.views.helpers));
+	});
+</script>
+</head>
+<body>
+
+</body>
+</html>

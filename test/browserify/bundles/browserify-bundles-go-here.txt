@@ -1,0 +1,3 @@
+﻿Run
+$ gulp bundle
+to generated browserify client bundles used in the unit tests: test/unit-tests-browserify.html
