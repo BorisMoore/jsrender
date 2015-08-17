@@ -15,7 +15,7 @@
 
 <!---------------------- First Example ---------------------->
 
-<div class="subhead">Example 1: Expressions in tags, and template parameters:</div>
+<div class="subhead">Example 1: Expressions in tags, and template parameters ({{if}} tag):</div>
 
 <pre>
     {{for languages ~count=languages.length}}
@@ -43,6 +43,35 @@
 
 <!---------------------- Second Example ---------------------->
 
+<div class="subhead">Example 2: Expressions in tags, and template parameters (ternary expression):</div>
+
+<pre>
+    {{for languages ~count=languages.length}}
+        ...
+        {{: #index === ~count-2 ? " and " : #index < ~count-2 ? ", " : ""}}
+        ...
+    {{/for}}
+</pre>
+
+<script id="movieTemplate2" type="text/x-jsrender">
+	<tr>
+		<td>{{>title}}</td>
+		<td>
+    {{for languages ~count=languages.length}}
+				{{>name}}{{: #index === ~count-2 ? " and " : #index < ~count-2 ? ", " : ""}}
+			{{/for}}
+		</td>
+	</tr>
+</script>
+
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
+	<tbody id="movieList2"></tbody>
+</table>
+<br />
+
+<!---------------------- Second Example ---------------------->
+
 <div class="subhead">Example 2: Custom helper functions:</div>
 
 <pre>
@@ -53,7 +82,7 @@
     {{/for}}
 </pre>
 
-<script id="movieTemplate2" type="text/x-jsrender">
+<script id="movieTemplate3" type="text/x-jsrender">
 	<tr>
 		<td>{{>title}}</td>
 		<td>
@@ -64,10 +93,9 @@
 	</tr>
 </script>
 
-
 <table>
 	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
-	<tbody id="movieList2"></tbody>
+	<tbody id="movieList3"></tbody>
 </table>
 <br />
 
@@ -81,7 +109,7 @@
 <br /><br />The following two examples illustrate its use, but are not the recommended approach. The built-in expression support,
 <br />custom tags, helper functions etc. provide a better solution for almost all scenarios, as in the two examples above.</div>
 
-<div class="subhead">Example 3: allowCode, for program flow:</div>
+<div class="subhead">Example 3: allowCode, for program flow - with if(...) { ... }:</div>
 
 <pre>
 $.templates( "movieTmpl", {
@@ -98,48 +126,6 @@ $.templates( "movieTmpl", {
 }}
 </pre>
 
-<script id="movieTemplate3" type="text/x-jsrender">
-	<tr>
-		<td>{{>title}}</td>
-		<td>
-			{{for languages}}
-				{{>name}}{{*
-
-					if ( view.index === view.parent.data.length - 2 ) {
-
-				}} and {{*
-
-					} else if ( view.index < view.parent.data.length - 2 ) {
-
-				}}, {{* } }}
-			{{/for}}
-		</td>
-	</tr>
-</script>
-
-<table>
-	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
-	<tbody id="movieList3"></tbody>
-</table>
-
-<!---------------------- Fourth Example ---------------------->
-
-<div class="subhead">Example 4: allowCode, for returning content:</div>
-
-<pre>
-$.templates( "movieTmpl", {
-    markup: "#movieTemplate",
-    allowCode: true
-});
-
-{{*
-    if ( myexpression ) {
-        ret += ...;
-        ...
-    }
-}}
-</pre>
-
 <script id="movieTemplate4" type="text/x-jsrender">
 	<tr>
 		<td>{{>title}}</td>
@@ -147,13 +133,13 @@ $.templates( "movieTmpl", {
 			{{for languages}}
 				{{>name}}{{*
 
-					if ( view.index === view.parent.data.length - 2 ) {
-						ret += " and";
-					} else if ( view.index < view.parent.data.length - 2 ) {
-						ret+= ",";
-					}
+					if ( view.index === view.parent.data.length-2 ) {
 
-				}}
+				}} and {{*
+
+					} else if ( view.index < view.parent.data.length-2 ) {
+
+				}}, {{* } }}
 			{{/for}}
 		</td>
 	</tr>
@@ -164,17 +150,47 @@ $.templates( "movieTmpl", {
 	<tbody id="movieList4"></tbody>
 </table>
 
+<!---------------------- Fourth Example ---------------------->
+
+<div class="subhead">Example 5: allowCode, for returning content - with ternary expression:</div>
+
+<pre>
+$.templates( "movieTmpl", {
+    markup: "#movieTemplate",
+    allowCode: true
+});
+
+{{*: myexpression ? ... : ...}}
+</pre>
+
+<script id="movieTemplate5" type="text/x-jsrender">
+	<tr>
+		<td>{{>title}}</td>
+		<td>
+			{{for languages}}
+				{{>name}}
+				{{*: view.index === view.parent.data.length-2 ? " and " : view.index < view.parent.data.length-2 ? ", " : ""}}
+			{{/for}}
+		</td>
+	</tr>
+</script>
+
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
+	<tbody id="movieList5"></tbody>
+</table>
+
 
 <script type="text/javascript">
 
 	$.views.helpers({
 
 		nextToLast: function() {
-			return this.index === this.parent.data.length - 2;
+			return this.index === this.parent.data.length-2;
 		},
 
 		notLast: function() {
-			return this.index !== this.parent.data.length - 1;
+			return this.index !== this.parent.data.length-1;
 		}
 	});
 
@@ -207,15 +223,22 @@ $.templates( "movieTmpl", {
 	$.templates({
 		movieTmpl1: "#movieTemplate1",
 		movieTmpl2: "#movieTemplate2",
-		movieTmpl3: {
-			markup: "#movieTemplate3",
-			allowCode: true
-		},
+		movieTmpl3: "#movieTemplate3",
 		movieTmpl4: {
+			markup: "#movieTemplate3",
+			allowCode: true,
+			useViews: true // Since the {{* ... }} code inserted uses views (view.parent...) we make sure the default optimization of not using views when not necessary
+		},
+		movieTmpl5: {
 			markup: "#movieTemplate4",
-			allowCode: true
+			allowCode: true,
+			useViews: true
 		}
 	});
+
+	// Note that by default, rendering simple templates does not create a view hierarchy - which allows for optimized performance.
+	// For the movieList3 and movieList4 we are inserting code that does depend on the view hierarchy (e.g. view.parent... ) so for
+	// those templates we have set useViews: true. We could alternatively use $.views.settings.useViews = true, as a global setting...
 
 	$( "#movieList1" ).html(
 		$.render.movieTmpl1( movies )
@@ -230,6 +253,10 @@ $.templates( "movieTmpl", {
 	);
 
 	$( "#movieList4" ).html(
+		$.render.movieTmpl4( movies )
+	);
+
+	$( "#movieList5" ).html(
 		$.render.movieTmpl4( movies )
 	);
 

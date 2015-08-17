@@ -1,6 +1,16 @@
-/*global test, equal, module, ok, QUnit, _jsv, viewsAndBindings */
-(function(global, $, undefined) {
+/*global test, equal, ok, QUnit*/
+(function(undefined) {
 "use strict";
+var global = (0, eval)('this'), // jshint ignore:line
+
+	isIE8 = global.attachEvent && !global.addEventListener,
+	isBrowser = !!global.document,
+
+	$ = global.jsrender || global.jQuery; // On Node.js with QUnit, jsrender is added as namespace, to global
+
+if (!isBrowser) {
+	global.document = {};
+}
 
 function compileTmpl(template) {
 	try {
@@ -32,13 +42,13 @@ function sort(array) {
 }
 
 var person = { name: "Jo" },
-	people = [{ name: "Jo" },{ name: "Bill" }],
-	towns = [{ name: "Seattle" },{ name: "Paris" },{ name: "Delhi" }];
+	people = [{ name: "Jo" }, { name: "Bill" }],
+	towns = [{ name: "Seattle" }, { name: "Paris" }, { name: "Delhi" }];
 
 var tmplString = "A_{{:name}}_B";
 $.views.tags({ sort: sort });
 
-module("tagParser");
+QUnit.module("tagParser");
 test("{{if}} {{else}}", 4, function() {
 	equal(compileTmpl("A_{{if true}}{{/if}}_B"), "compiled", "Empty if block: {{if}}{{/if}}");
 	equal(compileTmpl("A_{{if true}}yes{{/if}}_B"), "compiled", "{{if}}...{{/if}}");
@@ -48,7 +58,7 @@ $.views.settings.debugMode(false);
 	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
 });
 
-module("{{if}}");
+QUnit.module("{{if}}");
 test("{{if}}", 4, function() {
 	equal($.templates("A_{{if true}}yes{{/if}}_B").render(), "A_yes_B", "{{if a}}: a");
 	equal($.templates("A_{{if false}}yes{{/if}}_B").render(), "A__B", "{{if a}}: !a");
@@ -73,7 +83,7 @@ test("{{if}} {{else}} external templates", 2, function() {
 	equal($.templates("A_{{if false tmpl='yes<br/>'}}{{else false tmpl='or<br/>'}}{{else tmpl='no<br/>'}}{{/if}}_B").render(), "A_no<br/>_B", "{{if a tmpl=foo}}{{else b tmpl=bar}}{{else tmpl=baz}}: !a!b");
 });
 
-module("{{:}}");
+QUnit.module("{{:}}");
 test("convert", 4, function() {
 	equal($.templates("{{>#data}}").render("<br/>'\"&"), "&lt;br/&gt;&#39;&#34;&amp;", "default html converter");
 	equal($.templates("{{html:#data}}").render("<br/>'\"&"), "&lt;br/&gt;&#39;&#34;&amp;", "html converter");
@@ -126,7 +136,7 @@ test("types", function() {
 	equal($.templates('{{:((")abc)"))}}').render(), ")abc)", '((")abc)"))');
 });
 
-test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fallback'}}, etc.", function() {
+test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'fallback'}}, etc.", function() {
 	var message;
 	try {
 		$.templates("{{:a.missing.willThrow.path}}").render({a:1});
@@ -160,7 +170,7 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 		helperValue: "hlp"
 	}).slice(0, 38), "Override onError using a callback: hlp",
 		'{{>a.missing.willThrow.path onError=~myOnErrorFunction}}" >' +
-		' Providing a function "onError=~myOnErrorFunction" calls the function as onError callback');
+		'\nProviding a function "onError=~myOnErrorFunction" calls the function as onError callback');
 
 	equal($.templates("{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}").render(
 		{
@@ -170,7 +180,7 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 			}
 		}), "Override onError using a callback data method: dataValue",
 		'{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}" >' +
-		' Providing a function "onError=myOnErrorDataMethod" calls the function as onError callback');
+		'\nProviding a function "onError=myOnErrorDataMethod" calls the function as onError callback');
 
 	equal($.templates("1: {{>a.missing.willThrow.path onError=defaultVal}}" +
 		" 2: {{:a.missing.willThrow.path onError='Missing Object'}}" +
@@ -196,7 +206,8 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 			}
 		}
 	}).render({a:"yes"}), "fallback for undefined",
-		'{{withfallback:a.notdefined fallback="fallback for undefined"}} using converter to get fallback value for undefined properties');
+		'{{withfallback:a.notdefined fallback="fallback for undefined"}}' +
+		'\nusing converter to get fallback value for undefined properties');
 
 	equal($.templates({
 		markup: "1: {{withfallback:a.missing.y onError='Missing object' fallback='undefined prop'}}" +
@@ -258,9 +269,9 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 	} catch (e) {
 		message = e.message;
 	}
-	
+
 	ok(!!message,
-		'onError/fallback converter and regular thrown error message in same template: throws: "' + message + '"');
+		'onError/fallback converter and regular thrown error message in same template: throws:\n"' + message + '"');
 
 	equal($.templates("{{for missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
 		'{{for missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
@@ -335,9 +346,9 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 	} catch (e) {
 		message = e.message;
 	}
-	
+
 	ok(!!message,
-		'onError/fallback converter and regular thrown error message in same template: throws: "' + message + '"');
+		'onError/fallback converter and regular thrown error message in same template: throws: \n"' + message + '"');
 
 	$.views.settings.debugMode(true);
 	equal($.templates({
@@ -362,7 +373,8 @@ test("Fallbacks for missing or undefined paths: using {{:some.path onError = 'fa
 			return "myCallback: " + view.data.a;
 		}
 	}).slice(0, 8), "{Error: ",
-	'In debug mode, onError/fallback converter and regular thrown error message in same template: thrown error replaces the rest of the output (rather than concatenating)');
+	'In debug mode, onError/fallback converter and regular thrown error message in same template:' +
+	'\nthrown error replaces the rest of the output (rather than concatenating)');
 	$.views.settings.debugMode(false);
 
 });
@@ -443,7 +455,7 @@ test("expressions", 18, function() {
 	equal($.templates("{{:false === !null}}").render({}), "false", "false === !null");
 });
 
-module("{{for}}");
+QUnit.module("{{for}}");
 test("{{for}}", 17, function() {
 	$.templates({
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
@@ -457,9 +469,9 @@ test("{{for}}", 17, function() {
 	equal($.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}');
 	equal($.render.templateForArray([people]), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
 	equal($.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}');
-	equal($.templates("{{for}}xxx{{:name}} {{:~foo}}{{/for}}").render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}");
-	equal($.templates("{{for tmpl='testTmpl'/}}").render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", ": {{for tmpl=.../}} no parameter - equivalent to {{include tmpl=.../}} - renders once with parent #data context");
-	equal($.templates("{{include tmpl='testTmpl'/}}").render({name: "Jeff"},{foo:"fooVal"}), "xxxJeff fooVal", "{{include tmpl=.../}} with tmpl parameter - renders once with parent #data context. Equivalent to {{for tmpl=.../}}");
+	equal($.templates("{{for}}xxx{{:name}} {{:~foo}}{{/for}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}");
+	equal($.templates("{{for tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", ": {{for tmpl=.../}} no parameter - equivalent to {{include tmpl=.../}} - renders once with parent #data context");
+	equal($.templates("{{include tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "{{include tmpl=.../}} with tmpl parameter - renders once with parent #data context. Equivalent to {{for tmpl=.../}}");
 	equal($.templates("{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}").render({}), "", "missingProperty - renders empty string");
 	equal($.templates("{{for null}}xxx{{:#data===null}}{{/for}}").render(), "xxxtrue", "null - renders once with #data null: {{for null}}");
 	equal($.templates("{{for false}}xxx{{:#data}}{{/for}}").render(), "xxxfalse", "false - renders once with #data false: {{for false}}");
@@ -474,7 +486,7 @@ test("{{for}}", 17, function() {
 	equal($.render.forPrimitiveDataTypes({people:[0, 1, "abc", "", ,null ,true ,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey');
 });
 
-module("{{props}}");
+QUnit.module("{{props}}");
 test("{{props}}", 15, function() {
 	$.templates({
 		propsTmpl: "header_{{props person}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}_footer",
@@ -511,10 +523,11 @@ test("{{props}}", 15, function() {
 	'Primitive types render correctly, even if falsey');
 });
 
-module("allowCode");
+QUnit.module("allowCode");
 test("{{*}}", function() {
 	// =============================== Arrange ===============================
-	window.glob = {a: "AA"};
+	$.views.settings.allowCode = false;
+	global.glob = {a: "AA"};
 
 	var tmpl = $.templates("_{{*:glob.a}}_");
 
@@ -543,7 +556,7 @@ test("{{*}}", function() {
 	// ................................ Assert ..................................
 	equal(result, "true _AA_",
 		"If $.settings.allowCode set to true, {{*: expression}} returns evaluated expression, with access to globals");
-	
+
 	// =============================== Arrange ===============================
 	$.views.settings.allowCode = false;
 
@@ -577,7 +590,7 @@ test("{{*}}", function() {
 	});
 
 	tmpl = $.templates.myTmpl;
-	
+
 	result = "" + !!tmpl.allowCode + ":" + tmpl();
 
 	$.templates("myTmpl", {markup: $.templates.myTmpl, allowCode: true});
@@ -592,7 +605,8 @@ test("{{*}}", function() {
 
 	// =============================== Arrange ===============================
 	$.views.settings.allowCode = true;
-	window.people = people;
+
+	global.people = people;
 	tmpl = $.templates("{{:start}}"
 
 		+ "{{* for (var i=0, l=people.length; i<l; i++) { }}"
@@ -606,7 +620,7 @@ test("{{*}}", function() {
 		"If allowCode set to true, on recompiling the template, {{*:expression}} returns evaluated expression, with access to globals");
 
 	// ................................ Act ..................................
-	window.myFunction = function() {
+	global.myFunction = function() {
 		return "myGlobalfunction ";
 	};
 	document.title = "myTitle";
@@ -620,9 +634,136 @@ test("{{*}}", function() {
 		"{{* expression}} or {{*: expression}} can access globals, the data, the view, the view context, global functions etc.");
 
 	document.title = "";
+	$.views.settings.allowCode = false;
 });
 
-module("All tags");
+QUnit.module("useViews");
+test("", function() {
+
+	// =============================== Arrange ===============================
+	$.views.settings.allowCode = true;
+	$.views.tags("exclaim", "!!! ");
+	var message = "",
+
+		tmpl = $.templates(
+			"{{for towns}}"
+				+ "{{>name}}"
+				+ "{{*:view.index===view.parent.data.length-2 ? ' and ' : view.index<view.parent.data.length-2 ? ', ': ''}}"
+			+ "{{/for}}");
+
+	// ................................ Act ..................................
+	try {
+		tmpl.render({towns: towns});
+	}
+	catch (e) {
+		message = e.message;
+	}
+
+	// ................................ Assert ..................................
+	ok(tmpl.useViews === false && message.indexOf("data") > 0,
+		"A simple template with useViews=false will not provide access to the views through allowCode");
+
+	// ................................ Act ..................................
+	tmpl.useViews = true;
+
+	// ................................ Assert ..................................
+	equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+		"If tmpl.useViews set to true (for an existing template - without recompiling), the template renders with view hierarchy");
+
+	// ................................ Act ..................................
+	tmpl.useViews = false;
+	$.views.settings.useViews = true;
+
+	// ................................ Assert ..................................
+	equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+		"If tmpl.useViews is set to false, but $.views.settings.useViews is set to true, the template renders with view hierarchy, (without recompiling).");
+
+	// ................................ Act ..................................
+	$.views.settings.useViews = false;
+
+	tmpl = $.templates({markup: tmpl,
+		useViews: true
+	});
+
+	// ................................ Assert ..................................
+	equal(tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+		"Recompiling the template with useViews: true will create a template that has tmpl.useViews = true, which renders with views");
+
+	// ................................ Act ..................................
+	tmpl.useViews = false;
+
+	try {
+		tmpl.render({towns: towns});
+	}
+	catch (e) {
+		message = e.message;
+	}
+
+	// ................................ Assert ..................................
+	ok(message.indexOf("data") > 0,
+		"If tmpl.useViews set to false (for an existing template - without recompiling), the template renders without views");
+
+	// ................................ Act ..................................
+	$.views.settings.useViews = true;
+
+	tmpl = $.templates({markup: tmpl});
+
+	$.views.settings.useViews = false;
+
+	// ................................ Assert ..................................
+	equal(tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+		"If $.views.settings.useViews was true when the template is compiled, then the template renders with views, even if $.views.settings.useViews is not longer set to true");
+
+	// =============================== Arrange ===============================
+	$.views.settings.useViews = false;
+
+		tmpl = $.templates(
+			"{{exclaim/}}"
+			+ "{{for towns}}"
+				+ "{{>name}}"
+				+ "{{*:view.index===view.parent.data.length-2 ? ' and ' : view.index<view.parent.data.length-2 ? ', ': ''}}"
+			+ "{{/for}}");
+
+	// ................................ Assert ..................................
+	equal(tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
+		"A template with richer features, (such as a custom tag, or nested tags) will automatically have tmpl.useViews=truew and will render with views, even if $.views.settings.useViews is set to false");
+
+	// ................................ Act ..................................
+	var originalUseViews = tmpl.useViews;
+	tmpl.useViews = false;
+	
+	// ................................ Assert ..................................
+	equal(originalUseViews && !tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
+		"Setting tmpl.useViews=false will NOT prevent a richer template from rendering views.");
+
+	// =============================== Arrange ===============================
+		tmpl = $.templates(
+			"{{for towns}}"
+				+ "{{>name}}"
+				+ "{{*:view.index===view.parent.data.length-2 ? ' and ' : view.index<view.parent.data.length-2 ? ', ': ''}}"
+			+ "{{/for}}");
+
+	// ................................ Act ..................................
+	var originalUseViews = tmpl.useViews;
+	tmpl.useViews = true;
+
+	// ................................ Assert ..................................
+	equal(!originalUseViews && tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+		"Setting tmpl.useViews=true WILL prevent a simpler template from rendering without views.");
+
+	// ................................ Act ..................................
+	tmpl.useViews = originalUseViews;
+	$.views.settings.useViews = true;
+
+	// ................................ Assert ..................................
+	equal(!tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+		"Setting $.views.settings.useViews=true WILL prevent a simpler template from rendering without views.");
+
+	$.views.settings.useViews = false;
+	document.title = "";
+});
+
+QUnit.module("All tags");
 test("itemVar", 10, function() {
 	var otherPeople = [
 		{name: "Jo", otherTels: [1, 2]},
@@ -638,7 +779,7 @@ test("itemVar", 10, function() {
 			).render({ people: people});
 	}
 	catch (e) {
-		message = e.message;	
+		message = e.message;
 	}
 
 	equal(message, "Syntax error\nUse itemVar='~myItem'",
@@ -692,7 +833,8 @@ test("itemVar", 10, function() {
 		+ "{{/for}}"
 		).render({ people: otherPeople }),
 		"Jo 1 Jo 2 Bill 91 Bill 92 true Fred no phones",
-		"itemVar works also on {{for arr1}}{{else arr2}}{{else}}{{/for}} even though the context for the final {{else}} is the same as outer context for {{if}}.");
+		"itemVar works also on {{for arr1}}{{else arr2}}{{else}}{{/for}}" +
+		"\neven though the context for the final {{else}} is the same as outer context for {{if}}.");
 
 	equal($.templates(
 		"{{for people itemVar='~person'}}"
@@ -768,8 +910,49 @@ test("itemVar", 10, function() {
 		"itemVar with {{props}}{{else}}{{/props}}, and passing context to nested templates");
 });
 
-module("api");
+QUnit.module("api no jQuery");
 test("templates", function() {
+	// ................................ Arrange ..................................
+	$.templates("./test/templates/file/path.html", null); // In case template has been stored in a previous test
+
+	// ................................ Act ..................................
+	var tmpl0 = $.templates({markup: "./test/templates/file/path.html"}); // Compile template but do not cache
+
+	// ............................... Assert .................................
+	equal(!$.templates["./test/templates/file/path.html"] && tmpl0.render({name: "Jo0"}),
+		isIE8 ? "\nServerRenderedTemplate_Jo0_B" : "ServerRenderedTemplate_Jo0_B",
+		"Compile server-generated template, without caching");
+
+	// ................................ Act ..................................
+	var tmpl1 = $.templates("./test/templates/file/path.html"); // Compile and cache, using path as key
+
+	// ............................... Assert .................................
+	equal(tmpl1 !== tmpl0 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl1.render({name: "Jo1"}),
+		isIE8 ? "\nServerRenderedTemplate_Jo1_B" : "ServerRenderedTemplate_Jo1_B",
+		"Compile server-generated template, and cache on file path");
+
+	// ................................ Act ..................................
+	var tmpl2 = $.templates("./test/templates/file/path.html"); // Use cached template, accessed by path as key
+
+	// ............................... Assert .................................
+	equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}),
+		isIE8 ? "\nServerRenderedTemplate_Jo2_B" : "ServerRenderedTemplate_Jo2_B",
+		"Re-use cached server-generated template");
+
+	// ................................ Act ..................................
+	var tmpl3 = $.templates({markup: "./test/templates/file/path.html"}); // Re-compile template but do not cache. Leaved cached template.
+
+	// ............................... Assert .................................
+	equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl3.render({name: "Jo3"}),
+		isIE8 ? "\nServerRenderedTemplate_Jo3_B" : "ServerRenderedTemplate_Jo3_B",
+		"Recompile server-generated template, without caching");
+
+	// ................................ Reset ................................
+	delete $.templates["./test/templates/file/path.html"];
+	if (isBrowser) {
+		document.getElementById("./test/templates/file/path.html").removeAttribute("data-jsv-tmpl");
+	}
+
 	// =============================== Arrange ===============================
 	tmplString = "A_{{:name}}_B";
 
@@ -787,7 +970,8 @@ test("templates", function() {
 
 	// ............................... Assert .................................
 	equal($.templates("", tmplString).fn.toString() === fnToString && $.templates(null, tmplString).fn.toString() === fnToString && $.templates(undefined, tmplString).fn.toString() === fnToString, true,
-		'if name is "", null, or undefined, then var tmpl = $.templates(name, tmplString) is equivalent to var tmpl = $.templates(tmplString);');
+		'if name is "", null, or undefined, then var tmpl = $.templates(name, tmplString)' +
+		'\nis equivalent to var tmpl = $.templates(tmplString);');
 
 	// =============================== Arrange ===============================
 	$.templates("myTmpl", tmplString);
@@ -863,7 +1047,7 @@ test("templates", function() {
 	var result = tmplWithHelper(person, {foo: "thisFoo"});
 
 	var tmplWithHelper2 = $.templates({markup: tmplWithHelper, helpers: {foo: "thatFoo"}});
-	result += "|" + tmplWithHelper2(person)
+	result += "|" + tmplWithHelper2(person);
 
 	// ............................... Assert .................................
 	equal(result, "A_Jo_BthisFoo|A_Jo_BthatFoo",
@@ -1029,12 +1213,17 @@ test("{{sometag convert=converter}}", function() {
 	equal($.templates("1{{:#data convert='loc'}} 2{{:'desktop' convert='loc'}} 3{{:#data convert=~myloc}} 4{{:'desktop' convert=~myloc}}").render("desktop", {myloc: loc}), "1bureau 2bureau 3bureau 4bureau", "{{: convert=~myconverter}}");
 	equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
 		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a moins <que b",
-		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}} or {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
+		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}}" +
+		"\nor {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
 	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val;}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
 	equal($.templates("{{for #data convert=~reverse}}{{:#data}}{{/for}}").render([1,2,3], {reverse: function(val) {return val.reverse();}}, true), "321", "{{for expression convert=~myconverter}}");
 });
 
 test("tags", function() {
+	// ................................ Reset ..................................
+	towns = [{ name: "Seattle" }, { name: "Paris" }, { name: "Delhi" }];
+
+	// ................................ Act ..................................
 	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })");
 
 	equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({ people: people }), "BillJo", "Calling render() with inline data-binding {^{...}} renders normally without binding");
@@ -1162,25 +1351,30 @@ test("tags", function() {
 	"Tag with just a template and a parameter which is not defined renders once against 'undefined'");
 
 	equal($.templates("a{{include people}}{{tagJustTemplate/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
-	"Tag with just a template and no param renders once against current data, even if array - but can add render method with tagCtx.render(val) to iterate - (next test)");
+	"Tag with just a template and no param renders once against current data, even if array" +
+	"\n- but can add render method with tagCtx.render(val) to iterate - (next test)");
 
 	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array");
 
 	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData thisisignored/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
-	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array - and ignores argument if provided");
+	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array" +
+	"\n- and ignores argument if provided");
 
 	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
-	"Tag with a template and no param and render method calling tagCtx.render(val) renders against first arg - or defaults to current data, and iterates if array");
+	"Tag with a template and no param and render method calling tagCtx.render(val) renders against first arg" +
+	"\n- or defaults to current data, and iterates if array");
 
 	equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render(val) iterates against argument if array");
 
 	equal($.templates("a{{include people}}{{tagWithTemplateNoIteration/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
-	"If current data is an array, a tag with a template and a render method calling tagCtx.render(val, true) and no param renders against array without iteration");
+	"If current data is an array, a tag with a template and a render method calling" +
+	"\ntagCtx.render(val, true) and no param renders against array without iteration");
 
 	equal($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
-	"If current data is an array, a tag with a template and a render method calling tagCtx.render(val, helpers, true) and no param renders against array without iteration");
+	"If current data is an array, a tag with a template and a render method calling" +
+	"\ntagCtx.render(val, helpers, true) and no param renders against array without iteration");
 
 	equal($.templates("a{{include person}}{{tagJustRender/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a render and no param renders once against current data, if object");
@@ -1192,7 +1386,8 @@ test("tags", function() {
 	"Tag with just a template and renders once against first argument data, if object");
 
 	equal($.templates("a{{tagJustTemplate people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
-	"Tag with just a template renders once against first argument data even if it is an array - but can add render method with tagCtx.render(val) to iterate - (next test)");
+	"Tag with just a template renders once against first argument data even if it is an array" +
+	"\n- but can add render method with tagCtx.render(val) to iterate - (next test)");
 
 	equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and render method calling tagCtx.render(val) renders against first param data, and iterates if array");
@@ -1269,7 +1464,7 @@ test("derived tags", function() {
 				}
 			},
 			tmpl
-		),
+		);
 
 		$.views.tags("E",
 			{
@@ -1307,7 +1502,7 @@ test("derived tags", function() {
 
 	// ................................ Act ..................................
 	result = tmpl.render({});
-	
+
 	// ............................... Assert .................................
 	equal(result.slice(0, 8), "{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
 
@@ -1489,13 +1684,15 @@ test("settings", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing {{/if}}, in template:\n{{if}}', 'Override onError() - with thrown syntax error (missing {{/if}})');
+	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing {{/if}}, in template:\n{{if}}',
+		'Override onError() - with thrown syntax error (missing {{/if}})');
 
 	// ................................ Act ..................................
 	result = $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
 
 	// ............................... Assert .................................
-	equal(result.slice(0,64), 'Override error - (Fallback string: myFallback) Rendering error: ', 'Override onError() - with {{if missing.willThrow onError="myFallback"}}');
+	equal(result.slice(0,64), 'Override error - (Fallback string: myFallback) Rendering error: ',
+		'Override onError() - with {{if missing.willThrow onError="myFallback"}}');
 
 	// ................................ Reset ..................................
 	$.views.settings({
@@ -1620,10 +1817,4 @@ $.templates({
 
 });
 
-module("noConflict");
-
-test("jsviews.noConflict()", function() {
-	ok(noConflictTest === true, "jsviews.noConflict() works correctly");
-});
-
-})(this, this.jsviews || jQuery);
+})();
