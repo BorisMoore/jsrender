@@ -1,6 +1,7 @@
 /*global test, equal, ok, QUnit*/
 (function(undefined) {
 "use strict";
+
 var global = (0, eval)('this'), // jshint ignore:line
 
 	isIE8 = global.attachEvent && !global.addEventListener,

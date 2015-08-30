@@ -1,4 +1,4 @@
-/*! JsRender tmplify submodule v1.0.0-rc.67 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender tmplify submodule v1.0.0-rc.65 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! Browserify transform for JsRender templates */
 /*
  * Copyright 2015, Boris Moore
@@ -45,7 +45,7 @@
 
 (function() {
 "use strict";
-var jsrender = require('jsrender'),
+var jsrender = require('../'),
 	path = require('path'),
 	pathSep = path.sep,
 	through = require('through2'),

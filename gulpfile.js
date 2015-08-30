@@ -7,7 +7,7 @@ var gulp = require('gulp'),
 
 // Task to create Browserify client-side bundle scripts for Browserify test cases.
 gulp.task('bundle', function() {
-	var $jsr = require('./index.js');
+	var tmplify = require('./tmplify');
 	var gs = require('glob-stream');
 
 	return gs.create('./test/browserify/*-unit-tests.js')
@@ -15,7 +15,7 @@ gulp.task('bundle', function() {
 			// file has path, base, and cwd attrs
 			var fileName = file.path.slice(file.base.length, -14);
 			browserify(file.path, {debug:true})
-				.transform($jsr.tmplify)
+				.transform(tmplify)
 				.bundle()
 				.pipe(fs.createWriteStream('./test/browserify/bundles/' + fileName + "-bundle.js"))
 				.on('error', function(err) {

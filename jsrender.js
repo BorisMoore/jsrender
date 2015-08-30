@@ -1,4 +1,4 @@
-/*! JsRender v1.0.0-rc.65 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender v1.0.0-rc.67 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -86,6 +86,10 @@ var versionNumber = "v1.0.0-beta",
 	jsvTmpl = "jsvTmpl",
 	indexStr = "For #index in nested block use #getIndex().",
 	$render = {},
+
+	jsr = global.jsrender,
+	jsrToJq = jsr && $ && !$.render, // JsRender already loaded, without jQuery. but we will re-load it now to attach to jQuery
+
 	jsvStores = {
 		template: {
 			compile: compileTmpl
@@ -95,12 +99,9 @@ var versionNumber = "v1.0.0-beta",
 		},
 		helper: {},
 		converter: {}
-	},
+	};
 
-	jsr = global.jsrender,
-	jsrToJq = jsr && $ && !$.render; // JsRender already loaded, without jQuery. but we will re-load it now to attach to jQuery
-
-	// views object ($.views if jQuery is loaded, jsrender.views if no jQuery, e.g. in Node.js)
+// views object ($.views if jQuery is loaded, jsrender.views if no jQuery, e.g. in Node.js)
 	$views = {
 		jsviews: versionNumber,
 		settings: function(settings) {
@@ -877,6 +878,8 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 	}
 }
 
+//==== /end of function compileTmpl ====
+
 function dataMap(mapDef) {
 	function Map(source, options) {
 		this.tgt = mapDef.getTgt(source, options);
@@ -898,8 +901,6 @@ function dataMap(mapDef) {
 	};
 	return mapDef;
 }
-
-//==== /end of function compile ====
 
 function tmplObject(markup, options) {
 	// Template object constructor
@@ -1859,9 +1860,9 @@ if (!(jsr || $ && $.render)) {
 			return ({}.toString).call(obj) === "[object Array]";
 		};
 
-		$.toJq = function(jq) {
-			if ($ !== jq) {
-				$extend(jq, this); // map over from jsrender namespace to jQuery namespace
+		$sub._jq = function(jq) { // private method to move from JsRender APIs from jsrender namespace to jQuery namespace
+			if (jq !== $) {
+				$extend(jq, $); // map over from jsrender namespace to jQuery namespace
 				$ = jq;
 				$.fn.render = $fnRender;
 			}
@@ -1875,12 +1876,6 @@ if (!(jsr || $ && $.render)) {
 	$.render = $render;
 	$.views = $views;
 	$.templates = $templates = $views.templates;
-
-	$views.compile = function(markup, options) {
-		options = options || {};
-		options.markup = markup;
-		return $templates(options);
-	};
 
 	$viewsSettings({
 		debugMode: dbgMode,
@@ -1981,8 +1976,7 @@ if (!(jsr || $ && $.render)) {
 }
 
 if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over the stored items (templates, converters, helpers...)
-	jsr.toJq($);
+	jsr.views.sub._jq($);
 }
-
 return $ || jsr;
 }));

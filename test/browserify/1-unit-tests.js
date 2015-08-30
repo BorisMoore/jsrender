@@ -13,14 +13,14 @@ test("No jQuery global: require('jsrender')()", function() {
 	var data = {name: "Jo"};
 
 	// ................................ Act ..................................
-	var $jsr = require('../../jsrender')(); // Not passing in jQuery, so $jsr is jsrender namespace
+	var jsrender = require('../../')(); // Not passing in jQuery, so returns the jsrender namespace
 
-	// Use require to get server template, thanks to Browserify bundle that used jsrender.tmplify transform
-	var tmpl = require('../templates/name-template.html')($jsr); // Provide $jsr
+	// Use require to get server template, thanks to Browserify bundle that used jsrender/tmplify transform
+	var tmpl = require('../templates/name-template.html')(jsrender); // Provide jsrender
 
 	var result = tmpl(data);
 
-	result += " " + ($jsr !== jQuery);
+	result += " " + (jsrender !== jQuery);
 
 	// ............................... Assert .................................
 	equal(result, "Name: Jo (name-template.html) true", "result");

@@ -1,4 +1,4 @@
-/*! JsRender v1.0.0-rc.65 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender v1.0.0-rc.67 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -65,6 +65,7 @@ var versionNumber = "v1.0.0-beta",
 	jsvTmpl = "jsvTmpl",
 	indexStr = "For #index in nested block use #getIndex().",
 	$render = {},
+
 	jsvStores = {
 		template: {
 			compile: compileTmpl
@@ -74,12 +75,9 @@ var versionNumber = "v1.0.0-beta",
 		},
 		helper: {},
 		converter: {}
-	},
+	};
 
-	jsr = global.jsrender,
-	jsrToJq = jsr && $ && !$.render; // JsRender already loaded, without jQuery. but we will re-load it now to attach to jQuery
-
-	// views object ($.views if jQuery is loaded, jsrender.views if no jQuery, e.g. in Node.js)
+// views object ($.views if jQuery is loaded, jsrender.views if no jQuery, e.g. in Node.js)
 	$views = {
 		jsviews: versionNumber,
 		settings: function(settings) {
@@ -824,6 +822,8 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 	}
 }
 
+//==== /end of function compileTmpl ====
+
 function dataMap(mapDef) {
 	function Map(source, options) {
 		this.tgt = mapDef.getTgt(source, options);
@@ -845,8 +845,6 @@ function dataMap(mapDef) {
 	};
 	return mapDef;
 }
-
-//==== /end of function compile ====
 
 function tmplObject(markup, options) {
 	// Template object constructor
@@ -1756,7 +1754,7 @@ function htmlEncode(text) {
 
 //========================== Initialize ==========================
 
-if (!(jsr || $ && $.render)) {
+{
 	// JsRender not already loaded, or loaded without jQuery, and we are now moving from jsrender namespace to jQuery namepace
 	for (jsvStoreName in jsvStores) {
 		registerStore(jsvStoreName, jsvStores[jsvStoreName]);
@@ -1787,14 +1785,6 @@ if (!(jsr || $ && $.render)) {
 			return ({}.toString).call(obj) === "[object Array]";
 		};
 
-		$.toJq = function(jq) {
-			if ($ !== jq) {
-				$extend(jq, this); // map over from jsrender namespace to jQuery namespace
-				$ = jq;
-				$.fn.render = $fnRender;
-			}
-		};
-
 		$.jsrender = versionNumber;
 	}
 
@@ -1804,7 +1794,7 @@ if (!(jsr || $ && $.render)) {
 	$.views = $views;
 	$.templates = $templates = $views.templates;
 
-	$.compile = $views.compile = function(markup, options) {
+	$.compile = function(markup, options) { // For integration with Hapi (and possibly other platforms) provide standard API/signature for template compilation
 		options = options || {};
 		options.markup = markup;
 		return $templates(options);
@@ -1908,15 +1898,10 @@ if (!(jsr || $ && $.render)) {
 	$viewsDelimiters();
 }
 
-if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over the stored items (templates, converters, helpers...)
-	jsr.toJq($);
-}
-
 // NODE.JS-SPECIFIC CODE:
 var nodeFs = require('fs'),
 	nodePath = require('path'),
 	nodePathSep = nodePath.sep,
-	nodeThrough = require('through2'),
 	rootDirNameLen = nodePath.resolve("./").length + 1;
 
 // Support for rendering templates from file system in Node.js Node, and for Express template engine integration,
@@ -1933,42 +1918,6 @@ $.renderFile = $.__express = function(filepath, data, callback) {
 $views.tags("clientTemplate", function(path) { // Custom tag to render a template in a script block, so it can be used as a client template without making an HTTP request
 	return '<script id="' + path + '" type="text/x-jsrender">' + $templates(path).markup + '</script>';
 });
-
-// Browserify transform for bundling server-side templates ('./some/file.html') in client js bundle
-$.tmplify = function(file, options) {
-	var nodeFileDirName = nodePath.dirname(file),
-		templateExtName = "." + (options.extension || "html");
-
-	if (nodePath.extname(file) !== templateExtName) {
-		return nodeThrough();
-	}
-
-	return nodeThrough(function(buf, enc, next) {
-		var createTmplCode, ref, pathFromFileDir,
-			markup = buf.toString().replace(/^\uFEFF/, ''), // Remove BOM if necessary
-			tmpl = $templates(markup),
-			bundledFile = '',
-			templateName = './' + file.slice(rootDirNameLen).split(nodePathSep).join('/'),
-			jsRenderPath = './' + nodePath.relative(nodeFileDirName, "./public/js/jsrender.js").split(nodePathSep).join('/');
-
-		for (ref in tmpl.refs) {
-			pathFromFileDir = './' + nodePath.relative(nodeFileDirName, ref).split(nodePathSep).join('/');
-			bundledFile += 'require("' + pathFromFileDir + '");\n';
-		}
-
-		createTmplCode = '$.templates("' + templateName + '", mkup)';
-		bundledFile +=
-			"var mkup = '" + markup.replace(/['"\\]/g, "\\$&").replace(/[ \t]*(\r\n|\n|\r)/g, '\\n') + "',\n" // Normalize newlines, and escape quotes and \ character
-			+ '  $ = global.jsrender || global.jQuery;\n\n'
-			+ 'module.exports = $ ? ' + createTmplCode
-			+ ' :\n  function($) {\n'
-			+ '    if (!$ || !$.views) {throw "Requires jsrender/jQuery";}\n'
-			+ '    return ' + createTmplCode
-			+ '\n  };';
-		this.push(bundledFile);
-		next();
-	});
-};
 
 module.exports = $;
 // END NODE.JS-SPECIFIC CODE

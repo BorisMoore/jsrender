@@ -21,7 +21,7 @@
 
         document.getElementById( "movieList" ).innerHTML = $.render.movieTemplate( movies );
 
-    })(this.jsviews);
+    })(this.jsrender);
 </pre>
 
 <script id="movieTemplate" type="text/x-jsrender">
@@ -91,7 +91,7 @@
 		document.getElementById( "movieList" ).innerHTML =
 			"<table><thead><tr><th>Title</th><th>Original order</th><th>Reverse order</th></tr></thead><tbody>" + $.render.movieTemplate( movies ) + "</tbody></table>";
 
-	})(this.jsviews);
+	})(this.jsrender);
 
 </script>
 
