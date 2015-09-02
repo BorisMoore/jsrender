@@ -1,51 +1,13 @@
-/*! JsRender tmplify submodule v1.0.0-rc.65 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender tmplify submodule v1.0.0-rc.68 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! Browserify transform for JsRender templates */
 /*
  * Copyright 2015, Boris Moore
  * Released under the MIT License.
-
------ Usage -----
-
-- Options:
-  --extensions or -e:
-  White-space separated list of extensions for jsrender templates
-  Default value: "html jsrender jsr"
-
-- Command line:
-
-  browserify -t jsrender/tmplify ./source.js > ./bundle.js
-
-  browserify -t [jsrender/tmplify --extensions 'htm jsrender'] ./source.js > ./bundle.js
-
-  browserify -t [jsrender/tmplify -e 'htm jsrender'] ./source.js > ./bundle.js
-
-- package.json:
-
-  "browserify": {
-    "transform": [
-      [
-        "jsrender/tmplify", {
-          "extensions": "htm jsrender"
-        }
-      ]
-    ]
-  }
-
-- API:
-
-  browserify('./source.js')
-    .transform(require('jsrender/tmplify'), {extensions: 'htm jsrender'})
-    .bundle()
-    .pipe(fs.createWriteStream('./bundle.js'))
-    .on('error', function(err) {
-      console.log(err);
-    });
-
 */
 
 (function() {
 "use strict";
-var jsrender = require('../'),
+var jsrender = require('./../jsrender-node.js'),
 	path = require('path'),
 	pathSep = path.sep,
 	through = require('through2'),

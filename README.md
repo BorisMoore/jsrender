@@ -1,10 +1,10 @@
 ## JsRender: best-of-breed templating
-_Simple and intuitive, powerful and extensible, lightning fast_<br/>
-_For templated content in the browser or on Node.js (with Express 4, Hapi and Browserify integration)_<br/>
+*Simple and intuitive, powerful and extensible, lightning fast*<br/>
+*For templated content in the browser or on Node.js (with Express 4, Hapi and Browserify integration)*<br/>
 
 **JsRender** is a light-weight but powerful templating engine, highly extensible, and optimized for high-performance rendering, without DOM dependency. It is designed for use in the browser or on Node.js, with or without jQuery.
 
-**JsRender** and **JsViews** together provide the next-generation implementation of the official jQuery plugins _JQuery Templates_, and _JQuery Data Link_ - and supersede those libraries.
+**JsRender** and **JsViews** together provide the next-generation implementation of the official jQuery plugins *JQuery Templates*, and *JQuery Data Link* - and supersede those libraries.
 
 <h3>Documentation and Downloads</h3>
 **[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
@@ -380,4 +380,3 @@ To learn more, see the [JsRender Node Starter](https://github.com/BorisMoore/jsr
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
 
 (See also the [demos](https://github.com/BorisMoore/jsrender/tree/master/demos) folder of this GitHub repository - available [here](http://borismoore.github.io/jsrender/demos/index.html) as live samples).
-

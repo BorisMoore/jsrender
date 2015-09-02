@@ -1,8 +1,8 @@
 /*global test, equal, ok, QUnit*/
 (function(undefined) {
 "use strict";
-var jsrender = require('./../../');
-var tmplify = require('./../../tmplify');
+var jsrender = require('./../../jsrender-node.js');
+var tmplify = require('./../../tmplify/index.js');
 
 function upper(val) {
 	return val.toUpperCase();

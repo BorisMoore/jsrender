@@ -1,4 +1,4 @@
-/*! JsRender v1.0.0-rc.67 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender v1.0.0-rc.68 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
