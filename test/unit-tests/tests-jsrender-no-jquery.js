@@ -661,10 +661,11 @@ test("", function() {
 	}
 
 	// ................................ Assert ..................................
-	ok(tmpl.useViews === false && message.indexOf("data") > 0,
+	ok(tmpl.useViews === false && message.indexOf("undefined") > 0,
 		"A simple template with useViews=false will not provide access to the views through allowCode");
 
 	// ................................ Act ..................................
+	message = "";
 	tmpl.useViews = true;
 
 	// ................................ Assert ..................................
@@ -687,22 +688,26 @@ test("", function() {
 	});
 
 	// ................................ Assert ..................................
-	equal(tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
-		"Recompiling the template with useViews: true will create a template that has tmpl.useViews = true, which renders with views");
+		tmpl = $.templates(
+			"{{:#type}} "
+			+ "{{for towns}}"
+				+ "{{>name}}"
+				+ "{{*:view.index===view.parent.data.length-2 ? ' and ' : view.index<view.parent.data.length-2 ? ', ': ''}}"
+			+ "{{/for}}");
+
+	var html = tmpl.render({towns: towns});
+
+	equal(tmpl.useViews && html, "data Seattle, Paris and Delhi",
+		"Recompiling the template with useViews: true will create a template that has tmpl.useViews = true, which renders with a 'data' view");
 
 	// ................................ Act ..................................
 	tmpl.useViews = false;
 
-	try {
-		tmpl.render({towns: towns});
-	}
-	catch (e) {
-		message = e.message;
-	}
+	html = tmpl.render({towns: towns});
 
 	// ................................ Assert ..................................
-	ok(message.indexOf("data") > 0,
-		"If tmpl.useViews set to false (for an existing template - without recompiling), the template renders without views");
+	equal(!tmpl.useViews && html, "top Seattle, Paris and Delhi",
+		"If tmpl.useViews set to false (for an existing template - without recompiling), the template renders without a 'data' view");
 
 	// ................................ Act ..................................
 	$.views.settings.useViews = true;
@@ -712,8 +717,8 @@ test("", function() {
 	$.views.settings.useViews = false;
 
 	// ................................ Assert ..................................
-	equal(tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
-		"If $.views.settings.useViews was true when the template is compiled, then the template renders with views, even if $.views.settings.useViews is not longer set to true");
+	equal(tmpl.useViews && tmpl.render({towns: towns}), "data Seattle, Paris and Delhi",
+		"If $.views.settings.useViews was true when the template was compiled, then the template renders with views, even if $.views.settings.useViews is no longer set to true");
 
 	// =============================== Arrange ===============================
 	$.views.settings.useViews = false;

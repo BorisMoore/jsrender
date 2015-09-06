@@ -1,15 +1,16 @@
 /*global test, equal, module, ok*/
 (function(global, jQuery, undefined) {
 "use strict";
-if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qunit async test seems to fail in IE8
-
-module("AMD Script Loader");
 
 function undefine() { // Undefine registered modules from previously run tests.
 	require.undef("jsrender");
 	require.undef("jquery");
 	delete window.jQuery;
 }
+
+if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qunit async test seems to fail in IE8
+
+module("AMD Script Loader");
 
 test("Loading JsRender, without jQuery, using RequireJS", function(assert) { 
 	var done = assert.async(),

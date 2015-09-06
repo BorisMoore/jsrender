@@ -370,7 +370,7 @@ or
 {{/if}}
 ```
 
-<h3><i>Node.js features</i></h3>
+<h3><i>Node.js Integration</i></h3>
 
 On Node.js *JsRender* provides built-in ***Express***, ***Hapi*** and ***Browserify*** integration. This makes it easy to register templates as simple `.html` files on the file system, and then load and render them either server-side, client-side or both.
 

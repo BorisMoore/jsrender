@@ -1,4 +1,4 @@
-/*! JsRender v1.0.0-rc.68 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender v1.0.0-rc.69 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -94,6 +94,7 @@ var versionNumber = "v1.0.0-beta",
 			tmplFn: tmplFn,
 			parse: parseParams,
 			extend: $extend,
+			extendCtx: extendCtx,
 			syntaxErr: syntaxError,
 			onStore: {},
 			_ths: tagHandlersFromProps,
@@ -200,7 +201,7 @@ function $viewsDelimiters(openChars, closeChars, link) {
 		delimCloseChar0 = closeChars ? closeChars.charAt(0) : delimCloseChar0;
 		delimCloseChar1 = closeChars ? closeChars.charAt(1) : delimCloseChar1;
 		linkChar = link || linkChar;
-		openChars = "\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1;  // Default is "{^{"
+		openChars = "\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1; // Default is "{^{"
 		closeChars = "\\" + delimCloseChar0 + "\\" + delimCloseChar1;                   // Default is "}}"
 		// Build regex with new delimiters
 		//          tag    (followed by / space or })   or cvtr+colon or html or code
@@ -612,7 +613,7 @@ function View(context, type, parentView, data, template, key, contentTmpl, onRen
 	// If the data is an array, this is an 'array view' with a views array for each child 'item view'
 	// If the data is not an array, this is an 'item view' with a views 'hash' object for any child nested views
 	// ._.useKey is non zero if is not an 'array view' (owning a data array). Use this as next key for adding to child views hash
-		self_ = self._ = {
+	self_ = self._ = {
 		key: 0,
 		useKey: isArray ? 0 : 1,
 		id: "" + viewId++,
@@ -696,7 +697,7 @@ function compileTag(name, tagDef, parentTmpl) {
 			render: tagDef
 		};
 	} else if ("" + tagDef === tagDef) {
-		tagDef = {template:  tagDef};
+		tagDef = {template: tagDef};
 	}
 	if (baseTag = tagDef.baseTag) {
 		tagDef.flow = !!tagDef.flow; // Set flow property, so defaults to false even if baseTag has flow=true
@@ -1057,7 +1058,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 	if (view) {
 		contentTmpl = contentTmpl || view.content; // The wrapped content - to be added as #content property on views, below
 		onRender = onRender || view._.onRender;
-		context = context || view.ctx;
+		context = extendCtx(context, view.ctx);
 	}
 
 	if (key === true) {
@@ -1095,7 +1096,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 		for (i = 0, l = data.length; i < l; i++) {
 			// Create a view for each data item.
 			if (itemVar) {
-				setItemVar(data[i]);  // use modified ctx with user-named ~item
+				setItemVar(data[i]); // use modified ctx with user-named ~item
 			}
 			childView = new View(newCtx, "item", newView, data[i], tmpl, (key || 0) + i, contentTmpl, onRender);
 
