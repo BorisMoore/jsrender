@@ -1,4 +1,4 @@
-/*! JsRender v1.0.0-rc.69 (Beta - Release Candidate): http://jsviews.com/#jsrender */
+/*! JsRender v1.0.0-rc.70 (Beta - Release Candidate): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -1503,10 +1503,10 @@ function parseParams(params, pathBindings, tmpl) {
 		// "a.b().c^d().e.f().g" - which has four chained paths, "a.b()", "^c.d()", ".e.f()" and ".g"
 		parenDepth = 0,
 		fnCall = {}, // We are in a function call
-		pathStart = {}; // tracks the start of the current path such as c^d() in the above example
+		pathStart = {}, // tracks the start of the current path such as c^d() in the above example
+		result = (params + (tmpl ? " " : "")).replace(rParams, parseTokens);
 
-	return (params + (tmpl ? " " : ""))
-		.replace(rParams, parseTokens);
+	return !parenDepth && result || syntaxError(params); // Syntax error if unbalanced parens in params expression
 }
 
 function buildCode(ast, tmpl, isLinkExpr) {

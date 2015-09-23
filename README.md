@@ -4,7 +4,7 @@
 
 **JsRender** is a light-weight but powerful templating engine, highly extensible, and optimized for high-performance rendering, without DOM dependency. It is designed for use in the browser or on Node.js, with or without jQuery.
 
-**JsRender** and **JsViews** together provide the next-generation implementation of the official jQuery plugins *JQuery Templates*, and *JQuery Data Link* - and supersede those libraries.
+**[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* - and supersede those libraries.
 
 <h3>Documentation and Downloads</h3>
 **[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
@@ -12,8 +12,7 @@
 
 <h3>JsRender and JsViews</h3>
 JsRender is used for data-driven rendering of templates to strings, ready for insertion in the DOM.<br/>
-It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, which adds data binding to JsRender templates,
-and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
+It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, which adds data binding to JsRender templates, and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
 
 <h3>Installation</h3>
 
@@ -22,28 +21,34 @@ and provides a fully-fledged MVVM platform for easily creating interactive data-
 Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an AMD script loader, such as RequireJS
-- On Node.js, after installing using  `$ npm install jsrender --save` it can be loaded for server-side rendering (or in the browser using Browserify ) using `var $ = require('jsrender');` *(see Node.js Integration topic below).*  
-
-<h2>Usage</h2>
+- On Node.js, after installing using  `$ npm install jsrender --save`, it can be loaded for server-side rendering (or in the browser using Browserify ) using `var jsrender = require('jsrender');`
 
 <h4><b>jQuery integration</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
 
-<h4><b>JsRender without jQuery / on Node.js</b></h4>
+<h4><b>JsRender without jQuery</b></h4>
 
-When jQuery is not present, JsRender provides its own `jsrender` namespace, exposed as `window.jsrender`, or (on Node.js or with AMD loaders) returned by `require('jsrender')`. 
+When jQuery is not present, JsRender provides its own `jsrender` namespace object, exposed as `window.jsrender`
 
-The `jsrender` namepace provides the same methods/APIs as with jQuery, so if jQuery is not present you can still use all the API examples, by simply writing:
+The `jsrender` namespace provides the same methods/APIs as with jQuery, so if jQuery is not present you can still use all the API examples, by simply writing:
 
 ```js
-// In browser
 var $ = window.jsrender;
 
-// On Node.js (and similarly with AMD)
-var $ = require('jsrender');
-
-// Now use $.views... $.templates... $.render...
+// Now use code as in samples/examples, with $.views... $.templates... $.render...
 ```
+
+<h4><b>JsRender on Node.js</b></h4>
+
+JsRender can be used to render templates on the server (using Node.js) as well as in the browser. JsRender on Node.js has all the features and APIs of JsRender in the browser, plus some additional ones specific to Node.js.
+
+It also provides built-in *Express*, *Hapi* and *Browserify* integration -- which makes it easy to register templates as simple `.html` files on the file system, and then load and render them either server-side, client-side or both.
+
+**Learn more:** [JsRender Node.js Quickstart](//www.jsviews.com/#jsr-node-quickstart) and [JsRender APIs for Node.js](http://www.jsviews.com/#jsrnode).
+
+**Code samples:** See [JsRender Node Starter](https://github.com/BorisMoore/jsrender-node-starter) for running code examples of Node.js scenarios, including with *Express*, *Hapi* and *Browserify*.
+
+<h2>JsRender Usage</h2>
 
 <h3><i>Define a template</i></h3>
 
@@ -68,25 +73,23 @@ On Node.js, from an .html file containing the template markup:
 
 ```js
 var $ = require('jsrender'); // returns the jsrender namespace object
-var tmpl = $.templates("./myTemplate.html");
+var tmpl = $.templates("./templates/myTemplate.html");
 ```
 <a href="http://www.jsviews.com/#d.templates">Learn more...</a>
 
 <h3><i>Render a template</i></h3>
 
-`tmpl(object)` or `tmpl.render(object)` renders the template with the object as data context.
+`tmpl.render(object)` (or shortcut form: `tmpl(object)`) renders the template with the object as data context.
 
-`tmpl(array)` or `tmpl.render(array)` renders the template once for each item in the array.
+`tmpl.render(array)` (or `tmpl(array)`) renders the template once for each item in the array.
 
 ```js
 var tmpl = $.templates(" Name: {{:name}}<br/> ");
-```
 
-```js
 var person = {name: "Jim"};
 
 // Render template for person object
-var html = tmpl(person); // ready for insertion, e.g $("#container").html(html);
+var html = tmpl.render(person); // ready for insertion, e.g $("#container").html(html);
 
 // result: "Name: Jim<br/> "
 ```
@@ -95,7 +98,7 @@ var html = tmpl(person); // ready for insertion, e.g $("#container").html(html);
 var people = [{name: "Jim"}, {name: "Pedro"}];
 
 // Render template for people array
-var html = tmpl(people); // ready for insertion...
+var html = tmpl.render(people); // ready for insertion...
 
 // result: "Name: Jim<br/> Name: Pedro<br/> "
 ```
@@ -128,7 +131,7 @@ var html = $.templates.myTmpl1(person);
 ```js
 var data = {address: {street: "Main Street"} };
 var tmpl = $.templates("<b>Street:</b> {{:address.street}}");
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "<b>Street:</b> Main Street"
 ```
@@ -142,7 +145,7 @@ var html =  tmpl(data);
 ```js
 var data = {condition: "a < b"};
 var tmpl = $.templates("<b>Formula:</b> {{>condition}}");
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "<b>Formula:</b> a &lt; b"
 ```
@@ -182,7 +185,7 @@ $.templates({
 });
 
 // Render outer template
-var html =  $.templates.addressTmpl(data);
+var html = $.templates.addressTmpl(data);
 
 // result: "Jim's address is <i>Main Street</i>"
 ```
@@ -205,7 +208,7 @@ var html =  $.templates.addressTmpl(data);
 ```js
 var data = {people: [{name: "Jim"}, {name: "Pedro"}] };
 var tmpl = $.templates("#peopleTmpl");
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "<ul> <li>Name: Jim</li> <li>Name: Pedro</li> </ul>"
 ```
@@ -226,7 +229,7 @@ var html =  tmpl(data);
 ```js
 var data = {person: {first: "Jim", last: "Varsov"} };
 var tmpl = $.templates("#personTmpl");
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "<ul> <li>first: Jim</li> <li>last: Varsov</li> </ul>"
 ```
@@ -253,7 +256,7 @@ var html =  tmpl(data);
 ```js
 var data = {nickname: "Jim", name: "James"};
 var tmpl = $.templates("#personTmpl");
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "Nickname: Jim"
 ```
@@ -287,7 +290,7 @@ Either way, the result will be as follows:
 ```js
 var tmpl = $.templates("{{fullName person/}}");
 var data = {person: {first: "Jim", last: "Varsov"}};
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "Jim Varsov"
 ```
@@ -316,7 +319,7 @@ We can pass the helpers in with the `render()` method
 ```js
 var data = {first: "Jim", last: "Varsov"};
 
-var html =  tmpl(data, myHelpers);
+var html = tmpl.render(data, myHelpers);
 
 // result: "Sir Jim VARSOV"
 ```
@@ -327,7 +330,7 @@ Or we can register helpers globally:
 $.views.helpers(myHelpers);
 
 var data = {first: "Jim", last: "Varsov"};
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "Sir Jim VARSOV"
 ```
@@ -344,7 +347,7 @@ $.views.converters("upper", function(val) { return val.toUpperCase(); });
 
 var tmpl = $.templates("{{:first}} {{upper:last}}");
 var data = {first: "Jim", last: "Varsov"};
-var html =  tmpl(data);
+var html = tmpl.render(data);
 
 // result: "Jim VARSOV"
 ```
@@ -370,11 +373,9 @@ or
 {{/if}}
 ```
 
-<h3><i>Node.js Integration</i></h3>
+<h3><i>Documentation and APIs</i></h3>
 
-On Node.js *JsRender* provides built-in ***Express***, ***Hapi*** and ***Browserify*** integration. This makes it easy to register templates as simple `.html` files on the file system, and then load and render them either server-side, client-side or both.
-
-To learn more, see the [JsRender Node Starter](https://github.com/BorisMoore/jsrender-node-starter) project. 
+See the [www.jsviews.com](http://www.jsviews.com) site, including the  [JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart) and [JsRender APIs](http://www.jsviews.com/#jsrapi) topics.
 
 <h3><i>Demos</i></h3>
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
