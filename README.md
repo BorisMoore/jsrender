@@ -44,7 +44,7 @@ JsRender can be used to render templates on the server (using Node.js) as well a
 
 It also provides built-in *Express*, *Hapi* and *Browserify* integration -- which makes it easy to register templates as simple `.html` files on the file system, and then load and render them either server-side, client-side or both.
 
-**Learn more:** [JsRender Node.js Quickstart](//www.jsviews.com/#jsr-node-quickstart) and [JsRender APIs for Node.js](http://www.jsviews.com/#jsrnode).
+**Learn more:** [JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart) and [JsRender APIs for Node.js](http://www.jsviews.com/#jsrnode).
 
 **Code samples:** See [JsRender Node Starter](https://github.com/BorisMoore/jsrender-node-starter) for running code examples of Node.js scenarios, including with *Express*, *Hapi* and *Browserify*.
 
@@ -89,7 +89,7 @@ var tmpl = $.templates(" Name: {{:name}}<br/> ");
 var person = {name: "Jim"};
 
 // Render template for person object
-var html = tmpl.render(person); // ready for insertion, e.g $("#container").html(html);
+var html = tmpl.render(person); // ready for insertion, e.g $("#result").html(html);
 
 // result: "Name: Jim<br/> "
 ```
