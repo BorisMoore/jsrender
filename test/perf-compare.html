@@ -57,7 +57,7 @@
 
 	// For Handlebars, make initial rendering call to do first compilation.
 	htmlSample = tmpl_handlebars( movie );
-	tmpl_handlebarsEncode( movie);
+	tmpl_handlebarsEncode( movie );
 	$( "#output" ).html( htmlSample );
 	
 	// For dust, load the template first
@@ -115,6 +115,10 @@
 	test( "Dustjs", times * 500, 1, function() {
 		ret = dust.render(tmpl_dustLoaded, movie, function(err, out) {});
 	});
+	test( "Dustjs: loadSource + render", times * 500, 1, function() {
+		tmpl_dustLoaded = dust.loadSource(tmpl_dust);
+		ret = dust.render(tmpl_dustLoaded, movie, function(err, out) {});
+	});
 	test( "JsRender", times * 500, 1, function() {
 		ret = tmpl_JsRender.render( movie );
 	});
@@ -148,6 +152,10 @@
 		ret = tmpl_hoganEncode.render( movie );
 	});
 	test( "Dustjs", times * 500, 1, function() {
+		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
+	});
+	test( "Dustjs: loadSource + render", times * 500, 1, function() {
+		tmpl_dustLoadedEncode = dust.loadSource(tmpl_dustEncode);
 		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
 	});
 	test( "JsRender", times * 50, 1, function() {
@@ -198,7 +206,8 @@
 		tmpl( movie );
 	});
 	test( "Hogan compile", times * 5, 0, function() {
-		tmpl_hogan = Hogan.compile( hoganTemplate );
+		//tmpl_hogan = Hogan.compile( hoganTemplate );
+		tmpl_hogan = Hogan.parse(Hogan.scan(hoganTemplate));
 	});
 	test( "Dustjs", times * 500, 1, function() {
 		tmpl_dust = dust.compile( dustTemplate );
