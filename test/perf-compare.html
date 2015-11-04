@@ -10,6 +10,8 @@
 
 	<script src="resources/handlebars.js" type="text/javascript"></script>
 	<script src="resources/dot.js" type="text/javascript"></script>
+	<script src="resources/hogan.min.js"></script>
+	<script src="resources/dust-full.min.js"></script>
 </head>
 <body>
 
@@ -35,6 +37,10 @@
 		dotTemplateEncode = "<div><b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})</div>",
 		handlebarsTemplate = "<div><b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})</div>",
 		handlebarsTemplateEncode = "<div><b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})</div>",
+		hoganTemplate = "<div><b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})</div>",
+		hoganTemplateEncode = "<div><b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})</div>",
+		dustTemplate = "<div><b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})</div>",
+		dustTemplateEncode = "<div><b>{Name|h}</b> ({ReleaseYear|h})<b>{Name|h}</b> ({ReleaseYear|h})<b>{Name|h}</b> ({ReleaseYear|h})<b>{Name|h}</b> ({ReleaseYear|h})</div>",
 
 		tmpl_doT = doT.template( dotTemplate ),
 		tmpl_doTEncode = doT.template( dotTemplateEncode ),
@@ -43,12 +49,20 @@
 		tmpl_jQueryTmplEncode =  $.template( null, jqueryTmplTemplateEncode ),
 		tmpl_JsRenderEncode = $.templates( null, jsRenderTemplateEncode ),
 		tmpl_handlebars = Handlebars.compile( handlebarsTemplate ),
-		tmpl_handlebarsEncode = Handlebars.compile( handlebarsTemplateEncode );
+		tmpl_handlebarsEncode = Handlebars.compile( handlebarsTemplateEncode ),
+		tmpl_hogan = Hogan.compile( hoganTemplate ),
+		tmpl_hoganEncode = Hogan.compile( hoganTemplateEncode ),
+		tmpl_dust = dust.compile( dustTemplate );
+		tmpl_dustEncode = dust.compile( dustTemplateEncode );
 
 	// For Handlebars, make initial rendering call to do first compilation.
 	htmlSample = tmpl_handlebars( movie );
 	tmpl_handlebarsEncode( movie);
 	$( "#output" ).html( htmlSample );
+	
+	// For dust, load the template first
+	tmpl_dustLoaded = dust.loadSource(tmpl_dust);
+	tmpl_dustLoadedEncode = dust.loadSource(tmpl_dustEncode);
 
 	function test( label, times, places, cb, before, after ) {
 		var target = $( "<tr><td>" + label + ": </td></tr>" ).appendTo( "#results" );
@@ -95,6 +109,12 @@
 	test( "Handlebars", times * 500, 1, function() {
 		ret = tmpl_handlebars(movie);
 	});
+	test( "Hogan", times * 500, 1, function() {
+		ret = tmpl_hogan.render(movie);
+	});
+	test( "Dustjs", times * 500, 1, function() {
+		ret = dust.render(tmpl_dustLoaded, movie, function(err, out) {});
+	});
 	test( "JsRender", times * 500, 1, function() {
 		ret = tmpl_JsRender.render( movie );
 	});
@@ -124,6 +144,12 @@
 	test( "Handlebars", times * 50, 1, function() {
 		ret = tmpl_handlebarsEncode( movie );
 	});
+	test( "Hogan", times * 50, 1, function() {
+		ret = tmpl_hoganEncode.render( movie );
+	});
+	test( "Dustjs", times * 500, 1, function() {
+		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
+	});
 	test( "JsRender", times * 50, 1, function() {
 		ret = tmpl_JsRenderEncode.render( movie );
 	});
@@ -148,6 +174,10 @@
 		$( "#output" ).empty();
 		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
 	});
+	test( "Dustjs - inserted in DOM", times * 5, 0, function() {
+		dust.render(tmpl_dustLoaded, movie, function(err, out) { $( "#output" ).html(out) });
+		;
+	});
 	test( "JsRender - inserted in DOM", times * 5, 0, function() {
 		$( "#output" ).html( tmpl_JsRender.render( movie ));
 	});
@@ -166,6 +196,12 @@
 		var tmpl = Handlebars.compile( handlebarsTemplateEncode );
 		// For Handlebars, make initial rendering call to do first compilation.
 		tmpl( movie );
+	});
+	test( "Hogan compile", times * 5, 0, function() {
+		tmpl_hogan = Hogan.compile( hoganTemplate );
+	});
+	test( "Dustjs", times * 500, 1, function() {
+		tmpl_dust = dust.compile( dustTemplate );
 	});
 	test( "JsRender compile", times * 5, 0, function() {
 		tmpl_JsRender = $.templates( "test", jsRenderTemplate );
