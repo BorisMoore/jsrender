@@ -151,10 +151,10 @@
 	test( "Hogan", times * 50, 1, function() {
 		ret = tmpl_hoganEncode.render( movie );
 	});
-	test( "Dustjs", times * 500, 1, function() {
+	test( "Dustjs", times * 50, 1, function() {
 		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
 	});
-	test( "Dustjs: loadSource + render", times * 500, 1, function() {
+	test( "Dustjs: loadSource + render", times * 50, 1, function() {
 		tmpl_dustLoadedEncode = dust.loadSource(tmpl_dustEncode);
 		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
 	});
@@ -209,7 +209,7 @@
 		//tmpl_hogan = Hogan.compile( hoganTemplate );
 		tmpl_hogan = Hogan.parse(Hogan.scan(hoganTemplate));
 	});
-	test( "Dustjs", times * 500, 1, function() {
+	test( "Dustjs", times * 5, 0, function() {
 		tmpl_dust = dust.compile( dustTemplate );
 	});
 	test( "JsRender compile", times * 5, 0, function() {
