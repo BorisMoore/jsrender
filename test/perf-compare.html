@@ -1,17 +1,17 @@
-﻿<!DOCTYPE html PUBLIC>
+<!DOCTYPE html PUBLIC>
 <html>
 <head>
-	<title>Benchmark JsRender</title>
-	<link href="resources/perf-compare.css" rel="stylesheet" type="text/css" />
-	<script src="http://code.jquery.com/jquery-1.11.2.js" type="text/javascript"></script>
+    <title>Benchmark JsRender</title>
+    <link href="resources/perf-compare.css" rel="stylesheet" type="text/css" />
+    <script src="http://code.jquery.com/jquery-1.11.2.js" type="text/javascript"></script>
+    <script src="http://twitter.github.com/hogan.js/builds/3.0.1/hogan-3.0.1.js"></script>
+    <script src="../jsrender.js" type="text/javascript"></script>
+    <script src="resources/jquery.tmpl.js" type="text/javascript"></script>
 
-	<script src="../jsrender.js" type="text/javascript"></script>
-	<script src="resources/jquery.tmpl.js" type="text/javascript"></script>
-
-	<script src="resources/handlebars.js" type="text/javascript"></script>
-	<script src="resources/dot.js" type="text/javascript"></script>
-	<script src="resources/hogan.min.js"></script>
-	<script src="resources/dust-full.min.js"></script>
+    <script src="resources/handlebars.js" type="text/javascript"></script>
+    <script src="resources/dot.js" type="text/javascript"></script>
+    <script src="resources/hogan.js"></script>
+    <script src="resources/dust-full.js"></script>
 </head>
 <body>
 
@@ -24,201 +24,199 @@
 <table><tbody id="results"></tbody></table>
 
 <script type="text/javascript">
-	var times = 250, ret, tmplString, htmlSample,
-		tests = [],
+    var times = 250, ret, tmplString, htmlSample,
+        tests = [],
 
-		movie = { Name: "The <i>Red</i> Violin", ReleaseYear: "1998" },
+        movie = { Name: "The <i>Red</i> Violin", ReleaseYear: "1998" },
 
-		jqueryTmplTemplate = "<div><b>{{html Name}}</b> ({{html ReleaseYear}})<b>{{html Name}}</b> ({{html ReleaseYear}})<b>{{html Name}}</b> ({{html ReleaseYear}})<b>{{html Name}}</b> ({{html ReleaseYear}})</div>",
-		jqueryTmplTemplateEncode = "<div><b>${Name}</b> (${ReleaseYear})<b>${Name}</b> (${ReleaseYear})<b>${Name}</b> (${ReleaseYear})<b>${Name}</b> (${ReleaseYear})</div>",
-		jsRenderTemplate = "<div><b>{{:Name}}</b> ({{:ReleaseYear}})<b>{{:Name}}</b> ({{:ReleaseYear}})<b>{{:Name}}</b> ({{:ReleaseYear}})<b>{{:Name}}</b> ({{:ReleaseYear}})</div>",
-		jsRenderTemplateEncode = "<div><b>{{>Name}}</b> ({{>ReleaseYear}})<b>{{>Name}}</b> ({{>ReleaseYear}})<b>{{>Name}}</b> ({{>ReleaseYear}})<b>{{>Name}}</b> ({{>ReleaseYear}})</div>",
-		dotTemplate = "<div><b>{{=it.Name}}</b> ({{=it.ReleaseYear}})<b>{{=it.Name}}</b> ({{=it.ReleaseYear}})<b>{{=it.Name}}</b> ({{=it.ReleaseYear}})<b>{{=it.Name}}</b> ({{=it.ReleaseYear}})</div>",
-		dotTemplateEncode = "<div><b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})</div>",
-		handlebarsTemplate = "<div><b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})</div>",
-		handlebarsTemplateEncode = "<div><b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})</div>",
-		hoganTemplate = "<div><b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})</div>",
-		hoganTemplateEncode = "<div><b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})</div>",
-		dustTemplate = "<div><b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})</div>",
-		dustTemplateEncode = "<div><b>{Name|h}</b> ({ReleaseYear|h})<b>{Name|h}</b> ({ReleaseYear|h})<b>{Name|h}</b> ({ReleaseYear|h})<b>{Name|h}</b> ({ReleaseYear|h})</div>",
+        jqueryTmplTemplate = "<div><b>{{html Name}}</b> ({{html ReleaseYear}})<b>{{html Name}}</b> ({{html ReleaseYear}})<b>{{html Name}}</b> ({{html ReleaseYear}})<b>{{html Name}}</b> ({{html ReleaseYear}})</div>",
+        jqueryTmplTemplateEncode = "<div><b>${Name}</b> (${ReleaseYear})<b>${Name}</b> (${ReleaseYear})<b>${Name}</b> (${ReleaseYear})<b>${Name}</b> (${ReleaseYear})</div>",
+        jsRenderTemplate = "<div><b>{{:Name}}</b> ({{:ReleaseYear}})<b>{{:Name}}</b> ({{:ReleaseYear}})<b>{{:Name}}</b> ({{:ReleaseYear}})<b>{{:Name}}</b> ({{:ReleaseYear}})</div>",
+        jsRenderTemplateEncode = "<div><b>{{>Name}}</b> ({{>ReleaseYear}})<b>{{>Name}}</b> ({{>ReleaseYear}})<b>{{>Name}}</b> ({{>ReleaseYear}})<b>{{>Name}}</b> ({{>ReleaseYear}})</div>",
+        dotTemplate = "<div><b>{{=it.Name}}</b> ({{=it.ReleaseYear}})<b>{{=it.Name}}</b> ({{=it.ReleaseYear}})<b>{{=it.Name}}</b> ({{=it.ReleaseYear}})<b>{{=it.Name}}</b> ({{=it.ReleaseYear}})</div>",
+        dotTemplateEncode = "<div><b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})<b>{{!it.Name}}</b> ({{!it.ReleaseYear}})</div>",
+        handlebarsTemplate = "<div><b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})</div>",
+        handlebarsTemplateEncode = "<div><b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})</div>",
+        hoganTemplate = "<div><b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})<b>{{{Name}}}</b> ({{{ReleaseYear}}})</div>",
+        hoganTemplateEncode = "<div><b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})<b>{{Name}}</b> ({{ReleaseYear}})</div>",
+        dustTemplate = "<div><b>{Name|s}</b> ({ReleaseYear|s})<b>{Name|s}</b> ({ReleaseYear|s})<b>{Name|s}</b> ({ReleaseYear|s})<b>{Name|s}</b> ({ReleaseYear|s})</div>",
+        dustTemplateEncode = "<div><b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})<b>{Name}</b> ({ReleaseYear})</div>",
 
-		tmpl_doT = doT.template( dotTemplate ),
-		tmpl_doTEncode = doT.template( dotTemplateEncode ),
-		tmpl_jQueryTmpl =  $.template( null, jqueryTmplTemplate ),
-		tmpl_JsRender = $.templates( null, jsRenderTemplate ),
-		tmpl_jQueryTmplEncode =  $.template( null, jqueryTmplTemplateEncode ),
-		tmpl_JsRenderEncode = $.templates( null, jsRenderTemplateEncode ),
-		tmpl_handlebars = Handlebars.compile( handlebarsTemplate ),
-		tmpl_handlebarsEncode = Handlebars.compile( handlebarsTemplateEncode ),
-		tmpl_hogan = Hogan.compile( hoganTemplate ),
-		tmpl_hoganEncode = Hogan.compile( hoganTemplateEncode ),
-		tmpl_dust = dust.compile( dustTemplate );
-		tmpl_dustEncode = dust.compile( dustTemplateEncode );
+        tmpl_doT = doT.template( dotTemplate ),
+        tmpl_doTEncode = doT.template( dotTemplateEncode ),
+        tmpl_jQueryTmpl =  $.template( null, jqueryTmplTemplate ),
+        tmpl_JsRender = $.templates( null, jsRenderTemplate ),
+        tmpl_jQueryTmplEncode =  $.template( null, jqueryTmplTemplateEncode ),
+        tmpl_JsRenderEncode = $.templates( null, jsRenderTemplateEncode ),
+        tmpl_handlebars = Handlebars.compile( handlebarsTemplate ),
+        tmpl_handlebarsEncode = Handlebars.compile( handlebarsTemplateEncode ),
+        tmpl_hogan = Hogan.compile( hoganTemplate ),
+        tmpl_hoganEncode = Hogan.compile( hoganTemplateEncode ),
+        tmpl_dust = dust.compile( dustTemplate );
+        tmpl_dustEncode = dust.compile( dustTemplateEncode );
 
-	// For Handlebars, make initial rendering call to do first compilation.
-	htmlSample = tmpl_handlebars( movie );
-	tmpl_handlebarsEncode( movie );
-	$( "#output" ).html( htmlSample );
-	
-	// For dust, load the template first
-	tmpl_dustLoaded = dust.loadSource(tmpl_dust);
-	tmpl_dustLoadedEncode = dust.loadSource(tmpl_dustEncode);
+    // For Handlebars, make initial rendering call to do first compilation.
+    htmlSample = tmpl_handlebars( movie );
+    tmpl_handlebarsEncode( movie );
+    $( "#output" ).html( htmlSample );
 
-	function test( label, times, places, cb, before, after ) {
-		var target = $( "<tr><td>" + label + ": </td></tr>" ).appendTo( "#results" );
-		tests.push( function() {
-			if (before) {
-				before();
-			}
-			var endTime, result,
-				count = times,
-				startTime = new Date().getTime();
+    // For dust, load the template first
+    tmpl_dustLoaded = dust.loadSource(tmpl_dust);
+    tmpl_dustLoadedEncode = dust.loadSource(tmpl_dustEncode);
 
-			while (count--) {
-				cb();
-			}
-			endTime = new Date().getTime();
-			if (after) {
-				after();
-			}
-			result = ((( endTime-startTime ) * 1000 ) / times);
-			target.append( "<td class='result'>" + result.toFixed( places ) + "</td>");
-			runNextTest();
-		});
-	}
+    function test( label, times, places, cb, before, after ) {
+        var target = $( "<tr><td>" + label + ": </td></tr>" ).appendTo( "#results" );
+        tests.push( function() {
+            if (before) {
+                before();
+            }
+            var endTime, result,
+                count = times,
+                startTime = new Date().getTime();
 
-	function runNextTest() {
-		var next;
-		if (next = tests.shift()) {
-			setTimeout( next, 0 );
-		} else {
-			$( "#results" ).append( "<tr><td colspan='2'><em>Tests complete...</em></td></tr>" );
-		}
-	}
+            while (count--) {
+                cb();
+            }
+            endTime = new Date().getTime();
+            if (after) {
+                after();
+            }
+            result = ((( endTime-startTime ) * 1000 ) / times);
+            target.append( "<td class='result'>" + result.toFixed( places ) + "</td>");
+            runNextTest();
+        });
+    }
 
-	// Test render to string perf
-	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
-	$( "#results" ).append( "<tr><td colspan='2'><b>Optimized render to string</b></td></tr>");
+    function runNextTest() {
+        var next;
+        if (next = tests.shift()) {
+            setTimeout( next, 0 );
+        } else {
+            $( "#results" ).append( "<tr><td colspan='2'><em>Tests complete...</em></td></tr>" );
+        }
+    }
 
-	test( "jQuery Templates", times * 100, 1, function() {
-		ret = tmpl_jQueryTmpl($, { data: movie }).join("");
-	});
-	test( "doT", times * 500, 1, function() {
-		ret = tmpl_doT(movie);
-	});
-	test( "Handlebars", times * 500, 1, function() {
-		ret = tmpl_handlebars(movie);
-	});
-	test( "Hogan", times * 500, 1, function() {
-		ret = tmpl_hogan.render(movie);
-	});
-	test( "Dustjs", times * 500, 1, function() {
-		ret = dust.render(tmpl_dustLoaded, movie, function(err, out) {});
-	});
-	test( "Dustjs: loadSource + render", times * 500, 1, function() {
-		tmpl_dustLoaded = dust.loadSource(tmpl_dust);
-		ret = dust.render(tmpl_dustLoaded, movie, function(err, out) {});
-	});
-	test( "JsRender", times * 500, 1, function() {
-		ret = tmpl_JsRender.render( movie );
-	});
+    // Test render to string perf
+    $( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
+    $( "#results" ).append( "<tr><td colspan='2'><b>Render to string</b></td></tr>");
 
-	test( "JsRender: Debug mode off - <em>$.views.settings.debugMode(false)</em>", times * 500, 1,
-		function() {
-			ret = tmpl_JsRender.render( movie );
-		},
-		function() {
-			$.views.settings.debugMode(false);
-		},
-		function() {
-			$.views.settings.debugMode(true);
-		}
-	);
+    test( "jQuery Templates", times * 100, 1, function() {
+        ret = tmpl_jQueryTmpl($, { data: movie }).join("");
+    });
+    test( "doT", times * 500, 1, function() {
+        ret = tmpl_doT(movie);
+    });
+    test( "Handlebars", times * 500, 1, function() {
+        ret = tmpl_handlebars(movie);
+    });
+    test( "Hogan", times * 500, 1, function() {
+        ret = tmpl_hogan.render(movie);
+    });
+    test( "Dustjs", times * 500, 1, function() {
+        dust.render(tmpl_dustLoaded, movie, function(err, out) {
+            ret = out;
+        });
+    });
+    test( "JsRender", times * 500, 1, function() {
+        ret = tmpl_JsRender.render( movie );
+    });
 
-	// Test html encoding perf
-	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
-	$( "#results" ).append( "<tr><td colspan='2'><b>Render to string, with HTML encoding</b></td></tr>");
+    test( "JsRender: Debug mode off - <em>$.views.settings.debugMode(false)</em>", times * 500, 1,
+        function() {
+            ret = tmpl_JsRender.render( movie );
+        },
+        function() {
+            $.views.settings.debugMode(false);
+        },
+        function() {
+            $.views.settings.debugMode(true);
+        }
+    );
 
-	test( "jQuery Templates", times * 50, 1, function() {
-		ret = tmpl_jQueryTmplEncode($, { data: movie }).join("");
-	});
-	test( "doT", times * 50, 1, function() {
-		ret = tmpl_doTEncode( movie );
-	});
-	test( "Handlebars", times * 50, 1, function() {
-		ret = tmpl_handlebarsEncode( movie );
-	});
-	test( "Hogan", times * 50, 1, function() {
-		ret = tmpl_hoganEncode.render( movie );
-	});
-	test( "Dustjs", times * 50, 1, function() {
-		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
-	});
-	test( "Dustjs: loadSource + render", times * 50, 1, function() {
-		tmpl_dustLoadedEncode = dust.loadSource(tmpl_dustEncode);
-		ret = dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {});
-	});
-	test( "JsRender", times * 50, 1, function() {
-		ret = tmpl_JsRenderEncode.render( movie );
-	});
+    // Test html encoding perf
+    $( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
+    $( "#results" ).append( "<tr><td colspan='2'><b>Render to string, with HTML encoding</b></td></tr>");
 
-	test( "JsRender: Debug mode off - <em>$.views.settings.debugMode(false)</em>", times * 50, 1,
-		function() {
-			ret = tmpl_JsRenderEncode.render( movie );
-		},
-		function() {
-			$.views.settings.debugMode(false);
-		},
-		function() {
-			$.views.settings.debugMode(true);
-		}
-	);
+    test( "jQuery Templates", times * 50, 1, function() {
+        ret = tmpl_jQueryTmplEncode($, { data: movie }).join("");
+    });
+    test( "doT", times * 50, 1, function() {
+        ret = tmpl_doTEncode( movie );
+    });
+    test( "Handlebars", times * 50, 1, function() {
+        ret = tmpl_handlebarsEncode( movie );
+    });
+    test( "Hogan", times * 50, 1, function() {
+        ret = tmpl_hoganEncode.render( movie );
+    });
+    test( "Dustjs", times * 50, 1, function() {
+        dust.render(tmpl_dustLoadedEncode, movie, function(err, out) {
+            ret = out;
+        });
+    });
+    test( "JsRender", times * 50, 1, function() {
+        ret = tmpl_JsRenderEncode.render( movie );
+    });
 
-	// Test full features perf
-	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
-	$( "#results" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
+    test( "JsRender: Debug mode off - <em>$.views.settings.debugMode(false)</em>", times * 50, 1,
+        function() {
+            ret = tmpl_JsRenderEncode.render( movie );
+        },
+        function() {
+            $.views.settings.debugMode(false);
+        },
+        function() {
+            $.views.settings.debugMode(true);
+        }
+    );
 
-	test( "jQuery Templates - inserted in DOM", times * 5, 0, function() {
-		$( "#output" ).empty();
-		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
-	});
-	test( "Dustjs - inserted in DOM", times * 5, 0, function() {
-		dust.render(tmpl_dustLoaded, movie, function(err, out) { $( "#output" ).html(out) });
-		;
-	});
-	test( "JsRender - inserted in DOM", times * 5, 0, function() {
-		$( "#output" ).html( tmpl_JsRender.render( movie ));
-	});
+    // Test full features perf
+    $( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
+    $( "#results" ).append( "<tr><td colspan='2'><b>Render and insert in DOM</b></td></tr>");
 
-	// Test compile perf
-	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
-	$( "#results" ).append( "<tr><td colspan='2'><b>Compile</b></td></tr>");
+    test( "jQuery Templates - inserted in DOM", times * 5, 0, function() {
+        $( "#output" ).empty();
+        $.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
+    });
+    test( "Dustjs - inserted in DOM", times * 5, 0, function() {
+        dust.render(tmpl_dustLoaded, movie, function(err, out) {
+            $( "#output" ).html(out);
+        });
+    });
+    test( "JsRender - inserted in DOM", times * 5, 0, function() {
+        $( "#output" ).html(tmpl_JsRender.render( movie ));
+    });
 
-	test( "jQuery Templates compile", times * 5, 0, function() {
-		tmpl_jQueryTmpl = $.template( jqueryTmplTemplate );
-	});
-	test( "doT compile", times * 5, 0, function() {
-		tmpl_doT = doT.template( dotTemplate );
-	});
-	test( "Handlebars compile", times * 5, 0, function() {
-		var tmpl = Handlebars.compile( handlebarsTemplateEncode );
-		// For Handlebars, make initial rendering call to do first compilation.
-		tmpl( movie );
-	});
-	test( "Hogan compile", times * 5, 0, function() {
-		//tmpl_hogan = Hogan.compile( hoganTemplate );
-		tmpl_hogan = Hogan.parse(Hogan.scan(hoganTemplate));
-	});
-	test( "Dustjs", times * 5, 0, function() {
-		tmpl_dust = dust.compile( dustTemplate );
-	});
-	test( "JsRender compile", times * 5, 0, function() {
-		tmpl_JsRender = $.templates( "test", jsRenderTemplate );
-	});
+    // Test compile perf
+    $( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
+    $( "#results" ).append( "<tr><td colspan='2'><b>Compile</b></td></tr>");
 
-	$( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
+    test( "jQuery Templates compile", times * 5, 0, function() {
+        tmpl_jQueryTmpl = $.template( jqueryTmplTemplate );
+    });
+    test( "doT compile", times * 5, 0, function() {
+        tmpl_doT = doT.template( dotTemplate );
+    });
+    test( "Handlebars compile", times * 5, 0, function() {
+        var tmpl = Handlebars.compile( handlebarsTemplateEncode );
+        // For Handlebars, make initial rendering call to do first compilation.
+        tmpl( movie );
+    });
+    test( "Hogan compile", times * 5, 0, function() {
+        Hogan.cache = {}; // Clear cached compiled template
+        tmpl_hogan = Hogan.compile( hoganTemplate );
+    });
+    test( "Dustjs compile", times * 5, 0, function() {
+        tmpl_dust = dust.compile( dustTemplate );
+        tmpl_dustLoaded = dust.loadSource(tmpl_dust);
+    });
+    test( "JsRender compile", times * 5, 0, function() {
+        tmpl_JsRender = $.templates( "test", jsRenderTemplate );
+    });
 
-	runNextTest();
+    $( "#results" ).append( "<tr><td colspan='2'>________________________________________________________</td></tr>" );
+
+    runNextTest();
 </script>
 
 </body>
