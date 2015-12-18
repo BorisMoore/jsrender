@@ -34,6 +34,13 @@ test("jsrender.templates", function() {
 	var html = tmpl({ name: "Jo" });
 	equal(html, "Name: Jo (name-template.html)", 'jsrender.templates("file.path.html") compiles template');
 
+
+	// absolute path 
+	var fs = require('fs');
+	var path = require('path');
+	var tmpl = jsrender.templates(path.resolve('.test/templates/name-template.html'));
+	var html = tmpl({ name: "Jo" });
+	equal(html, "Name: Jo (name-template.html)", 'jsrender.templates("/absolute/path/file.path.html") compiles template');
 });
 
 test("jsrender.compile", function() {
