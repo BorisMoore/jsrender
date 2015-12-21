@@ -24,6 +24,7 @@ Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an AMD script loader, such as RequireJS
 - On Node.js, after installing using  `$ npm install jsrender --save`, it can be loaded for server-side rendering (or in the browser using Browserify ) using `var jsrender = require('jsrender');`
+- You can also use the free cdn files by cdnjs located [here](https://cdnjs.com/libraries/jsrender)
 
 <h4><b>jQuery integration</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
