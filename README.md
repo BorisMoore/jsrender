@@ -4,14 +4,16 @@
 
 **JsRender** is a light-weight but powerful templating engine, highly extensible, and optimized for high-performance rendering, without DOM dependency. It is designed for use in the browser or on Node.js, with or without jQuery.
 
-**[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* - and supersede those libraries.
+**[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.
 
 <h3>Documentation and Downloads</h3>
 **[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
 
+The content of this ***ReadMe*** is available also as a *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)*.
 
 <h3>JsRender and JsViews</h3>
-JsRender is used for data-driven rendering of templates to strings, ready for insertion in the DOM.<br/>
+JsRender is used for data-driven rendering of templates to strings, ready for insertion in the DOM.
+
 It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, which adds data binding to JsRender templates, and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
 
 <h3>Installation</h3>
@@ -123,7 +125,27 @@ var html = $.templates.myTmpl1(person);
 
 <h3><i>Template tags</i></h3>
 
-<h4><b>Evaluation tags</b></h4>
+<h4><b>Template tag syntax</b></h4>
+
+- All tags other than `{{: ...}}` `{{> ...}}` `{{* ...}}` `{{!-- --}}` behave as *block tags*
+
+- Block tags can have content, unless they use the self-closing syntax:
+
+ &dash; *Block tag - with content:* `{{someTag ...}} content {{/someTag}}`<br/>&dash; *Self-closing tag - no content (empty):* `{{someTag .../}}`
+
+- A particular case of self-closing syntax is when any block tag uses the named parameter `tmpl=...`  to reference an external template, which then replaces what would have been the block content:
+ 
+ &dash; *Self-closing block  tag referencing an external template:* `{{someTag ... tmpl=.../}}`<br/> (See [example](http://www.jsviews.com/#samples/jsr/composition/tmpl))
+
+- Tags can take both unnamed arguments and named parameters:
+ 
+ &dash; `{{someTag argument1 param1=...}} content {{/someTag}}`<br/>&dash; an example of a named parameter is the `tmpl=...`  parameter mentioned above<br/>&dash; arguments and named parameters can be assigned values from simple data-paths such as `address.street` or from richer expressions such as `product.quantity * 3.1 / 4.5`, or `name.toUpperCase()`
+
+
+[Learn more...](http://www.jsviews.com/#tagsyntax)
+
+<h4><b>Built-in tags</b></h4>
+
 <h4><i><b>{{: ...}}</b></i> (Evaluate)</h4>
 
 `{{: pathOrExpr}}` inserts the value of the path or expression.
@@ -150,24 +172,6 @@ var html = tmpl.render(data);
 // result: "<b>Formula:</b> a &lt; b"
 ```
 <a href="http://www.jsviews.com/#htmltag">Learn more...</a>
-
-<h4><b>Block tags</b></h4>
-
-- Block tags can have content, unless they use the self-closing syntax:
-
- &dash; *Block tag - with content:* `{{someTag ...}} content {{/someTag}}`<br/>&dash; *Self-closing tag - no content (empty):* `{{someTag .../}}`
-
-- A particular case of self-closing syntax is when any block tag uses the named parameter `tmpl=...`  to reference an external template, which then replaces what would have been the block content:
- 
- &dash; *Self-closing block  tag referencing an external template:* `{{someTag ... tmpl=.../}}`<br/> (See [example](http://www.jsviews.com/#samples/jsr/composition/tmpl))
-
-- All tags other than `{{: ...}}` `{{> ...}}` `{{* ...}}` `{{!-- --}}` behave as block tags
-
-- Tags can take both unnamed arguments and named parameters:
- 
- &dash; `{{someTag argument1 param1=...}} content {{/someTag}}`<br/>&dash; an example of a named parameter is the `tmpl=...`  parameter mentioned above<br/>&dash; arguments and named parameters can be assigned values from simple data-paths such as `address.street` or from richer expressions such as `product.quantity * 3.1 / 4.5`, or `name.toUpperCase()`
-
-<h4><b>Built-in tags</b></h4>
 
 <h4><i><b>{{include ...}}</b></i> (Template composition - partials)</h4> 
 
@@ -239,7 +243,7 @@ var html = tmpl.render(data);
 
 `{{if pathOrExpr}}...{{/if}}` or `{{if pathOrExpr tmpl=.../}}` renders the content/template only if the evaluated path or expression is 'truthy'.
 
-`{{if pathOrExpr}}...{{else pathOrExpr2}}...{{else}}...{{/if}}`  behaves as '*if' - 'else if' - 'else'* and renders each block based on the condidtions.
+`{{if pathOrExpr}}...{{else pathOrExpr2}}...{{else}}...{{/if}}`  behaves as '*if' - 'else if' - 'else'* and renders each block based on the conditions.
 
 ```html
 <script id="personTmpl" type="text/x-jsrender">
@@ -380,4 +384,4 @@ See the [www.jsviews.com](http://www.jsviews.com) site, including the  [JsRender
 <h3><i>Demos</i></h3>
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
 
-(See also the [demos](https://github.com/BorisMoore/jsrender/tree/master/demos) folder of this GitHub repository - available [here](http://borismoore.github.io/jsrender/demos/index.html) as live samples).
+(See also the [demos](https://github.com/BorisMoore/jsrender/tree/master/demos) folder of the GitHub repository - available [here](http://borismoore.github.io/jsrender/demos/index.html) as live samples).

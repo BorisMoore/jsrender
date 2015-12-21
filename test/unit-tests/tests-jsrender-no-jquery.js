@@ -53,10 +53,15 @@ QUnit.module("tagParser");
 test("{{if}} {{else}}", 4, function() {
 	equal(compileTmpl("A_{{if true}}{{/if}}_B"), "compiled", "Empty if block: {{if}}{{/if}}");
 	equal(compileTmpl("A_{{if true}}yes{{/if}}_B"), "compiled", "{{if}}...{{/if}}");
-$.views.settings.debugMode(true);
 	equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing {{/if}}, in template:\nA_{{if true/}}yes{{/if}}_B", "unmatched or missing tag error");
-$.views.settings.debugMode(false);
 	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
+});
+
+test("syntax errors", 4, function() {
+	equal(compileTmpl("{^{*:foo}}"), "Syntax error\n{^{*:foo}}", "Syntax error for {^{* ...}}");
+	equal(compileTmpl("{{:foo/}}"), "Syntax error\n{{:foo/}}", "Syntax error for {{: ... /}}");
+	equal(compileTmpl("{{if foo:}}"), "Syntax error\n{{if foo:}}", "Syntax error for {{tag ... :}}");
+	equal(compileTmpl("{{if foo:cvt}}"), "Syntax error\n{{if foo:cvt}}", "Syntax error for {{tag ... :cvt}}");
 });
 
 QUnit.module("{{if}}");
@@ -524,6 +529,19 @@ test("{{props}}", 15, function() {
 	'Primitive types render correctly, even if falsey');
 });
 
+QUnit.module("{{!-- --}}");
+test("{{!-- --}}", function() {
+	// =============================== Arrange ===============================
+	var result,
+		tmpl = $.templates("a {{:'--1'}}\n {{for '--2} }'}} {{:}} {{/for}} \n b"),
+		tmplWrappedInComment = $.templates("a {{!-- {{:'--1'}}\n {{for '--2} }'}} {{:}} {{/for}} \n--}} b");
+
+	// ................................ Assert ..................................
+	result = tmpl.render() + "|" + tmplWrappedInComment.render();
+	equal(result, "a --1\n  --2} } \n b|a  b",
+		"{{!-- --}} comments out blocks including newlines and --");
+});
+
 QUnit.module("allowCode");
 test("{{*}}", function() {
 	// =============================== Arrange ===============================
@@ -607,6 +625,20 @@ test("{{*}}", function() {
 	// =============================== Arrange ===============================
 	$.views.settings.allowCode = true;
 
+	// ................................ Act ..................................
+	global.myVar = 0;
+
+	tmpl = $.templates(
+		"{{* myvar=2; myvar+=4; }}"
+		+ "Initial value: {{*:myvar}} "
+		+ "{{* myvar+=11; }}"
+		+ "New value: {{*:myvar}}");
+
+	// ................................ Assert ..................................
+	equal(tmpl.render(), "Initial value: 6 New value: 17",
+		"{{* expression}} or {{*: expression}} can access globals as window.myVar or myVar");
+
+	// ................................ Act ..................................
 	global.people = people;
 	tmpl = $.templates("{{:start}}"
 
@@ -627,15 +659,16 @@ test("{{*}}", function() {
 	document.title = "myTitle";
 	tmpl = $.templates("{{for people}}"
 		+ "{{*: ' ' + glob.a}} {{*: data.name}} {{*: view.index}} {{*: view.ctx.myHelper}} {{*: myFunction() + document.title}}"
-	+ "{{/for}}"
+	+ "{{/for}}");
 
-	);
 	// ................................ Assert ..................................
 	equal(tmpl.render({people: people}, {myHelper: "hi"}), " AA Jo 0 hi myGlobalfunction myTitle AA Bill 1 hi myGlobalfunction myTitle",
 		"{{* expression}} or {{*: expression}} can access globals, the data, the view, the view context, global functions etc.");
 
 	document.title = "";
+
 	$.views.settings.allowCode = false;
+
 });
 
 QUnit.module("useViews");
@@ -1082,7 +1115,7 @@ test("templates", function() {
 		'Remove a named template: $.templates("myTmpl", null);');
 });
 
-test("render", 26, function() {
+test("render", 25, function() {
 	var tmpl1 = $.templates("myTmpl8", tmplString);
 	$.templates({
 		simple: "Content{{:#data}}|",
@@ -1119,16 +1152,14 @@ test("render", 26, function() {
 		+ '{{/for}}');
 
 	$.views.settings.debugMode(true);
-
-	equal(templateWithIndex.render({people: [1,2]}),
-		"a0 bFor #index in nested block use #getIndex(). c0 dFor #index in nested block use #getIndex(). a1 bFor #index in nested block use #getIndex(). c1 dFor #index in nested block use #getIndex(). ",
-		"If debug mode is true, #index gives error message in nested blocks.");
+	var result  = templateWithIndex.render({people: [1,2]});
 
 	$.views.settings.debugMode(false);
+	var result2 = templateWithIndex.render({people: [1,2]});
 
-	equal(templateWithIndex.render({people: [1,2]}),
+	equal(result2 === result && result,
 		"a0 bFor #index in nested block use #getIndex(). c0 dFor #index in nested block use #getIndex(). a1 bFor #index in nested block use #getIndex(). c1 dFor #index in nested block use #getIndex(). ",
-		"If debug mode is false, #index still gives error message in nested blocks");
+		"#index gives error message in nested blocks (whether or not debugMode is true).");
 
 	var templateWithGetIndex = $.templates(
 			'{{for people}}'
@@ -1318,6 +1349,9 @@ test("tags", function() {
 		tagJustTemplate: {
 			template: "{{:#data ? name||length : 'Not defined'}} "
 		},
+		tagJustTemplateObject: {
+			template: {markup: "{{:#data ? name||length : 'Not defined'}} "}
+		},
 		tagWithTemplateWhichIteratesAgainstCurrentData: {
 			template: "{{:#data ? name : 'Not defined'}} ",
 			render: function() {
@@ -1352,6 +1386,9 @@ test("tags", function() {
 
 	equal($.templates("a{{include person}}{{tagJustTemplate/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a template and no param renders once against current data, if object");
+
+	equal($.templates("a{{include person}}{{tagJustTemplateObject/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	"Tag with just a template object and no param renders once against current data, if object");
 
 	equal($.templates("a{{include person}}{{tagJustTemplate undefinedProperty/}}{{/include}}").render({person: {name: "Jo"}}), "aNot defined ",
 	"Tag with just a template and a parameter which is not defined renders once against 'undefined'");
@@ -1569,15 +1606,21 @@ test('{{include}} and wrapping content', function() {
 
 	result = $.templates({
 		markup:
-				'This replaces:{{myTag override="replacementText" tmpl="wrapper"}}'
+			 'This (render method) replaces: {{myTag override="replacementText" tmpl="wrapper"}}'
 				+ '{{:name}}'
-			+ '{{/myTag}}'
-			+ 'This wraps:{{myTag tmpl="wrapper"}}'
+			+ '{{/myTag}} | '
+			+ 'This (original template) adds: {{myTag}}'
 				+ '{{:name}}'
-			+ '{{/myTag}}',
+			+ '{{/myTag}} | '
+			+ 'This (new template) wraps: {{myTag setTmpl="wrapper"}}'
+				+ '{{:name}}'
+			+ '{{/myTag}} | ',
 		tags: {
 			myTag: {
 				template: "add{{include tmpl=#content/}}",
+				init: function() {
+					this.template = this.tagCtx.props.setTmpl || this.template;
+				},
 				render: function() {
 					return this.tagCtx.props.override;
 				}
@@ -1588,7 +1631,14 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render(people);
 
-	equal(result, "This replaces:replacementTextThis wraps:headerJofooterThis replaces:replacementTextThis wraps:headerBillfooter", 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+	equal(result,
+		"This (render method) replaces: replacementText |" 
+		+ " This (original template) adds: addJo |" 
+		+ " This (new template) wraps: headerJofooter |" 
+		+ " This (render method) replaces: replacementText |" 
+		+ " This (original template) adds: addBill |" 
+		+ " This (new template) wraps: headerBillfooter | "
+		, 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
 	result = $.templates({
 		markup:
@@ -1621,6 +1671,144 @@ test('{{include}} and wrapping content', function() {
 	}).render({people: people});
 
 	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+
+	result = $.templates({
+		markup:
+		'{{myTag}}'
+			+ '{{:name}}'
+		+ '{{/myTag}} | '
+		+ '{{myTag tmpl="innerwrap"}}'
+			+ '{{:name}}'
+		+ '{{/myTag}} | ' 
+		+ '{{myTag tmpl="middlewrap"}}'
+			+ '{{:name}}'
+		+ '{{/myTag}} | '
+		+ '{{myTag tmpl="wrapper"}}'
+			+ '{{:name}}'
+		+ '{{/myTag}} | '
+
+		+ '{{myTag2}}'
+			+ '{{:name}}'
+		+ '{{/myTag2}} | '
+		+ '{{myTag2 tmpl="innerwrap"}}'
+			+ '{{:name}}'
+		+ '{{/myTag2}} | ' 
+		+ '{{myTag2 tmpl="middlewrap"}}'
+			+ '{{:name}}'
+		+ '{{/myTag2}} | '
+		+ '{{myTag2 tmpl="wrapper"}}'
+			+ '{{:name}}'
+		+ '{{/myTag2}} | ',
+		templates: {
+			wrapper: "middle {{include tmpl=#content/}} {{include tmpl='middlewrap'/}} {{include tmpl='innerwrap'/}}/middle",
+			middlewrap: "inner {{include tmpl=#content/}} and {{include tmpl='innerwrap'/}} /inner",
+			innerwrap: "innermost {{include tmpl=#content/}} /innermost"
+		},
+		tags: {
+			myTag: {
+			template: "outer {{include tmpl=#content/}} /outer"
+			},
+			myTag2: {
+			}
+		}
+	}).render(people);
+
+	equal(result, 
+		"outer Jo /outer |"
+		+ " outer innermost Jo /innermost /outer |"
+		+ " outer inner Jo and innermost Jo /innermost /inner /outer |"
+		+ " outer middle Jo inner Jo and innermost Jo /innermost /inner innermost Jo /innermost/middle /outer |"
+
+		+ " Jo |"
+		+ " innermost Jo /innermost |"
+		+ " inner Jo and innermost Jo /innermost /inner |"
+		+ " middle Jo inner Jo and innermost Jo /innermost /inner innermost Jo /innermost/middle |"
+
+		+ " outer Bill /outer |"
+		+ " outer innermost Bill /innermost /outer |"
+		+ " outer inner Bill and innermost Bill /innermost /inner /outer |"
+		+ " outer middle Bill inner Bill and innermost Bill /innermost /inner innermost Bill /innermost/middle /outer |"
+
+		+ " Bill |"
+		+ " innermost Bill /innermost |"
+		+ " inner Bill and innermost Bill /innermost /inner |"
+		+ " middle Bill inner Bill and innermost Bill /innermost /inner innermost Bill /innermost/middle | ",
+		'Cascading multi-level wrappers around #content'
+	);
+
+	var data = [{
+	phones: [
+		{number: "Ph0", alt: "Alt0"},
+		{number: "Ph1", alt: "Alt1"},
+		{number: "Ph2", alt: "Alt2"}
+	],
+	}];
+
+	result = $.templates({
+		markup:
+		  '{{myTag tmpl="phonelist"}}'
+			+ '{{:number}} '
+		+ '{{/myTag}} | '
+		+ '{{myTag2 tmpl="phonelist"}}'
+			+ '{{:number}} '
+		+ '{{/myTag2}}',
+		templates: {
+			phonelist: "{{for phones}}{{include tmpl=#content/}}{{/for}}"
+		},
+		tags: {
+			myTag: {
+				template: "outer {{include tmpl=#content/}} /outer"
+			},
+			myTag2: {
+			}
+		}
+	}).render(data);
+
+	equal(result, 
+		"outer Ph0 Ph1 Ph2  /outer | Ph0 Ph1 Ph2 ",
+		'Cascading multi-level wrapper around #content with {{for}}'
+	);
+
+	result = $.templates({
+		markup:
+		  '{{myTag tmpl="phonelist"}}'
+			+ '{{:number}}'
+		+ '{{else tmpl="altlist"}}'
+			+ '{{:alt}}'
+		+ '{{else tmpl="altlist2"}}'
+			+ '{{:alt}}'
+		+ '{{/myTag}}'
+		+ '{{myTag2 tmpl="phonelist"}}'
+			+ '{{:number}}'
+		+ '{{else tmpl="altlist"}}'
+			+ '{{:alt}}'
+		+ '{{else tmpl="altlist2"}}'
+			+ '{{:alt}}'
+		+ '{{/myTag2}}',
+		templates: {
+			phonelist: "A< {{for phones}}{{include tmpl=#content/}} {{/for}} > ",
+			altlist: "B< {{for phones tmpl='titlewrap'/}} > ",
+			altlist2: "C< {{for phones}}{{include tmpl='titlewrap'/}}{{/for}} > ",
+			titlewrap: "alternate: {{include tmpl=#content/}} "
+		},
+		tags: {
+			myTag: {
+				template: "outer {{include tmpl=#content/}} /outer | "
+			},
+			myTag2: {
+			}
+		}
+	}).render(data);
+
+	equal(result, 
+		  "outer A< Ph0 Ph1 Ph2  >  /outer |"
+		+ " outer B< alternate: Alt0 alternate: Alt1 alternate: Alt2  >  /outer |"
+		+ " outer C< alternate: Alt0 alternate: Alt1 alternate: Alt2  >  /outer |"
+		+ " A< Ph0 Ph1 Ph2  >"
+		+ " B< alternate: Alt0 alternate: Alt1 alternate: Alt2  >"
+		+ " C< alternate: Alt0 alternate: Alt1 alternate: Alt2  > ",
+		'Cascading multi-level wrapper around #content with {{for}}{{else}}'
+	);
 });
 
 test("helpers", 4, function() {
