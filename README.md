@@ -18,13 +18,13 @@ It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, whic
 
 <h3>Installation</h3>
 
- jsrender.js is available from [downloads](http://www.jsviews.com/#download)  on the jsviews.com site. 
+ jsrender.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site. 
 
 Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an AMD script loader, such as RequireJS
-- On Node.js, after installing using  `$ npm install jsrender --save`, it can be loaded for server-side rendering (or in the browser using Browserify ) using `var jsrender = require('jsrender');`
-- You can also use the free cdn files by cdnjs located [here](https://cdnjs.com/libraries/jsrender)
+- On Node.js, after installing using `$ npm install jsrender --save`, it can be loaded for server-side rendering (or in the browser using Browserify ) using `var jsrender = require('jsrender');`
+- JsRender is available on the CDN: [cdnjs](https://cdnjs.com/libraries/jsrender)
 
 <h4><b>jQuery integration</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
@@ -134,13 +134,13 @@ var html = $.templates.myTmpl1(person);
 
  &dash; *Block tag - with content:* `{{someTag ...}} content {{/someTag}}`<br/>&dash; *Self-closing tag - no content (empty):* `{{someTag .../}}`
 
-- A particular case of self-closing syntax is when any block tag uses the named parameter `tmpl=...`  to reference an external template, which then replaces what would have been the block content:
+- A particular case of self-closing syntax is when any block tag uses the named parameter `tmpl=...` to reference an external template, which then replaces what would have been the block content:
  
- &dash; *Self-closing block  tag referencing an external template:* `{{someTag ... tmpl=.../}}`<br/> (See [example](http://www.jsviews.com/#samples/jsr/composition/tmpl))
+ &dash; *Self-closing block tag referencing an external template:* `{{someTag ... tmpl=.../}}`<br/> (See [example](http://www.jsviews.com/#samples/jsr/composition/tmpl))
 
 - Tags can take both unnamed arguments and named parameters:
  
- &dash; `{{someTag argument1 param1=...}} content {{/someTag}}`<br/>&dash; an example of a named parameter is the `tmpl=...`  parameter mentioned above<br/>&dash; arguments and named parameters can be assigned values from simple data-paths such as `address.street` or from richer expressions such as `product.quantity * 3.1 / 4.5`, or `name.toUpperCase()`
+ &dash; `{{someTag argument1 param1=...}} content {{/someTag}}`<br/>&dash; an example of a named parameter is the `tmpl=...` parameter mentioned above<br/>&dash; arguments and named parameters can be assigned values from simple data-paths such as `address.street` or from richer expressions such as `product.quantity * 3.1 / 4.5`, or `name.toUpperCase()`
 
 
 [Learn more...](http://www.jsviews.com/#tagsyntax)
@@ -244,7 +244,7 @@ var html = tmpl.render(data);
 
 `{{if pathOrExpr}}...{{/if}}` or `{{if pathOrExpr tmpl=.../}}` renders the content/template only if the evaluated path or expression is 'truthy'.
 
-`{{if pathOrExpr}}...{{else pathOrExpr2}}...{{else}}...{{/if}}`  behaves as '*if' - 'else if' - 'else'* and renders each block based on the conditions.
+`{{if pathOrExpr}}...{{else pathOrExpr2}}...{{else}}...{{/if}}` behaves as '*if' - 'else if' - 'else'* and renders each block based on the conditions.
 
 ```html
 <script id="personTmpl" type="text/x-jsrender">
@@ -269,7 +269,7 @@ var html = tmpl.render(data);
 
 <h4><b>Other built-in tags</b></h4>
 
-For details on all the above built-in tags, as well as *<a href="http://www.jsviews.com/#commenttag">comment tags</a>* <i><b>{{!-- ... --}}</b></i> and *<a href="http://www.jsviews.com/#allowcodetag">allow code tags</a>*  <i><b>{{\*&nbsp;...&nbsp;}} and {{\*:&nbsp;...}}</b></i>, see the [tags documentation](http://www.jsviews.com/#jsrtags) on jsviews.com.
+For details on all the above built-in tags, as well as *<a href="http://www.jsviews.com/#commenttag">comment tags</a>* <i><b>{{!-- ... --}}</b></i> and *<a href="http://www.jsviews.com/#allowcodetag">allow code tags</a>* <i><b>{{\*&nbsp;...&nbsp;}} and {{\*:&nbsp;...}}</b></i>, see the [tags documentation](http://www.jsviews.com/#jsrtags) on jsviews.com.
 
 <h4><b>Custom tags</b></h4>
 
@@ -304,7 +304,7 @@ var html = tmpl.render(data);
 
 For details on helpers, see the [Helpers](http://www.jsviews.com/#helpers) documentation topic on jsviews.com.
 
-Here is a simple example.  Two helpers - a function, and a string:
+Here is a simple example. Two helpers - a function, and a string:
 
 ```js
 var myHelpers = {
@@ -380,7 +380,7 @@ or
 
 <h3><i>Documentation and APIs</i></h3>
 
-See the [www.jsviews.com](http://www.jsviews.com) site, including the  [JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart) and [JsRender APIs](http://www.jsviews.com/#jsrapi) topics.
+See the [www.jsviews.com](http://www.jsviews.com) site, including the [JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart) and [JsRender APIs](http://www.jsviews.com/#jsrapi) topics.
 
 <h3><i>Demos</i></h3>
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
