@@ -382,7 +382,7 @@ function convertVal(converter, view, tagCtx, onError) {
 				tagName: ":",
 				cvt: converter,
 				flow: true,
-				tagCtx: tagCtx,
+				tagCtx: tagCtx
 			});
 			if (linkCtx) {
 				linkCtx.tag = tag;
