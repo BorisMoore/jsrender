@@ -35,8 +35,6 @@ test("Loading JsRender and jQuery, without forcing load order, using RequireJS",
 	console.log("2");
 
 // Note JsRender does not require jQuery - so its AMD definition does not specify jQuery dependency.
-// So we will force loading order here by nesting require call for JsRender inside require call for jQuery.
-// This is not optimized for loading speed.
 
 	require(["./unit-tests/requirejs-config"], function() {
 		require(["jquery", "jsrender"], function($jq, $) {

@@ -14,17 +14,18 @@ The content of this ***ReadMe*** is available also as a *[JsRender Quickstart](h
 <h3>JsRender and JsViews</h3>
 JsRender is used for data-driven rendering of templates to strings, ready for insertion in the DOM.
 
-It is also used by the [JsViews](http://www.jsviews.com/#jsviews) platform, which adds data binding to JsRender templates, and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
+It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, which adds data binding to JsRender templates, and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
 
 <h3>Installation</h3>
 
- jsrender.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site. 
+*jsrender.js* is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site. 
+
+*CDN delivery* is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsrender](https://cdnjs.com/libraries/jsrender).
 
 Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
-- It can be loaded using an AMD script loader, such as RequireJS
-- On Node.js, after installing using `$ npm install jsrender --save`, it can be loaded for server-side rendering (or in the browser using Browserify ) using `var jsrender = require('jsrender');`
-- JsRender is available on the CDN: [cdnjs](https://cdnjs.com/libraries/jsrender)
+- It can be loaded using an *AMD script loader*, such as RequireJS
+- For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
 
 <h4><b>jQuery integration</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
@@ -47,9 +48,9 @@ JsRender can be used to render templates on the server (using Node.js) as well a
 
 It also provides built-in *Express*, *Hapi* and *Browserify* integration -- which makes it easy to register templates as simple `.html` files on the file system, and then load and render them either server-side, client-side or both.
 
-**Learn more:** [JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart) and [JsRender APIs for Node.js](http://www.jsviews.com/#jsrnode).
+**Learn more:** *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)* and *[JsRender APIs for Node.js](http://www.jsviews.com/#jsrnode)*.
 
-**Code samples:** See [JsRender Node Starter](https://github.com/BorisMoore/jsrender-node-starter) for running code examples of Node.js scenarios, including with *Express*, *Hapi* and *Browserify*.
+**Code samples:** See *[JsRender Node Starter](https://github.com/BorisMoore/jsrender-node-starter)* for running code examples of Node.js scenarios, including with *Express*, *Hapi* and *Browserify*.
 
 <h2>JsRender Usage</h2>
 
@@ -185,8 +186,8 @@ var data = {name: "Jim", address: {street: "Main Street"} };
 
 // Register two named templates
 $.templates({
-    streetTmpl: "<i>{{:street}}</i>",
-    addressTmpl: "{{:name}}'s address is {{include address tmpl='streetTmpl'/}}."
+  streetTmpl: "<i>{{:street}}</i>",
+  addressTmpl: "{{:name}}'s address is {{include address tmpl='streetTmpl'/}}."
 });
 
 // Render outer template
@@ -281,7 +282,7 @@ As a render function:
 
 ```js
 $.views.tags("fullName", function(val) {
-    return val.first + " " + val.last;
+  return val.first + " " + val.last;
 });
 ```
 Or as a template string:
@@ -308,8 +309,8 @@ Here is a simple example. Two helpers - a function, and a string:
 
 ```js
 var myHelpers = {
-    upper: function(val) { return val.toUpperCase(); },
-    title: "Sir"
+  upper: function(val) { return val.toUpperCase(); },
+  title: "Sir"
 };
 ```
 
@@ -380,9 +381,9 @@ or
 
 <h3><i>Documentation and APIs</i></h3>
 
-See the [www.jsviews.com](http://www.jsviews.com) site, including the [JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart) and [JsRender APIs](http://www.jsviews.com/#jsrapi) topics.
+See the [www.jsviews.com](http://www.jsviews.com) site, including the *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)* and [JsRender APIs](http://www.jsviews.com/#jsrapi) topics.
 
 <h3><i>Demos</i></h3>
-Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
+Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples/jsr), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
 
 (See also the [demos](https://github.com/BorisMoore/jsrender/tree/master/demos) folder of the GitHub repository - available [here](http://borismoore.github.io/jsrender/demos/index.html) as live samples).

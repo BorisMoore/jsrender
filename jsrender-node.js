@@ -1,4 +1,4 @@
-/*! JsRender v0.9.71 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.72 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v1.0.0-beta",
+var versionNumber = "v0.9.72",
 
 	// global var is the this object, which is window when running in the usual browser environment
 	global = (0, eval)('this'), // jshint ignore:line
@@ -34,7 +34,7 @@ var versionNumber = "v1.0.0-beta",
 	rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 	//        not                               object     helper    view  viewProperty pathTokens      leafToken
 
-	rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|[^\(\[])|[)\]])([([]?))|(\s+)/g,
+	rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
 	//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                           prn2  space
 	// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
@@ -206,15 +206,15 @@ function $viewsDelimiters(openChars, closeChars, link) {
 		// Build regex with new delimiters
 		//          [tag    (followed by / space or })  or cvtr+colon or html or code] followed by space+params then convertBack?
 		rTag = "(?:(\\w+(?=[\\/\\s\\" + delimCloseChar0 + "]))|(\\w+)?(:)|(>)|(\\*))\\s*((?:[^\\"
-			+ delimCloseChar0 + "]|\\" + delimCloseChar0 + "(?!\\" + delimCloseChar1 + "))*?)(:\\w*)?";
+			+ delimCloseChar0 + "]|\\" + delimCloseChar0 + "(?!\\" + delimCloseChar1 + "))*?)";
 
 		// make rTag available to JsViews (or other components) for parsing binding expressions
 		$sub.rTag = "(?:" + rTag + ")";
 		//                        { ^? {   tag+params slash?  or closingTag                                                   or comment
-		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))|!--[\\s\\S]*?--))" + closeChars, "g");
+		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
 
-		// Default:  bind     tagName         cvt   cln html code   params             cvtBk  slash           closeBlk  comment
-		//      /(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(:\w*)?(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
+		// Default:  bind     tagName         cvt   cln html code   params             slash           closeBlk  comment
+		//      /(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
 
 		rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
 		// rTmplString looks for html tags or { or } char not preceded by \\, or JsRender tags {{xxx}}. Each of these strings are considered
@@ -358,7 +358,7 @@ function convertVal(converter, view, tagCtx, onError) {
 				tagName: ":",
 				cvt: converter,
 				flow: true,
-				tagCtx: tagCtx,
+				tagCtx: tagCtx
 			});
 			if (linkCtx) {
 				linkCtx.tag = tag;
@@ -1050,6 +1050,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 			context = context || {};
 			context.link = false;
 		}
+
 		if (itemVar = tagCtx.props.itemVar) {
 			if (itemVar.charAt(0) !== "~") {
 				syntaxError("Use itemVar='~myItem'");
@@ -1167,11 +1168,11 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 		}
 	}
 
-	function parseTag(all, bind, tagName, converter, colon, html, codeTag, params, convertBack, slash, closeBlock, index) {
+	function parseTag(all, bind, tagName, converter, colon, html, codeTag, params, slash, closeBlock, index) {
 /*
 
-     bind     tagName         cvt   cln html code   params             cvtBk  slash           closeBlk  comment
-/(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(:\w*)?(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
+     bind     tagName         cvt   cln html code   params             slash           closeBlk  comment
+/(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
 
 (?:
   {(\^)?{				bind
@@ -1190,7 +1191,6 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
   (						params
     (?:[^}]|}(?!}))*?
   )
-  (:\w*)?			convertBack
   (\/)?					slash
   |
   {{
@@ -1204,15 +1204,8 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 
 */
 
-		if (codeTag && convertBack) {
-			params = convertBack;
-			convertBack = undefined;
-		}
-		if (codeTag && bind || convertBack && !colon || slash && !tagName) {
+		if (codeTag && bind || slash && !tagName || params && params.slice(-1) === ":") {
 			syntaxError(all);
-		}
-		if (convertBack) {
-			convertBack = convertBack.slice(1);
 		}
 
 		// Build abstract syntax tree (AST): [tagName, converter, params, content, hash, bindings, contentMarkup]
@@ -1328,6 +1321,9 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 
 //		result = markup;
 	if (isLinkExpr) {
+		if (convertBack !== undefined) {
+			markup = markup.slice(0, -convertBack.length - 2) + delimCloseChar1;
+		}
 		markup = delimOpenChar0 + markup + delimCloseChar1;
 	}
 
@@ -1387,8 +1383,8 @@ function paramStructure(parts, type) {
 function parseParams(params, pathBindings, tmpl) {
 
 	function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-	// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|\s)|[)\]])([([]?))|(\s+)/g,
-	//   lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                    prn2  space
+	// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
+	//   lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2  space
 		// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
 		bound = bindings && bound;
 		if (bound && !eq) {
@@ -1404,8 +1400,8 @@ function parseParams(params, pathBindings, tmpl) {
 		var expr, exprFn, binds, theOb, newOb;
 
 		function parsePath(allPath, not, object, helper, view, viewProperty, pathTokens, leafToken) {
-			// rPath = /^(?:null|true|false|\d[\d.]*|(!*?)([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-			//                                        none   object     helper    view  viewProperty pathTokens      leafToken
+			//rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+			//          not                               object     helper    view  viewProperty pathTokens      leafToken
 			var subPath = object === ".";
 			if (object) {
 				path = path.slice(not.length);

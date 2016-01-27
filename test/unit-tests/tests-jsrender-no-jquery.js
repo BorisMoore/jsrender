@@ -57,11 +57,14 @@ test("{{if}} {{else}}", 4, function() {
 	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
 });
 
-test("syntax errors", 4, function() {
+test("syntax errors", 7, function() {
 	equal(compileTmpl("{^{*:foo}}"), "Syntax error\n{^{*:foo}}", "Syntax error for {^{* ...}}");
 	equal(compileTmpl("{{:foo/}}"), "Syntax error\n{{:foo/}}", "Syntax error for {{: ... /}}");
-	equal(compileTmpl("{{if foo:}}"), "Syntax error\n{{if foo:}}", "Syntax error for {{tag ... :}}");
-	equal(compileTmpl("{{if foo:cvt}}"), "Syntax error\n{{if foo:cvt}}", "Syntax error for {{tag ... :cvt}}");
+	equal(compileTmpl("{{:foo:}}"), "Syntax error\n{{:foo:}}", "Syntax error for {{: ... :}}");
+	equal(compileTmpl("{^{:foo:}}"), "Syntax error\n{^{:foo:}}", "Syntax error for {^{: ... :}}");
+	equal(compileTmpl("{{mytag foo :}}"), "Syntax error\n{{mytag foo :}}", "Syntax error for {{mytag ... :}}");
+	equal(compileTmpl("{^{mytag foo :}}"), "Syntax error\n{^{mytag foo :}}", "Syntax error for {^{mytag ... :}}");
+	equal(compileTmpl("{{if foo?bar:baz}}{{/if}}"), "compiled", "No syntax error for {{tag foo?bar:baz}}");
 });
 
 QUnit.module("{{if}}");
@@ -590,7 +593,7 @@ test("{{*}}", function() {
 
 	// ................................ Act ..................................
 	tmpl = $.templates({
-		markup: "_{{*:glob.a}}_",
+		markup: "_{{*:glob.a}}_"
 	});
 
 	result = "" + !!tmpl.allowCode + ":" + tmpl();
@@ -605,7 +608,7 @@ test("{{*}}", function() {
 
 	// ................................ Act ..................................
 	$.templates("myTmpl", {
-		markup: "_{{*:glob.a}}_",
+		markup: "_{{*:glob.a}}_"
 	});
 
 	tmpl = $.templates.myTmpl;
@@ -1741,7 +1744,7 @@ test('{{include}} and wrapping content', function() {
 		{number: "Ph0", alt: "Alt0"},
 		{number: "Ph1", alt: "Alt1"},
 		{number: "Ph2", alt: "Alt2"}
-	],
+	]
 	}];
 
 	result = $.templates({
