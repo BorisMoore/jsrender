@@ -16,7 +16,7 @@ JsRender is used for data-driven rendering of templates to strings, ready for in
 
 It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, which adds data binding to JsRender templates, and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
 
-<h3>Installation</h3>
+<h2>JsRender Installation</h2>
 
 *jsrender.js* is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site. 
 
@@ -25,12 +25,14 @@ It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, wh
 Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
-- For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
+- For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](#jsr-node-quickstart)*
 
-<h4><b>jQuery integration</b></h4>
+<h4><b>Using JsRender with jQuery</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
 
-<h4><b>JsRender without jQuery</b></h4>
+*Example HTML page:* [JsRender with jQuery](http://www.jsviews.com/#download/pages-jsr-jq)
+
+<h4><b>Using JsRender without jQuery</b></h4>
 
 When jQuery is not present, JsRender provides its own `jsrender` namespace object, exposed as `window.jsrender`
 
@@ -41,6 +43,8 @@ var $ = window.jsrender;
 
 // Now use code as in samples/examples, with $.views... $.templates... $.render...
 ```
+
+*Example HTML page:* [JsRender without jQuery](http://www.jsviews.com/#download/pages-jsr)
 
 <h4><b>JsRender on Node.js</b></h4>
 

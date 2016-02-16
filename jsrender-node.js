@@ -1,11 +1,11 @@
-/*! JsRender v0.9.72 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.73 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2015, Boris Moore
+ * Copyright 2016, Boris Moore
  * Released under the MIT License.
  */
 
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v0.9.72",
+var versionNumber = "v0.9.73",
 
 	// global var is the this object, which is window when running in the usual browser environment
 	global = (0, eval)('this'), // jshint ignore:line
@@ -211,10 +211,10 @@ function $viewsDelimiters(openChars, closeChars, link) {
 		// make rTag available to JsViews (or other components) for parsing binding expressions
 		$sub.rTag = "(?:" + rTag + ")";
 		//                        { ^? {   tag+params slash?  or closingTag                                                   or comment
-		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
+		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
 
-		// Default:  bind     tagName         cvt   cln html code   params             slash           closeBlk  comment
-		//      /(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
+		// Default:  bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
+		//      /(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}
 
 		rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
 		// rTmplString looks for html tags or { or } char not preceded by \\, or JsRender tags {{xxx}}. Each of these strings are considered
@@ -1168,43 +1168,43 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 		}
 	}
 
-	function parseTag(all, bind, tagName, converter, colon, html, codeTag, params, slash, closeBlock, index) {
+	function parseTag(all, bind, tagName, converter, colon, html, codeTag, params, slash, bind2, closeBlock, index) {
 /*
 
-     bind     tagName         cvt   cln html code   params             slash           closeBlk  comment
-/(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
+     bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
+/(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}/g
 
 (?:
-  {(\^)?{				bind
+  {(\^)?{            bind
   (?:
-    (\w+				tagName
+    (\w+             tagName
       (?=[\/\s}])
     )
     |
-    (\w+)?(:)			converter colon
+    (\w+)?(:)        converter colon
     |
-    (>)					html
+    (>)              html
     |
-    (\*)				codeTag
+    (\*)             codeTag
   )
   \s*
-  (						params
+  (                  params
     (?:[^}]|}(?!}))*?
   )
-  (\/)?					slash
+  (\/)?              slash
   |
-  {{
+  {(\^)?{            bind2
   (?:
-    (?:\/(\w+))			closeBlock
+    (?:\/(\w+))\s*   closeBlock
     |
-    !--[\s\S]*?--		comment
+    !--[\s\S]*?--    comment
   )
 )
 }}/g
 
 */
 
-		if (codeTag && bind || slash && !tagName || params && params.slice(-1) === ":") {
+		if (codeTag && bind || slash && !tagName || params && params.slice(-1) === ":" || bind2) {
 			syntaxError(all);
 		}
 
