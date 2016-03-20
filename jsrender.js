@@ -1,4 +1,4 @@
-/*! JsRender v0.9.73 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.74 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -11,46 +11,44 @@
 
 //jshint -W018, -W041
 
-(function(factory) {
+(function(factory, global) {
 	// global var is the this object, which is window when running in the usual browser environment
-	var global = (0, eval)('this'), // jshint ignore:line
-		$ = global.jQuery;
+	var $ = global.jQuery;
 
 	if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
-		define(factory);
+		define(function() {
+			return factory(global);
+		});
 	} else if (typeof exports === "object") { // CommonJS e.g. Browserify
 		module.exports = $
-			? factory($)
+			? factory(global, $)
 			: function($) { // If no global jQuery, take optional jQuery passed as parameter: require('jsrender')(jQuery)
 				if ($ && !$.fn) {
 					throw "Provide jQuery or null";
 				}
-				return factory($);
+				return factory(global, $);
 			};
 	} else { // Browser using plain <script> tag
-		factory(false);
+		factory(global, false);
 	}
 } (
 
 // factory (for jsrender.js)
-function($) {
+function(global, $) {
 "use strict";
 
 //========================== Top-level vars ==========================
 
 // global var is the this object, which is window when running in the usual browser environment
-var global = (0, eval)('this'), // jshint ignore:line
-	setGlobals = $ === false; // Only set globals if script block in browser (not AMD and not CommonJS)
+var setGlobals = $ === false; // Only set globals if script block in browser (not AMD and not CommonJS)
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.73",
+var versionNumber = "v0.9.74",
 	jsvStoreName, rTag, rTmplString, topView, $views,
 
 //TODO	tmplFnsCache = {},
-	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $viewsSettings,
-
-	delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", linkChar = "^",
+	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
 
 	rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 	//        not                               object     helper    view  viewProperty pathTokens      leafToken
@@ -104,13 +102,6 @@ var versionNumber = "v0.9.73",
 // views object ($.views if jQuery is loaded, jsrender.views if no jQuery, e.g. in Node.js)
 	$views = {
 		jsviews: versionNumber,
-		settings: function(settings) {
-			$extend($viewsSettings, settings);
-			dbgMode($viewsSettings._dbgMode);
-			if ($viewsSettings.jsv) {
-				$viewsSettings.jsv();
-			}
-		},
 		sub: {
 			// subscription, e.g. JsViews integration
 			View: View,
@@ -121,13 +112,32 @@ var versionNumber = "v0.9.73",
 			extendCtx: extendCtx,
 			syntaxErr: syntaxError,
 			onStore: {},
+			addSetting: addSetting,
+			settings: {
+				allowCode: false
+			},
+			advSet: noop, // Update advanced settings
 			_ths: tagHandlersFromProps,
-			_tg: function() {} // Constructor for tagDef
+			_tg: function() {}, // Constructor for tagDef
+			_cnvt: convertVal,
+			_tag: renderTag,
+			_er: error,
+			_err: onRenderError,
+			_html: htmlEncode
 		},
-		map: dataMap, // If jsObservable loaded first, use that definition of dataMap
-		_cnvt: convertVal,
-		_tag: renderTag,
-		_err: error
+		settings: {
+			delimiters: $viewsDelimiters,
+			advanced: function(value) {
+				return value
+					? (
+							$extend($subSettingsAdvanced, value),
+							$sub.advSet(),
+							$viewsSettings
+						)
+						: $subSettingsAdvanced;
+				}
+		},
+		map: dataMap // If jsObservable loaded first, use that definition of dataMap
 	};
 
 function getDerivedMethod(baseMethod, method) {
@@ -179,18 +189,14 @@ function noop() {
 }
 
 function dbgBreak(val) {
-	// Usage examples: {{dbg:...}}, {{:~dbg(...)}}, {{for ... onAfterLink=~dbg}}, {{dbg .../}} etc.
-	// To break here, stop on caught exceptions.
+	// Usage examples: {{dbg:...}}, {{:~dbg(...)}}, {{dbg .../}}, {^{for ... onAfterLink=~dbg}} etc.
 	try {
 		debugger;
-		throw "dbg breakpoint";
+		console.log("JsRender dbg breakpoint: " + val);
+		throw "dbg breakpoint"; // To break here, stop on caught exceptions.
 	}
 	catch (e) {}
 	return this.base ? this.baseApply(arguments) : val;
-}
-
-function dbgMode(debugMode) {
-	$viewsSettings._dbgMode = debugMode !== false; // Pass in false to unset. Otherwise sets to true.
 }
 
 function JsViewsError(message) {
@@ -215,36 +221,39 @@ function $extend(target, source) {
 //===================
 // views.delimiters
 //===================
+
 function $viewsDelimiters(openChars, closeChars, link) {
 	// Set the tag opening and closing delimiters and 'link' character. Default is "{{", "}}" and "^"
 	// openChars, closeChars: opening and closing strings, each with two characters
-
-	if (this !== 0 || openChars) {
-		delimOpenChar0 = openChars ? openChars.charAt(0) : delimOpenChar0; // Escape the characters - since they could be regex special characters
-		delimOpenChar1 = openChars ? openChars.charAt(1) : delimOpenChar1;
-		delimCloseChar0 = closeChars ? closeChars.charAt(0) : delimCloseChar0;
-		delimCloseChar1 = closeChars ? closeChars.charAt(1) : delimCloseChar1;
-		linkChar = link || linkChar;
-		openChars = "\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1; // Default is "{^{"
-		closeChars = "\\" + delimCloseChar0 + "\\" + delimCloseChar1;                   // Default is "}}"
-		// Build regex with new delimiters
-		//          [tag    (followed by / space or })  or cvtr+colon or html or code] followed by space+params then convertBack?
-		rTag = "(?:(\\w+(?=[\\/\\s\\" + delimCloseChar0 + "]))|(\\w+)?(:)|(>)|(\\*))\\s*((?:[^\\"
-			+ delimCloseChar0 + "]|\\" + delimCloseChar0 + "(?!\\" + delimCloseChar1 + "))*?)";
-
-		// make rTag available to JsViews (or other components) for parsing binding expressions
-		$sub.rTag = "(?:" + rTag + ")";
-		//                        { ^? {   tag+params slash?  or closingTag                                                   or comment
-		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
-
-		// Default:  bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
-		//      /(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}
-
-		rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
-		// rTmplString looks for html tags or { or } char not preceded by \\, or JsRender tags {{xxx}}. Each of these strings are considered
-		// NOT to be jQuery selectors
+	if (!openChars) {
+		return $subSettings.delimiters;
 	}
-	return [delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar];
+
+	$subSettings.delimiters = [openChars, closeChars, linkChar = link ? link.charAt(0) : linkChar];
+
+	delimOpenChar0 = openChars.charAt(0); // Escape the characters - since they could be regex special characters
+	delimOpenChar1 = openChars.charAt(1);
+	delimCloseChar0 = closeChars.charAt(0);
+	delimCloseChar1 = closeChars.charAt(1);
+	openChars = "\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1; // Default is "{^{"
+	closeChars = "\\" + delimCloseChar0 + "\\" + delimCloseChar1;                   // Default is "}}"
+	// Build regex with new delimiters
+	//          [tag    (followed by / space or })  or cvtr+colon or html or code] followed by space+params then convertBack?
+	rTag = "(?:(\\w+(?=[\\/\\s\\" + delimCloseChar0 + "]))|(\\w+)?(:)|(>)|(\\*))\\s*((?:[^\\"
+		+ delimCloseChar0 + "]|\\" + delimCloseChar0 + "(?!\\" + delimCloseChar1 + "))*?)";
+
+	// make rTag available to JsViews (or other components) for parsing binding expressions
+	$sub.rTag = "(?:" + rTag + ")";
+	//                        { ^? {   tag+params slash?  or closingTag                                                   or comment
+	rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
+
+	// Default:  bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
+	//      /(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}
+
+	rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
+	// rTmplString looks for html tags or { or } char not preceded by \\, or JsRender tags {{xxx}}. Each of these strings are considered
+	// NOT to be jQuery selectors
+	return $viewsSettings;
 }
 
 //=========
@@ -366,7 +375,7 @@ function convertVal(converter, view, tagCtx, onError) {
 	if (onError !== undefined) {
 		tagCtx = onError = {props: {}, args: [onError]};
 	} else if (boundTag) {
-		tagCtx = boundTag(view.data, view, $views);
+		tagCtx = boundTag(view.data, view, $sub);
 	}
 
 	value = tagCtx.args[0];
@@ -474,7 +483,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		ret += onError;
 		tagCtxs = onError = [{props: {}, args: []}];
 	} else if (boundTag) {
-		tagCtxs = boundTag(parentView.data, parentView, $views);
+		tagCtxs = boundTag(parentView.data, parentView, $sub);
 	}
 
 	l = tagCtxs.length;
@@ -735,7 +744,7 @@ function compileTag(name, tagDef, parentTmpl) {
 		compiledDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
 	}
 	if (compiledDef.init !== false) {
-		// Set init: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
+		// Set init: false on tagDef if you want to provide just a render method, or render and template, but no constructor or prototype.
 		// so equivalent to setting tag to render function, except you can also provide a template.
 		(Tag.prototype = compiledDef).constructor = compiledDef._ctr = Tag;
 	}
@@ -898,7 +907,7 @@ function dataMap(mapDef) {
 function tmplObject(markup, options) {
 	// Template object constructor
 	var htmlTag,
-		wrapMap = $viewsSettings.wrapMap || {}, // Only used in JsViews. Otherwise empty: {}
+		wrapMap = $subSettingsAdvanced._wm || {}, // Only used in JsViews. Otherwise empty: {}
 		tmpl = $extend(
 			{
 				tmpls: [],
@@ -936,7 +945,6 @@ function registerStore(storeName, storeSettings) {
 		// or $.views.things(name, item[, parentTmpl])
 
 		var onStore, compile, itemName, thisStore;
-
 		if (name && typeof name === OBJECT && !name.nodeType && !name.markup && !name.getTgt) {
 			// Call to $.views.things(items[, parentTmpl]),
 
@@ -965,7 +973,7 @@ function registerStore(storeName, storeSettings) {
 				delete thisStore[name];
 			}
 		} else {
-			item = compile ? compile(name, item, parentTmpl, 0) : item;
+			item = compile ? compile.call(thisStore, name, item, parentTmpl, 0) : item;
 			if (name) {
 				thisStore[name] = item;
 			}
@@ -983,6 +991,14 @@ function registerStore(storeName, storeSettings) {
 	var storeNames = storeName + "s";
 
 	$views[storeNames] = theStore;
+}
+
+function addSetting(st) {
+	$viewsSettings[st] = function(value) {
+		return arguments.length
+			? ($subSettings[st] = value, $viewsSettings)
+			: $subSettings[st];
+	};
 }
 
 //==============
@@ -1032,7 +1048,7 @@ function renderContent(data, context, noIteration, parentView, key, onRender) {
 		if (!view) {
 			(context = context || {}).root = data; // Provide ~root as shortcut to top-level data.
 		}
-		if (!isRenderCall || $viewsSettings.useViews || tmpl.useViews || view && view !== topView) {
+		if (!isRenderCall || $subSettingsAdvanced.useViews || tmpl.useViews || view && view !== topView) {
 			result = renderWithViews(tmpl, data, context, noIteration, view, key, onRender, tag);
 		} else {
 			if (view) { // In a block
@@ -1050,11 +1066,11 @@ function renderContent(data, context, noIteration, parentView, key, onRender) {
 				for (i = 0, l = data.length; i < l; i++) {
 					view.index = i;
 					view.data = data[i];
-					result += tmpl.fn(data[i], view, $views);
+					result += tmpl.fn(data[i], view, $sub);
 				}
 			} else {
 				view.data = data;
-				result += tmpl.fn(data, view, $views);
+				result += tmpl.fn(data, view, $sub);
 			}
 			view.data = prevData;
 			view.index = prevIndex;
@@ -1086,7 +1102,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 
 		if (tmpl === view.content) { // {{xxx tmpl=#content}}
 			contentTmpl = tmpl !== view.ctx._wrp // We are rendering the #content
-				?  view.ctx._wrp // #content was the tagCtx.props.tmpl wrapper of the block content - so within this view, #content will now be the view.ctx._wrp block content
+				? view.ctx._wrp // #content was the tagCtx.props.tmpl wrapper of the block content - so within this view, #content will now be the view.ctx._wrp block content
 				: undefined; // #content was the view.ctx._wrp block content - so within this view, there is no longer any #content to wrap.
 		} else if (tmpl !== tagCtx.content) {
 			if (tmpl === tag.template) { // Rendering {{tag}} tag.template, replacing block content.
@@ -1164,7 +1180,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 			}
 			childView = new View(newCtx, "item", newView, data[i], tmpl, (key || 0) + i, onRender, contentTmpl);
 
-			itemResult = tmpl.fn(data[i], childView, $views);
+			itemResult = tmpl.fn(data[i], childView, $sub);
 			result += newView._.onRender ? newView._.onRender(itemResult, childView) : itemResult;
 		}
 	} else {
@@ -1177,7 +1193,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 		if (tag && !tag.flow) {
 			newView.tag = tag;
 		}
-		result += tmpl.fn(data, newView, $views);
+		result += tmpl.fn(data, newView, $sub);
 	}
 	return outerOnRender ? outerOnRender(result, newView) : result;
 }
@@ -1189,12 +1205,22 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 // Generate a reusable function that will serve to render a template against data
 // (Compile AST then build template function)
 
-function error(e, view, fallback) {
-	var message = $viewsSettings.onError(e, view, fallback);
-	if ("" + e === e) { // if e is a string, not an Exception, then throw new Exception
-		throw new $sub.Err(message);
+function onRenderError(e, view, fallback) {
+	var message = fallback !== undefined
+		? $isFunction(fallback)
+			? fallback.call(view.data, e, view)
+			: fallback || ""
+		: "{Error: " + e.message + "}";
+
+	if ($subSettings.onError && (fallback = $subSettings.onError.call(view.data, e, fallback && message, view)) !== undefined) {
+		message = fallback; // There is a settings.debugMode(handler) onError override. Call it, and use return value (if any) to replace message
 	}
-	return !view.linkCtx && view.linked ? $converters.html(message) : message;
+
+	return view && !view.linkCtx && view.linked ? $converters.html(message) : message;
+}
+
+function error(message) {
+	throw new $sub.Err(message);
 }
 
 function syntaxError(message) {
@@ -1259,7 +1285,6 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 }}/g
 
 */
-
 		if (codeTag && bind || slash && !tagName || params && params.slice(-1) === ":" || bind2) {
 			syntaxError(all);
 		}
@@ -1335,8 +1360,8 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 					tagName,
 					converter || !!convertBack || hasHandlers || "",
 					block && [],
-					parsedParam(paramsArgs, paramsProps, paramsCtxProps),
-					parsedParam(args, props, ctxProps),
+					parsedParam(paramsArgs || (tagName === ":" ? "'#data'," : ""), paramsProps, paramsCtxProps), // {{:}} equivalent to {{:#data}}
+					parsedParam(args || (tagName === ":" ? "data," : ""), props, ctxProps),
 					onError,
 					useTrigger,
 					pathBindings || 0
@@ -1358,7 +1383,8 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 	//==== /end of nested functions ====
 
 	var result, newNode, hasHandlers,
-		allowCode = $viewsSettings.allowCode || tmpl && tmpl.allowCode,
+		allowCode = $subSettings.allowCode || tmpl && tmpl.allowCode
+			|| $viewsSettings.allowCode === true, // include direct setting of settings.allowCode true for backward compat only
 		astTop = [],
 		loc = 0,
 		stack = [],
@@ -1461,6 +1487,9 @@ function parseParams(params, pathBindings, tmpl) {
 			var subPath = object === ".";
 			if (object) {
 				path = path.slice(not.length);
+				if (/^\.?constructor$/.test(leafToken||path)) {
+					syntaxError(allPath);
+				}
 				if (!subPath) {
 					allPath = (helper
 							? 'view.hlp("' + helper + '")'
@@ -1618,7 +1647,7 @@ function buildCode(ast, tmpl, isLinkExpr) {
 	var i, node, tagName, converter, tagCtx, hasTag, hasEncoder, getsVal, hasCnvt, useCnvt, tmplBindings, pathBindings, params, boundOnErrStart, boundOnErrEnd,
 		tagRender, nestedTmpls, tmplName, nestedTmpl, tagAndElses, content, markup, nextIsElse, oldCode, isElse, isGetVal, tagCtxFn, onError, tagStart, trigger,
 		tmplBindingKey = 0,
-		useViews = $viewsSettings.useViews || tmpl.useViews || tmpl.tags || tmpl.templates || tmpl.helpers || tmpl.converters,
+		useViews = $subSettingsAdvanced.useViews || tmpl.useViews || tmpl.tags || tmpl.templates || tmpl.helpers || tmpl.converters,
 		code = "",
 		tmplOptions = {},
 		l = ast.length;
@@ -1677,6 +1706,7 @@ function buildCode(ast, tmpl, isLinkExpr) {
 					if (converter) {
 						tagName = converter === HTML ? ">" : converter + tagName;
 					}
+					trigger = node[6] || $subSettings.trigger;
 				} else {
 					if (content) { // TODO optimize - if content.length === 0 or if there is a tmpl="..." specified - set content to null / don't run this compilation code - since content won't get used!!
 						// Create template object for nested template
@@ -1728,8 +1758,8 @@ function buildCode(ast, tmpl, isLinkExpr) {
 							? ((tmplBindings[tmplBindingKey - 1] = tagCtxFn), tmplBindingKey) // Store the compiled tagCtxFn in tmpl.bnds, and pass the key to convertVal()
 							: "{" + tagCtx + "}") + ")")
 						: tagName === ">"
-							? (hasEncoder = true, "h(" + params[0] + ')')
-							: (getsVal = true, "((v=" + (params[0] || 'data') + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
+							? (hasEncoder = true, "h(" + params[0] + ")")
+							: (getsVal = true, "((v=" + params[0] + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
 					)
 					: (hasTag = true, "\n{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 						+ (content ? nestedTmpls.length : "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
@@ -1775,13 +1805,13 @@ function buildCode(ast, tmpl, isLinkExpr) {
 		+ "\nvar v"
 		+ (hasTag ? ",t=j._tag" : "")                // has tag
 		+ (hasCnvt ? ",c=j._cnvt" : "")              // converter
-		+ (hasEncoder ? ",h=j.converters.html" : "") // html converter
+		+ (hasEncoder ? ",h=j._html" : "")           // html converter
 		+ (isLinkExpr ? ";\n" : ',ret=""\n')
 		+ (tmplOptions.debug ? "debugger;" : "")
 		+ code
 		+ (isLinkExpr ? "\n" : ";\nreturn ret;");
 
-	if ($viewsSettings._dbgMode) {
+	if ($subSettings.debugMode !== false) {
 		code = "try {\n" + code + "\n}catch(e){\nreturn j._err(e, view);\n}";
 	}
 
@@ -1920,28 +1950,35 @@ if (!(jsr || $ && $.render)) {
 		$.jsrender = versionNumber;
 	}
 
+	$subSettings = $sub.settings;
+	$subSettings.allowCode = false;
 	$isFunction = $.isFunction;
 	$isArray = $.isArray;
 	$.render = $render;
 	$.views = $views;
 	$.templates = $templates = $views.templates;
 
-	$viewsSettings({
-		debugMode: dbgMode,
-		delimiters: $viewsDelimiters,
-		onError: function(e, view, fallback) {
-			// Can override using $.views.settings({onError: function(...) {...}});
-			if (view) {
-				// For render errors, e is an exception thrown in compiled template, and view is the current view. For other errors, e is an error string.
-				e = fallback === undefined
-					? "{Error: " + (e.message || e) + "}"
-					: $isFunction(fallback)
-						? fallback(e, view) : fallback;
-			}
-			return e == undefined ? "" : e;
-		},
-		_dbgMode: false
-	});
+	for (setting in $subSettings) {
+		addSetting(setting);
+	}
+
+	($viewsSettings.debugMode = function(debugMode) {
+		return debugMode === undefined
+			? $subSettings.debugMode
+			: (
+				$subSettings.debugMode = debugMode,
+				$subSettings.onError = debugMode + "" === debugMode
+					? new Function("", "return '" + debugMode + "';" )
+					: $isFunction(debugMode)
+						? debugMode
+						: undefined,
+				$viewsSettings);
+	})(false); // jshint ignore:line
+
+	$subSettingsAdvanced = $subSettings.advanced = {
+		useViews: false,
+		_jsv: false // For global access to JsViews store
+	};
 
 	//========================== Register tags ==========================
 
@@ -2021,11 +2058,11 @@ if (!(jsr || $ && $.render)) {
 	});
 
 	//========================== Define default delimiters ==========================
-	$viewsDelimiters();
+	$viewsSettings.delimiters("{{", "}}", "^");
 }
 
 if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over the stored items (templates, converters, helpers...)
 	jsr.views.sub._jq($);
 }
 return $ || jsr;
-}));
+}, this));

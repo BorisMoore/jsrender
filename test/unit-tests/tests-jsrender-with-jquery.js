@@ -22,7 +22,7 @@ var person = { name: "Jo" },
 	people = [{ name: "Jo" },{ name: "Bill" }],
 	towns = [{ name: "Seattle" },{ name: "Paris" },{ name: "Delhi" }];
 
-var tmplString =  "A_{{:name}}_B";
+var tmplString = "A_{{:name}}_B";
 
 module("api");
 
@@ -102,7 +102,7 @@ test("templates", function() {
 	equal($.render.my_tmpl(person), "A_Jo_B", 'Compile a template and then render it: $.templates("my_tmpl", tmplString); $.render.my_tmpl(data);');
 
 	$.templates({ myTmpl2: tmplString });
-	equal($.render.myTmpl2(person), "A_Jo_B", 'Compile and register templates: $.templates({ "my_tmpl", tmplString, ...  }); $.render.my_tmpl(data);');
+	equal($.render.myTmpl2(person), "A_Jo_B", 'Compile and register templates: $.templates({ "my_tmpl", tmplString, ... }); $.render.my_tmpl(data);');
 
 	equal($.templates.myTmpl2.render(person), "A_Jo_B", 'Get named template: $.templates.my_tmpl.render(data);');
 
@@ -149,7 +149,7 @@ test("templates", function() {
 	ok($.templates.cloned2 !== tmpl2 && $.templates.cloned2.tmplName === "cloned2", '$.templates({ cloned: {markup: "#my_tmpl" } }) will clone the cached template');
 
 	$.templates("my_tmpl", null);
-	equal($.templates.my_tmpl, undefined, 'Remove a named template:  $.templates("my_tmpl", null);');
+	equal($.templates.my_tmpl, undefined, 'Remove a named template: $.templates("my_tmpl", null);');
 
 	$.templates({
 		"scriptTmpl": {
@@ -161,7 +161,7 @@ test("templates", function() {
 			debug:true
 		}
 	});
-	equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0 && $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0, true, 'Debug a template:  set debug:true on object');
+	equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0 && $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0, true, 'Debug a template: set debug:true on object');
 
 	// reset
 	$("#my_tmpl")[0].removeAttribute("data-jsv-tmpl");
@@ -234,7 +234,7 @@ test("helpers", 3, function() {
 	equal($.views.helpers.concat === concat, true, 'concatFunction === $.views.helpers.concat');
 
 	$.views.helpers("concat2", null);
-	equal($.views.helpers.concat2, undefined,  'Remove a registered helper: $.views.helpers({ concat: null })');
+	equal($.views.helpers.concat2, undefined, 'Remove a registered helper: $.views.helpers({ concat: null })');
 });
 
 test("template encapsulation", 1, function() {

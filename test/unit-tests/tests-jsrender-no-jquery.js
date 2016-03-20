@@ -138,7 +138,11 @@ test("types", function() {
 	equal($.templates("{{:-33.33 - 2.2}}").render(), "-35.53", "-33.33 - 2.2");
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
 	equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
+
+//$.views.settings.trigger(true);
 	equal($.templates("{{:x=22}}").render("aString"), "aString", "{{:x=...}} returns current data item");
+	equal($.templates("{{html:x=22}}").render("aString"), "aString", "{{html:x=...}} returns current data item");
+	equal($.templates("{{>x=22}}").render("aString"), "aString", "{{>x=...}} returns current data item");
 	equal($.templates("{{:'abc('}}").render(), "abc(", "'abc(': final paren in string is rendered correctly"); // https://github.com/BorisMoore/jsviews/issues/300
 	equal($.templates('{{:"abc("}}').render(), "abc(", '"abc(": final paren in string is rendered correctly');
 	equal($.templates("{{:(('(abc('))}}").render(), "(abc(", "(('(abc('))");
@@ -184,8 +188,9 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 	equal($.templates("{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}").render(
 		{
 			a: "dataValue",
-			myOnErrorDataMethod: function(e, view) {
-				return "Override onError using a callback data method: " + view.data.a;
+			myOnErrorDataMethod: function(e) {
+				var data = this;
+				return "Override onError using a callback data method: " + data.a;
 			}
 		}), "Override onError using a callback data method: dataValue",
 		'{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}" >' +
@@ -202,7 +207,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 			a:"aVal",
 			defaultVal: "defaultFromData",
 			myCb: function(e, view) {
-				return "myCallback: " + view.data.a;
+				return "myCallback: " + this.a;
 			}
 		}), "1: defaultFromData 2: Missing Object 3:  4:  5: aVal 6:  7: myCallback: aVal end",
 		'multiple onError fallbacks in same template - correctly concatenated into output');
@@ -247,7 +252,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		a:"aVal",
 		defaultVal: "defaultFromData",
 		myCb: function(e, view) {
-			return "myCallback: " + view.data.a;
+			return "myCallback: " + this.a;
 		}
 	}), "1: defaultFromData 2: Missing Object 3:  4: aVal 5:  6: myCallback: aVal 7: undefined prop end",
 	'multiple onError fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
@@ -272,7 +277,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 			a:"aVal",
 			defaultVal: "defaultFromData",
 			myCb: function(e, view) {
-				return "myCallback: " + view.data.a;
+				return "myCallback: " + this.a;
 			}
 		});
 	} catch (e) {
@@ -324,7 +329,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		a:"aVal",
 		defaultVal: "defaultFromData",
 		myCb: function(e, view) {
-			return "myCallback: " + view.data.a;
+			return "myCallback: " + this.a;
 		}
 	}), "1: defaultFromData 2: Missing Object 3:  4: yes 5:  6: myCallback: aVal 7: undefined prop end 8: Missing Object",
 	'multiple onError fallbacks or undefined property fallbacks in same template - correctly concatenated into output');
@@ -349,7 +354,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 			a:"aVal",
 			defaultVal: "defaultFromData",
 			myCb: function(e, view) {
-				return "myCallback: " + view.data.a;
+				return "myCallback: " + this.a;
 			}
 		});
 	} catch (e) {
@@ -379,7 +384,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		a:"aVal",
 		defaultVal: "defaultFromData",
 		myCb: function(e, view) {
-			return "myCallback: " + view.data.a;
+			return "myCallback: " + this.a;
 		}
 	}).slice(0, 8), "{Error: ",
 	'In debug mode, onError/fallback converter and regular thrown error message in same template:' +
@@ -548,7 +553,7 @@ test("{{!-- --}}", function() {
 QUnit.module("allowCode");
 test("{{*}}", function() {
 	// =============================== Arrange ===============================
-	$.views.settings.allowCode = false;
+	$.views.settings.allowCode(false);
 	global.glob = {a: "AA"};
 
 	var tmpl = $.templates("_{{*:glob.a}}_");
@@ -558,7 +563,7 @@ test("{{*}}", function() {
 		"{{*:expression}} returns nothing if allowCode not set to true");
 
 	// =============================== Arrange ===============================
-	$.views.settings.allowCode = true;
+	$.views.settings.allowCode(true);
 
 	var result = "" + !!tmpl.allowCode + " " + tmpl.render(); // Still returns "__" until we recompile
 
@@ -568,7 +573,7 @@ test("{{*}}", function() {
 
 	// ................................ Assert ..................................
 	equal(result, "false __|true __",
-		"If $.settings.allowCode or tmpl.allowCode are set to true, previously compiled template is unchanged, so {{*}} still inactive");
+		"If $.settings.allowCode() or tmpl.allowCode are set to true, previously compiled template is unchanged, so {{*}} still inactive");
 
 	// ................................ Act ..................................
 	tmpl = $.templates("_{{*:glob.a}}_");
@@ -577,10 +582,10 @@ test("{{*}}", function() {
 
 	// ................................ Assert ..................................
 	equal(result, "true _AA_",
-		"If $.settings.allowCode set to true, {{*: expression}} returns evaluated expression, with access to globals");
+		"If $.settings.allowCode() set to true, {{*: expression}} returns evaluated expression, with access to globals");
 
 	// =============================== Arrange ===============================
-	$.views.settings.allowCode = false;
+	$.views.settings.allowCode(false);
 
 	tmpl = $.templates({
 		markup: "_{{*:glob.a}}_",
@@ -626,7 +631,7 @@ test("{{*}}", function() {
 		'Can recompile named tmpl to allow code, using $.templates("myTemplateName", {markup: $.templates.myTmpl, allowCode:true})"');
 
 	// =============================== Arrange ===============================
-	$.views.settings.allowCode = true;
+	$.views.settings.allowCode(true);
 
 	// ................................ Act ..................................
 	global.myVar = 0;
@@ -670,7 +675,7 @@ test("{{*}}", function() {
 
 	document.title = "";
 
-	$.views.settings.allowCode = false;
+	$.views.settings.allowCode(false);
 
 });
 
@@ -678,7 +683,7 @@ QUnit.module("useViews");
 test("", function() {
 
 	// =============================== Arrange ===============================
-	$.views.settings.allowCode = true;
+	$.views.settings.allowCode(true);
 	$.views.tags("exclaim", "!!! ");
 	var message = "",
 
@@ -710,14 +715,14 @@ test("", function() {
 
 	// ................................ Act ..................................
 	tmpl.useViews = false;
-	$.views.settings.useViews = true;
 
+	$.views.settings.advanced({useViews: true});
 	// ................................ Assert ..................................
 	equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
-		"If tmpl.useViews is set to false, but $.views.settings.useViews is set to true, the template renders with view hierarchy, (without recompiling).");
+		"If tmpl.useViews is set to false, but $.views.settings.advanced({useViews: ...}) is set to true, the template renders with view hierarchy, (without recompiling).");
 
 	// ................................ Act ..................................
-	$.views.settings.useViews = false;
+	$.views.settings.advanced({useViews: false});
 
 	tmpl = $.templates({markup: tmpl,
 		useViews: true
@@ -746,18 +751,18 @@ test("", function() {
 		"If tmpl.useViews set to false (for an existing template - without recompiling), the template renders without a 'data' view");
 
 	// ................................ Act ..................................
-	$.views.settings.useViews = true;
+	$.views.settings.advanced({useViews: true});
 
 	tmpl = $.templates({markup: tmpl});
 
-	$.views.settings.useViews = false;
+	$.views.settings.advanced({useViews: false});
 
 	// ................................ Assert ..................................
 	equal(tmpl.useViews && tmpl.render({towns: towns}), "data Seattle, Paris and Delhi",
-		"If $.views.settings.useViews was true when the template was compiled, then the template renders with views, even if $.views.settings.useViews is no longer set to true");
+		"If $.views.settings.advanced({useViews: ...}) was true when the template was compiled, then the template renders with views, even if $.views.settings.advanced({useViews: ...}) is no longer set to true");
 
 	// =============================== Arrange ===============================
-	$.views.settings.useViews = false;
+	$.views.settings.advanced({useViews: false});
 
 		tmpl = $.templates(
 			"{{exclaim/}}"
@@ -768,7 +773,7 @@ test("", function() {
 
 	// ................................ Assert ..................................
 	equal(tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
-		"A template with richer features, (such as a custom tag, or nested tags) will automatically have tmpl.useViews=truew and will render with views, even if $.views.settings.useViews is set to false");
+		"A template with richer features, (such as a custom tag, or nested tags) will automatically have tmpl.useViews=truew and will render with views, even if $.views.settings.advanced({useViews: ...}) is set to false");
 
 	// ................................ Act ..................................
 	var originalUseViews = tmpl.useViews;
@@ -795,13 +800,13 @@ test("", function() {
 
 	// ................................ Act ..................................
 	tmpl.useViews = originalUseViews;
-	$.views.settings.useViews = true;
+	$.views.settings.advanced({useViews: true});
 
 	// ................................ Assert ..................................
 	equal(!tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
-		"Setting $.views.settings.useViews=true WILL prevent a simpler template from rendering without views.");
+		"Setting $.views.settings.advanced({useViews: true}) WILL prevent a simpler template from rendering without views.");
 
-	$.views.settings.useViews = false;
+	$.views.settings.advanced({useViews: false});
 	document.title = "";
 });
 
@@ -1155,7 +1160,7 @@ test("render", 25, function() {
 		+ '{{/for}}');
 
 	$.views.settings.debugMode(true);
-	var result  = templateWithIndex.render({people: [1,2]});
+	var result = templateWithIndex.render({people: [1,2]});
 
 	$.views.settings.debugMode(false);
 	var result2 = templateWithIndex.render({people: [1,2]});
@@ -1753,7 +1758,7 @@ test('{{include}} and wrapping content', function() {
 			+ '{{:number}} '
 		+ '{{/myTag}} | '
 		+ '{{myTag2 tmpl="phonelist"}}'
-			+ '{{:number}} '
+		  + '{{:number}} '
 		+ '{{/myTag2}}',
 		templates: {
 			phonelist: "{{for phones}}{{include tmpl=#content/}}{{/for}}"
@@ -1777,16 +1782,16 @@ test('{{include}} and wrapping content', function() {
 		  '{{myTag tmpl="phonelist"}}'
 			+ '{{:number}}'
 		+ '{{else tmpl="altlist"}}'
-			+ '{{:alt}}'
+		  + '{{:alt}}'
 		+ '{{else tmpl="altlist2"}}'
-			+ '{{:alt}}'
+		  + '{{:alt}}'
 		+ '{{/myTag}}'
 		+ '{{myTag2 tmpl="phonelist"}}'
-			+ '{{:number}}'
+		  + '{{:number}}'
 		+ '{{else tmpl="altlist"}}'
-			+ '{{:alt}}'
+		  + '{{:alt}}'
 		+ '{{else tmpl="altlist2"}}'
-			+ '{{:alt}}'
+		  + '{{:alt}}'
 		+ '{{/myTag2}}',
 		templates: {
 			phonelist: "A< {{for phones}}{{include tmpl=#content/}} {{/for}} > ",
@@ -1840,61 +1845,126 @@ test("helpers", 4, function() {
 
 test("settings", function() {
 	// ................................ Act ..................................
+	// Delimiters
+
 	$.views.settings.delimiters("@%","%@");
-	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
-	$.views.settings.delimiters("{{","}}");
-	result += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render();
+	var result = $.templates("A_@%if true%@yes@%/if%@_B").render()
+		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+
+	$.views.settings.delimiters("<<",">>", "*");
+
+	result += "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+
+	$.views.settings.delimiters("{{","}}", "^");
+	result += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render()
+		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+
 	// ............................... Assert .................................
-	equal(result, "A_yes_B|A_YES_B", "Custom delimiters with render()");
+	equal(result, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
 
 	// =============================== Arrange ===============================
+	// Debug mode false
+
+	var oldDebugMode = $.views.settings.debugMode();
 	var app = {choose: true, name: "Jo"};
 	result = "";
-	var oldOnError = $.views.settings.onError;
-
-	$.views.settings({
-		onError: function(e, view, fallback) {
-			return "Override error - " + (fallback ? ("(Fallback string: " + fallback + ") ") : "") + (view ? "Rendering error: " + e.message : "JsViews error: " + e);
-		}
-	});
 
 	// ................................ Act ..................................
-	$.views.settings.debugMode(true);
-	result = $.templates('{{:missing.willThrow}}').render(app);
-	$.views.settings.debugMode();
-
-	// ............................... Assert .................................
-	equal(result.slice(0, 34), "Override error - Rendering error: ", "Override onError()");
-
-	// ................................ Act ..................................
-	result = $.templates('{{:missing.willThrow onError="myFallback"}}').render(app);
-
-	// ............................... Assert .................................
-	equal(result.slice(0, 64), "Override error - (Fallback string: myFallback) Rendering error: ", 'Override onError() - with {{:missing.willThrow onError="myFallback"}}');
-
-	// ................................ Act ..................................
+	$.views.settings.debugMode(false)
+	
 	try {
-		$.templates('{{if}}').render(app);
+		result = $.templates('{{:missing.willThrow}}').render(app);
 	}
 	catch (e) {
-		result = e.message;
+		result += !!e.message;
 	}
 
 	// ............................... Assert .................................
-	equal(result, 'Override error - JsViews error: Syntax error\nUnmatched or missing {{/if}}, in template:\n{{if}}',
-		'Override onError() - with thrown syntax error (missing {{/if}})');
+	equal($.views.settings.debugMode() + " " + result, 'false true',
+		'Debug mode false: {{:missing.willThrow}} throws error');
 
 	// ................................ Act ..................................
-	result = $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
+	// Debug mode true
+
+	$.views.settings.debugMode(true)
+
+	try {
+		result = $.templates('{{:missing.willThrow}}').render(app);
+	}
+	catch (e) {
+		result += !!e.message;
+	}
 
 	// ............................... Assert .................................
-	equal(result.slice(0,64), 'Override error - (Fallback string: myFallback) Rendering error: ',
-		'Override onError() - with {{if missing.willThrow onError="myFallback"}}');
+	equal($.views.settings.debugMode() + " " + result.slice(0, 8), 'true {Error: ',
+		'Debug mode true: {{:missing.willThrow}} renders error');
+
+	// ................................ Act ..................................
+	// Debug mode 'onError' handler function with return value
+
+	$.views.settings.debugMode(function(e, fallback, view) {
+		var data = this;
+		return "Override error - " + (fallback||"") + "_" + (view ? data.name + " " + (e.message.indexOf("willThrow")>-1): e); // For syntax errors e is a string, and view is undefined
+	});
+
+	// ................................ Act ..................................
+	result = typeof $.views.settings.debugMode() + " ";
+	result += $.templates('{{:missing.willThrow}}').render(app);
+
+	// ............................... Assert .................................
+	equal(result, "function Override error - _Jo true",
+		"Debug mode 'onError' handler override, with {{:missing.willThrow}}");
+
+	// ................................ Act ..................................
+	result = typeof $.views.settings.debugMode() + " ";
+	result += $.templates('{{:missing.willThrow onError="myFallback"}}').render(app);
+
+	// ............................... Assert .................................
+	equal(result, "function Override error - myFallback_Jo true",
+		'Debug mode \'onError\' handler override, with onError fallback: {{:missing.willThrow onError="myFallback"}}');
+
+	// ................................ Act ..................................
+	result = typeof $.views.settings.debugMode() + " ";
+	result += $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
+
+	// ............................... Assert .................................
+	equal(result, 'function Override error - myFallback_Jo true',
+		'Debug mode \'onError\' handler override, with onError fallback: {{if missing.willThrow onError="myFallback"}}');
+
+	// ................................ Act ..................................
+	// Debug mode 'onError' handler function without return value
+	var ret = "";
+	$.views.settings.debugMode(function(e, fallback, view) {
+		var data = this;
+		ret = "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("willThrow")>-1); // For syntax errors e is a string, and view is undefined
+	});
+
+	// ................................ Act ..................................
+	result = typeof $.views.settings.debugMode() + " ";
+	result += $.templates('{{:missing.willThrow}}').render(app);
+
+	// ............................... Assert .................................
+	equal(ret + "|" + result.slice(0, 17), "Override error - _Jo true|function {Error: ",
+		"Debug mode 'onError' handler (no return) with {{:missing.willThrow}}");
+
+	// ................................ Act ..................................
+	result = typeof $.views.settings.debugMode() + " ";
+	result += $.templates('{{:missing.willThrow onError="myFallback"}}').render(app);
+
+	// ............................... Assert .................................
+	equal(ret + "|" + result, "Override error - myFallback_Jo true|function myFallback",
+		'Debug mode \'onError\' handler (no return) with onError fallback: {{:missing.willThrow onError="myFallback"}}');
+
+	// ................................ Act ..................................
+	result = typeof $.views.settings.debugMode() + " ";
+	result += $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
+
+	// ............................... Assert .................................
+	equal(ret + "|" + result, "Override error - myFallback_Jo true|function myFallback",
+		'Debug mode \'onError\' handler (no return) with onError fallback: {{if missing.willThrow onError="myFallback"}}');
 
 	// ................................ Reset ..................................
-	$.views.settings({
-		onError: oldOnError
-	});
+	$.views.settings.debugMode(oldDebugMode);
 });
 
 test("template encapsulation", 8, function() {
