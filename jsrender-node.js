@@ -1,4 +1,4 @@
-/*! JsRender v0.9.74 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.75 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v0.9.74",
+var versionNumber = "v0.9.75",
 
 	// global var is the this object, which is window when running in the usual browser environment
 
@@ -1159,7 +1159,7 @@ function onRenderError(e, view, fallback) {
 		message = fallback; // There is a settings.debugMode(handler) onError override. Call it, and use return value (if any) to replace message
 	}
 
-	return view && !view.linkCtx && view.linked ? $converters.html(message) : message;
+	return view && !view.linkCtx ? $converters.html(message) : message;
 }
 
 function error(message) {

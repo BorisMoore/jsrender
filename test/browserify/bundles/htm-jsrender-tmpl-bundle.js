@@ -1,3 +1,4 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /*! JsRender v0.9.75 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
@@ -2066,3 +2067,75 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 }
 return $ || jsr;
 }, window));
+
+},{}],2:[function(require,module,exports){
+(function (global){
+/*global QUnit, test, equal, ok*/
+(function(undefined) {
+"use strict";
+
+browserify.done.htm = true;
+
+QUnit.module("Browserify - client code");
+
+test("jQuery global: require('jsrender')", function() {
+
+	// ............................... Hide QUnit global jQuery .................................
+	var jQuery = global.jQuery;
+	global.jQuery = undefined;
+
+	// =============================== Arrange ===============================
+	var data = {name: "Jo"};
+
+	// ................................ Act ..................................
+	var jsrender = require('./../../')();
+
+	// Use require to get server template, thanks to Browserify bundle that used jsrender/tmplify transform
+	var tmpl = require('../templates/name-template.htm')(jsrender); // Provide jsrender
+	var tmpl2 = require('../templates/name-template.jsrender')(jsrender); // Provide jsrender
+
+	var result = tmpl(data) + " " + tmpl2(data);
+
+	// ............................... Assert .................................
+	equal(result, "Name: Jo (name-template.htm) Name: Jo (name-template.jsrender)", "result: jQuery global: require('jsrender') - htm");
+
+	// ............................... Reset .................................
+	global.jQuery = jQuery; // Replace QUnit global jQuery
+});
+
+})();
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../templates/name-template.htm":3,"../templates/name-template.jsrender":4,"./../../":1}],3:[function(require,module,exports){
+(function (global){
+var tmplRefs = [],
+  mkup = 'Name: {{:name}} (name-template.htm)',
+  $ = global.jsrender || global.jQuery;
+
+module.exports = $ ? $.templates("./test/templates/name-template.htm", mkup) :
+  function($) {
+    if (!$ || !$.views) {throw "Requires jsrender/jQuery";}
+    while (tmplRefs.length) {
+      tmplRefs.pop()($); // compile nested template
+    }
+
+    return $.templates("./test/templates/name-template.htm", mkup)
+  };
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],4:[function(require,module,exports){
+(function (global){
+var tmplRefs = [],
+  mkup = 'Name: {{:name}} (name-template.jsrender)',
+  $ = global.jsrender || global.jQuery;
+
+module.exports = $ ? $.templates("./test/templates/name-template.jsrender", mkup) :
+  function($) {
+    if (!$ || !$.views) {throw "Requires jsrender/jQuery";}
+    while (tmplRefs.length) {
+      tmplRefs.pop()($); // compile nested template
+    }
+
+    return $.templates("./test/templates/name-template.jsrender", mkup)
+  };
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}]},{},[2]);

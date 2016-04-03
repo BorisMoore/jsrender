@@ -25,7 +25,7 @@ It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, wh
 Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
-- For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](#jsr-node-quickstart)*
+- For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
 
 <h4><b>Using JsRender with jQuery</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
@@ -141,7 +141,7 @@ var html = $.templates.myTmpl1(person);
 
 - A particular case of self-closing syntax is when any block tag uses the named parameter `tmpl=...` to reference an external template, which then replaces what would have been the block content:
  
- &dash; *Self-closing block tag referencing an external template:* `{{someTag ... tmpl=.../}}`<br/> (See [example](http://www.jsviews.com/#samples/jsr/composition/tmpl))
+ &dash; *Self-closing block tag referencing an external template:* `{{someTag ... tmpl=.../}}`<br/> (This lets you do [template composition](http://www.jsviews.com/#tagsyntax@composition). See [example](http://www.jsviews.com/#samples/jsr/composition/tmpl).)
 
 - Tags can take both unnamed arguments and named parameters:
  

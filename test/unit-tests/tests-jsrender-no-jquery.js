@@ -1904,7 +1904,7 @@ test("settings", function() {
 
 	$.views.settings.debugMode(function(e, fallback, view) {
 		var data = this;
-		return "Override error - " + (fallback||"") + "_" + (view ? data.name + " " + (e.message.indexOf("willThrow")>-1): e); // For syntax errors e is a string, and view is undefined
+		return "Override error - " + (fallback||"") + "_" + (view ? data.name + " " + (e.message.indexOf("undefined")>-1): e); // For syntax errors e is a string, and view is undefined
 	});
 
 	// ................................ Act ..................................
@@ -1936,7 +1936,7 @@ test("settings", function() {
 	var ret = "";
 	$.views.settings.debugMode(function(e, fallback, view) {
 		var data = this;
-		ret = "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("willThrow")>-1); // For syntax errors e is a string, and view is undefined
+		ret = "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("undefined")>-1); // For syntax errors e is a string, and view is undefined
 	});
 
 	// ................................ Act ..................................

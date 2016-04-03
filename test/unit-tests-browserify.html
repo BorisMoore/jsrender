@@ -6,23 +6,21 @@
 	<script src="//code.jquery.com/qunit/qunit-1.21.0.js"></script>
 </head>
 <body>
-<h3>Note: Run <i>$ gulp bundle;</i> before running these tests</h3>
+<h3>Note: Run <i>$ gulp bundle</i> and <i>$ npm test</i> before running these tests</h3>
 	<div id="qunit-fixture"><div id="result"></div></div>
 	<h1 id="qunit-header">JsViews QUnit Tests</h1>
 	<h2 id="qunit-banner"></h2>
 	<div id="qunit-testrunner-toolbar"></div>
 	<h2 id="qunit-userAgent"></h2>
 	<ol id="qunit-tests"></ol>
+	<script>
+		window.browserify = {done: {}};
+	</script>
 	<script src="browserify/bundles/1-bundle.js"></script>
 	<script src="browserify/bundles/2-bundle.js"></script>
 	<script src="browserify/bundles/3-bundle.js"></script>
-	<script src="browserify/bundles/4-bundle.js"></script>
-	<script src="browserify/bundles/5-bundle.js"></script>
-	<script src="browserify/bundles/6-bundle.js"></script>
-	<script src="browserify/bundles/7-bundle.js"></script>
-	<script src="browserify/bundles/8-bundle.js"></script>
-	<script src="browserify/bundles/9-bundle.js"></script>
-	<script src="browserify/bundles/10-errors-bundle.js"></script>
-	<script src="browserify/bundles/11-errors-bundle.js"></script>
+	<script src="browserify/bundles/html-jsr-tmpl-bundle.js"></script>
+	<script src="browserify/bundles/htm-jsrender-tmpl-bundle.js"></script>
+	<script src="browserify/tests-browserify-completed.js"></script>
 </body>
 </html>

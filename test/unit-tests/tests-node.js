@@ -73,7 +73,7 @@ test("jsrender/tmplify .html template", function() {
 	.bundle()
 	.pipe(fs.createWriteStream(outputFile)
 		.on('finish', function() {
-			ok(fs.readFileSync(outputFile, 'utf8').indexOf("alert(result);") > 0, 'browserify().transform(tmplify)');
+			ok(fs.readFileSync(outputFile, 'utf8').indexOf("browserify.done.html ") > 0, 'browserify().transform(tmplify)');
 			start();
 		})
 	)
@@ -92,7 +92,7 @@ test("jsrender/tmplify options: 'htm jsr'", function() {
 	.bundle()
 	.pipe(fs.createWriteStream(outputFile))
 		.on('finish', function() {
-			ok(fs.readFileSync(outputFile, 'utf8').indexOf("alert(result);") > 0, 'browserify().transform(tmplify, {extensions: "..., ..."})');
+			ok(fs.readFileSync(outputFile, 'utf8').indexOf("browserify.done.htm ") > 0, 'browserify().transform(tmplify, {extensions: "..., ..."})');
 			start();
 		})
 	.on('error', function(err) {
