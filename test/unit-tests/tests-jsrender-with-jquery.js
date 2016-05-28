@@ -29,7 +29,7 @@ module("api");
 test("templates", function() {
 	var tmplElem = document.getElementById("./test/templates/file/path.html");
 
-	// ................................ Arrange ..................................
+	// =============================== Arrange ===============================
 	$.removeData(tmplElem, "jsvTmpl"); // In case data has been set in a previous test
 
 	// ................................ Act ..................................
@@ -65,25 +65,25 @@ test("templates", function() {
 	tmplElem.removeAttribute("data-jsv-tmpl");
 
 	// ................................ Act ..................................
-	var tmpl0 = $.templates({markup: "#myTmpl"}); // Compile template declared in script block, but do not cache
+	tmpl0 = $.templates({markup: "#myTmpl"}); // Compile template declared in script block, but do not cache
 
 	// ............................... Assert .................................
 	equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), isIE8 ? "\nA_Jo0_B" : "A_Jo0_B", "Compile template declared in script block, without caching");
 
 	// ................................ Act ..................................
-	var tmpl1 = $.templates("#myTmpl"); // Compile and cache, using $.data(elem, "jsvTmpl", tmpl);
+	tmpl1 = $.templates("#myTmpl"); // Compile and cache, using $.data(elem, "jsvTmpl", tmpl);
 
 	// ............................... Assert .................................
 	equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), isIE8 ? "\nA_Jo1_B" : "A_Jo1_B", "Compile template declared in script block, and cache on file path");
 
 	// ................................ Act ..................................
-	var tmpl2 = $.templates("#myTmpl"); // Use cached template, accessed by $.data(elem, "jsvTmpl")
+	tmpl2 = $.templates("#myTmpl"); // Use cached template, accessed by $.data(elem, "jsvTmpl")
 
 	// ............................... Assert .................................
 	equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), isIE8 ? "\nA_Jo2_B" : "A_Jo2_B", "Re-use cached template declared in script block");
 
 	// ................................ Act ..................................
-	var tmpl3 = $.templates({markup: "#myTmpl"}); // Re-compile template but do not cache. Leaved cached template.
+	tmpl3 = $.templates({markup: "#myTmpl"}); // Re-compile template but do not cache. Leave cached template.
 
 	// ............................... Assert .................................
 	equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), isIE8 ? "\nA_Jo3_B" : "A_Jo3_B", "Recompile template declared in script block, without caching");
@@ -108,8 +108,8 @@ test("templates", function() {
 
 	equal($.templates(tmplString).render(person), "A_Jo_B", 'Compile without registering as named template: $.templates(tmplString).render(person);');
 
-	var tmpl2 = $.templates("#my_tmpl");
-	var tmpl3 = $.templates("#my_tmpl");
+	tmpl2 = $.templates("#my_tmpl");
+	tmpl3 = $.templates("#my_tmpl");
 	equal(tmpl2 === tmpl3 && $.trim(tmpl2.render(person)), "A_Jo_B", 'var tmpl = $.templates("#my_tmpl"); returns compiled template for script element');
 
 	$.templates({
@@ -120,7 +120,7 @@ test("templates", function() {
 
 	equal($.render.my_tmpl3 === $.templates.my_tmpl3 && $.templates.my_tmpl3 !== tmpl2 && $.trim($.render.my_tmpl3(person)), "A_Jo_B", 'Named template for template object with selector: { markup: "#my_tmpl" }');
 
-	var tmpl3 = $.templates("", {
+	tmpl3 = $.templates("", {
 		markup: "#my_tmpl"
 	});
 	equal($.trim(tmpl3.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: { markup: "#my_tmpl" }');
@@ -247,6 +247,205 @@ test("template encapsulation", 1, function() {
 		}
 	});
 	equal($.render.myTmpl6({ people: people }), "BillJo", '$.templates("my_tmpl", tmplObjWithNestedItems);');
+});
+
+test("$.views.viewModels", function() {
+	// =============================== Arrange ===============================
+	var Constr = $.views.viewModels({getters: ["a", "b"]});
+	// ................................ Act ..................................
+	var vm = Constr("a1 ", "b1 ");
+	var result = vm.a() + vm.b();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+	// ............................... Assert .................................
+	equal(result, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
+		this.c(val + this.a() + this.b() + this.c());
+	}}});
+	// ................................ Act ..................................
+	vm = Constr("a1 ", "b1 ", "c1 ");
+	vm.add("before ");
+	result = vm.c();
+	// ............................... Assert .................................
+	equal(result, "before a1 b1 c1 ", "viewModels, two getters, one method");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({extend: {add: function(val) {
+		this.foo = val;
+	}}});
+	// ................................ Act ..................................
+	vm = Constr();
+	vm.add("before");
+	result = vm.foo;
+	// ............................... Assert .................................
+	equal(result, "before", "viewModels, no getters, one method");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({getters: []});
+	// ................................ Act ..................................
+	vm = Constr();
+	result = JSON.stringify(vm);
+	// ............................... Assert .................................
+	equal(result, "{}", "viewModels, no getters, no methods");
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b"]
+		}
+	});
+	// ................................ Act ..................................
+	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
+
+	result = vm.a() + vm.b();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+
+	// ............................... Assert .................................
+	equal(result, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 "});
+
+	result = vm.a() + vm.b();
+
+	// ............................... Assert .................................
+	equal(result, "a3 b3 ", "viewModels merge, two getters, no methods");
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
+
+	// =============================== Arrange ===============================
+	var viewModels = $.views.viewModels({
+		T1: {
+			getters: ["a", {getter: "b"}, "c", "d", {getter: "e", type: undefined}, {getter: "f", type: null}, {getter: "g", type: "foo"}, {getter: "h", type: ""}]
+		}
+	}, {});
+	// ................................ Act ..................................
+	vm = viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 ", d: "d1 ", e: "e1 ", f: "f1 ", g: "g1 ", h: "h1 "});
+	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+	// ............................... Assert .................................
+	equal(result, "a1 b1 c1 d1 e1 f1 g1 h1 a2 b2 ",
+		"viewModels, multiple unmapped getters, no methods");
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 ", c: "c3 ", d: "d3 ", e: "e3 ", f: "f3 ", g: "g3 ", h: "h3 "});
+
+	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
+
+	// ............................... Assert .................................
+	equal(result, "a3 b3 c3 d3 e3 f3 g3 h3 ",
+		"viewModels merge, multiple unmapped getters, no methods");
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 ","c":"c3 ","d":"d3 ","e":"e3 ","f":"f3 ","g":"g3 ","h":"h3 "}',
+		"viewModels unmap, multiple unmapped getters, no methods");
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b", "c"],
+			extend : {
+				add: function(val) {
+					this.c(val + this.a() + this.b() + this.c());
+				}
+			}
+		}
+	});
+
+	// ................................ Act ..................................
+	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
+
+	vm.add("before ");
+	result = vm.c();
+
+	// ............................... Assert .................................
+	equal(result, "before a1 b1 c1 ", "viewModels, getters and one method");
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 ", c: "c3 "});
+	vm.add("updated ");
+	result = vm.c();
+
+	// ............................... Assert .................................
+	equal(result, "updated a3 b3 c3 ", "viewModels merge, getters and one method");
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 ","c":"updated a3 b3 c3 "}', "viewModels unmap, getters and one method");
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b"]
+		},
+		T2: {
+			getters: [{getter: "t1", type: "T1"}, {getter: "t1Arr", type: "T1"}, {getter: "t1OrNull", type: "T1", defaultVal: null}]
+		}
+	});
+	viewModels = $.views.viewModels;
+	// ................................ Act ..................................
+	var t1 = viewModels.T1.map({a: "a1 ", b: "b1 "}); // Create a T1
+	var t2 = viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: [t1.unmap(), {a: "a2 ", b: "b2 "}]}); // Create a T2 (using unmap to scrape values the T1: vm)
+
+	result = JSON.stringify(t2.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	t2.t1Arr()[0].merge({a: "a1x ", b: "b1x "}); // merge not the root, but a VM instance within hierarchy: vm2.t1Arr()[0] - leaving rest unchanged
+	result = JSON.stringify(t2.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1x ","b":"b1x "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, merge deep node");
+
+	// ................................ Act ..................................
+	var t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
+	var t2FromArr =  viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: t1Arr.unmap()}); // Create a T2 (using unmap to scrape values the T1: vm)
+	result = JSON.stringify(t2FromArr.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
+	t1Arr.push(viewModels.T1("a3 ", "b3 "));
+	t2FromArr = viewModels.T2.map({t1: {a: "a4 ", b: "b4 "}, t1Arr: t1Arr.unmap()}); // Create a T2 (using unmap to scrape values the T1: vm)
+	result = JSON.stringify(t2FromArr.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a4 ","b":"b4 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "},{"a":"a3 ","b":"b3 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	var t2new= viewModels.T2(viewModels.T1("a3 ", "b3 "), [viewModels.T1("a1 ", "b1 "), viewModels.T1("a2 ", "b2 ")], viewModels.T1("a4 ", "b4 ") );
+	result = JSON.stringify(t2new.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
+		"viewModels, hierarchy");
 });
 
 })(this, this.jQuery);

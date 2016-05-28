@@ -1,6 +1,7 @@
 /*global test, equal, ok, QUnit*/
 (function(undefined) {
 "use strict";
+
 var jsrender = require('./../../jsrender-node.js');
 var tmplify = require('./../../tmplify/index.js');
 
@@ -31,7 +32,7 @@ test("jsrender.templates", function() {
 });
 
 test("jsrender.compile", function() {
-	var tmpl = jsrender.compile('./test/templates/name-template.html');	
+	var tmpl = jsrender.compile('./test/templates/name-template.html');
 	var html = tmpl({ name: "Jo" });
 	equal(html, "Name: Jo (name-template.html)", 'jsrender.compile("./file.path.html") compiles template');
 
@@ -43,7 +44,7 @@ test("jsrender.compile", function() {
 test("jsrender.tags.clientTemplate", function() {
 	jsrender.views.settings.delimiters("<%", "%>");
 	var tmpl = jsrender.compile(
-		'<script src="//code.jquery.com/jquery-1.11.3.js"></script>\n'
+		'<script src="//code.jquery.com/jquery-1.12.3.js"></script>\n'
 		+ '<script src="//www.jsviews.com/download/jsrender.js"></script>\n'
 		+ '<%clientTemplate "./test/templates/outer.html"/%>\n'
 		+ '<%clientTemplate "./test/templates/inner.html"/%>\n'
@@ -52,7 +53,7 @@ test("jsrender.tags.clientTemplate", function() {
 		+ '<script>var tmpl = $.templates("#clientonly"); $("#result").html(tmpl({name: "Jeff"}));</script>');
 	var html = tmpl({ name: "Jo" });
 	equal(html,
-		'<script src="//code.jquery.com/jquery-1.11.3.js"></script>\n'
+		'<script src="//code.jquery.com/jquery-1.12.3.js"></script>\n'
 		+ '<script src="//www.jsviews.com/download/jsrender.js"></script>\n'
 		+ '<script id="./test/templates/outer.html" type="text/x-jsrender">Name: {{:name}} (outer.html) {{include tmpl="./test/templates/inner.html"/}}</script>\n'
 		+ '<script id="./test/templates/inner.html" type="text/x-jsrender">Name: {{:name}} (inner.html)</script>\n'

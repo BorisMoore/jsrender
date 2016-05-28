@@ -57,7 +57,7 @@ test("{{if}} {{else}}", 4, function() {
 	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
 });
 
-test("syntax errors", 7, function() {
+test("syntax errors", 15, function() {
 	equal(compileTmpl("{^{*:foo}}"), "Syntax error\n{^{*:foo}}", "Syntax error for {^{* ...}}");
 	equal(compileTmpl("{{:foo/}}"), "Syntax error\n{{:foo/}}", "Syntax error for {{: ... /}}");
 	equal(compileTmpl("{{:foo:}}"), "Syntax error\n{{:foo:}}", "Syntax error for {{: ... :}}");
@@ -65,6 +65,17 @@ test("syntax errors", 7, function() {
 	equal(compileTmpl("{{mytag foo :}}"), "Syntax error\n{{mytag foo :}}", "Syntax error for {{mytag ... :}}");
 	equal(compileTmpl("{^{mytag foo :}}"), "Syntax error\n{^{mytag foo :}}", "Syntax error for {^{mytag ... :}}");
 	equal(compileTmpl("{{if foo?bar:baz}}{{/if}}"), "compiled", "No syntax error for {{tag foo?bar:baz}}");
+	equal(compileTmpl("{{for [1,2]/}}"), "Syntax error\n[1,2]", "Syntax error for {{for [1,2]}} - top-level array");
+	equal(compileTmpl("{{:constructor()}}"), "Syntax error\nconstructor", "Syntax error for {{: ...constructor ...}}");
+	equal(compileTmpl("{{for #tmpl.constructor()}}"), "Syntax error\n#tmpl.constructor", "Syntax error for {{for ...constructor ...}}");
+
+$.views.settings.debugMode(true);
+	equal($.templates('{{:#data["constructor"]["constructor"]("alert(0);")()}}').render(), "{Error: Syntax error\n}", 'Syntax error 1 for ["constructor]"');
+	equal($.templates('{{:valueOf["constructor"]("alert(1);")()}}').render(1), "{Error: Syntax error\n}", 'Syntax error 2 for ["constructor]"');
+	equal($.templates('{{:valueOf["const"+"ructor"]("alert(2);")()}}').render(1), "{Error: Syntax error\n}", 'Syntax error 3 for ["constructor]"');
+	equal($.templates('{{if true ~c=toString["con" + foo + "or"]}}{{:convert=~c("alert(3);")}}{{/if}}').render({foo: "struct"}), "{Error: Syntax error\n}", 'Syntax error 1 for indirect ["constructor]"');
+	equal($.templates('{{if true ~tmp="constructo"}}{{if true ~tmp2="r"}}{{:toString[~tmp + ~tmp2]}}{{/if}}{{/if}}').render(1), "{Error: Syntax error\n}", 'Syntax error 2 for indirect ["constructor]"');
+$.views.settings.debugMode(false);
 });
 
 QUnit.module("{{if}}");
@@ -138,8 +149,6 @@ test("types", function() {
 	equal($.templates("{{:-33.33 - 2.2}}").render(), "-35.53", "-33.33 - 2.2");
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
 	equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
-
-//$.views.settings.trigger(true);
 	equal($.templates("{{:x=22}}").render("aString"), "aString", "{{:x=...}} returns current data item");
 	equal($.templates("{{html:x=22}}").render("aString"), "aString", "{{html:x=...}} returns current data item");
 	equal($.templates("{{>x=22}}").render("aString"), "aString", "{{>x=...}} returns current data item");
@@ -791,7 +800,7 @@ test("", function() {
 			+ "{{/for}}");
 
 	// ................................ Act ..................................
-	var originalUseViews = tmpl.useViews;
+	originalUseViews = tmpl.useViews;
 	tmpl.useViews = true;
 
 	// ................................ Assert ..................................
@@ -1645,8 +1654,8 @@ test('{{include}} and wrapping content', function() {
 		+ " This (new template) wraps: headerJofooter |" 
 		+ " This (render method) replaces: replacementText |" 
 		+ " This (original template) adds: addBill |" 
-		+ " This (new template) wraps: headerBillfooter | "
-		, 'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+		+ " This (new template) wraps: headerBillfooter | ",
+		'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
 	result = $.templates({
 		markup:
@@ -1870,7 +1879,7 @@ test("settings", function() {
 	result = "";
 
 	// ................................ Act ..................................
-	$.views.settings.debugMode(false)
+	$.views.settings.debugMode(false);
 	
 	try {
 		result = $.templates('{{:missing.willThrow}}').render(app);
@@ -2081,7 +2090,6 @@ $.templates({
 	// ............................... Assert .................................
 	equal($.templates.nesting.render({}, {b: "optionHelper"}), " templateHelper templateCvt innerTemplateHelper innerTemplateCvt innerInnerCascade innerCascade",
 		'Inner template, helper, and converter override outer template, helper, and converter');
-
 });
 
 })();

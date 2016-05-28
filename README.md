@@ -6,7 +6,7 @@
 
 **[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.
 
-<h3>Documentation and Downloads</h3>
+<h3>Documentation and downloads</h3>
 **[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
 
 The content of this ***ReadMe*** is available also as a *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)*.
@@ -16,7 +16,7 @@ JsRender is used for data-driven rendering of templates to strings, ready for in
 
 It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, which adds data binding to JsRender templates, and provides a fully-fledged MVVM platform for easily creating interactive data-driven single page apps and websites.
 
-<h2>JsRender Installation</h2>
+<h2>JsRender installation</h2>
 
 *jsrender.js* is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site. 
 
@@ -26,6 +26,7 @@ Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
 - For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
+- (For browser loading using *Browserify* or *webpack* -- see also *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*)
 
 <h4><b>Using JsRender with jQuery</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).
@@ -56,7 +57,7 @@ It also provides built-in *Express*, *Hapi* and *Browserify* integration -- whic
 
 **Code samples:** See *[JsRender Node Starter](https://github.com/BorisMoore/jsrender-node-starter)* for running code examples of Node.js scenarios, including with *Express*, *Hapi* and *Browserify*.
 
-<h2>JsRender Usage</h2>
+<h2>JsRender usage</h2>
 
 <h3><i>Define a template</i></h3>
 

@@ -8,10 +8,12 @@
 (function() {
 "use strict";
 var jsrender = require('./../jsrender-node.js'),
+	fs = require('fs'),
 	path = require('path'),
 	pathSep = path.sep,
 	through = require('through2'),
-	rootDirNameLen = path.resolve("./").length + 1;
+	rootDirPath = path.resolve("./"),
+	rootDirPathLen = rootDirPath.length + 1;
 
 function isTemplate(fileExt, extensions) {
 	extensions = typeof extensions === "string"
@@ -26,7 +28,6 @@ module.exports = function(file, options) {
 	if (!isTemplate(path.extname(file).slice(1), options && (options.extensions || options.e))) {
 		return through();
 	}
-
 	return through(function(buf, enc, next) {
 		var createTmplCode, ref, pathFromFileDir,
 			markup = buf.toString().replace(/^\uFEFF/, ''), // Remove BOM if necessary
@@ -34,10 +35,16 @@ module.exports = function(file, options) {
 			bundledFile = 'var tmplRefs = [],\n'
 			+ "  mkup = '" + markup.replace(/['"\\]/g, "\\$&").replace(/[ \t]*(\r\n|\n|\r)/g, '\\n') + "',\n" // Normalize newlines, and escape quotes and \ character
 			+ '  $ = global.jsrender || global.jQuery;\n\n',
-			templateName = './' + file.slice(rootDirNameLen).split(pathSep).join('/');
+			templateName = './' + file.slice(rootDirPathLen).split(pathSep).join('/');
 
 		for (ref in tmpl.refs) {
 			// Recursively bundle any nested template references, e.g. {{include tmpl="./some/template.html/}}"
+			fs.stat(ref, function(err, stat) {
+				// Async check that file exists
+				if(err && err.code == 'ENOENT') {
+					throw new Error("Template '" + ref + "' not found at '" + err.path + "'. Use path relative to '" + rootDirPath + "'.");
+				}
+			});
 			pathFromFileDir = './' + path.relative(nodeFileDirName, ref).split(pathSep).join('/');
 			bundledFile += 'tmplRefs.push(require("' + pathFromFileDir + '"));\n';
 		}
