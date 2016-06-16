@@ -1,4 +1,4 @@
-/*! JsRender v0.9.76 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.77 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v0.9.76",
+var versionNumber = "v0.9.77",
 
 	// global var is the this object, which is window when running in the usual browser environment
 
@@ -387,10 +387,10 @@ function convertVal(converter, view, tagCtx, onError) {
 
 		tagCtx.view = view;
 
-		tag.ctx = tagCtx.ctx || {};
+		tag.ctx = tagCtx.ctx || tag.ctx || {};
 		tagCtx.ctx = undefined;
 
-		value = tag.cvtArgs(tag.convert || converter !== "true" && converter)[0]; // If there is a convertBack but no convert, converter will be "true"
+		value = tag.cvtArgs(converter !== "true" && converter)[0]; // If there is a convertBack but no convert, converter will be "true"
 
 		// Call onRender (used by JsViews if present, to add binding annotations around rendered content)
 		value = boundTag && view._.onRender
@@ -406,7 +406,7 @@ function convertArgs(converter) {
 		view = tagCtx.view,
 		args = tagCtx.args;
 
-	converter = tag.convert || converter;
+	converter = converter || tag.convert;
 	converter = converter && ("" + converter === converter
 		? (view.getRsc("converters", converter) || error("Unknown converter: '" + converter + "'"))
 		: converter);

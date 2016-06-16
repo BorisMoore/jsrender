@@ -26,7 +26,7 @@ Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
 - For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
-- (For browser loading using *Browserify* or *webpack* -- see also *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*)
+- (For browser loading using *Browserify* or *webpack* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*, *[JsRender as a Browserify module](http://www.jsviews.com/#node/browserify@jsrender)* and *[JsRender as a webpack module](http://www.jsviews.com/#node/webpack@jsrender)*)
 
 <h4><b>Using JsRender with jQuery</b></h4>
 When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$.templates` and `$.render` to the jQuery namespace object, `$` (or `window.jQuery`).

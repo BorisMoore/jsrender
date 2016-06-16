@@ -1266,7 +1266,7 @@ test("{{sometag convert=converter}}", function() {
 
 	equal($.templates("1{{:#data convert='loc'}} 2{{:'desktop' convert='loc'}} 3{{:#data convert=~myloc}} 4{{:'desktop' convert=~myloc}}").render("desktop", {myloc: loc}), "1bureau 2bureau 3bureau 4bureau", "{{: convert=~myconverter}}");
 	equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
-		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a moins <que b",
+		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a&lt;b",
 		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}}" +
 		"\nor {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
 	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val;}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
