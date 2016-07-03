@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*! JsRender v0.9.77 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.78 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -45,8 +45,8 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.77",
-	jsvStoreName, rTag, rTmplString, topView, $views,
+var versionNumber = "v0.9.78",
+	jsvStoreName, rTag, rTmplString, topView, $views,	$expando,
 
 //TODO	tmplFnsCache = {},
 	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
@@ -990,7 +990,7 @@ function compileViewModel(name, type) {
 
 			ob = this.apply(this, arr); // Insantiate this View Model, passing getters args array to constructor
 			for (prop in data) { // Copy over any other properties. that are not get/set properties
-				if (!getterNames[prop]) {
+				if (prop !== $expando  && !getterNames[prop]) {
 					ob[prop] = data[prop];
 				}
 			}
@@ -1033,7 +1033,7 @@ function compileViewModel(name, type) {
 				}
 			}
 			if ($observable) {
-				$observable(model).refresh(newModArr);
+				$observable(model).refresh(newModArr, true);
 			} else {
 				model.splice.apply(model, [0, model.length].concat(newModArr));
 			}
@@ -1047,7 +1047,7 @@ function compileViewModel(name, type) {
 			}
 		});
 		for (prop in data) {
-			if (!getterNames[prop]) {
+			if (prop !== $expando && !getterNames[prop]) {
 				model[prop] = data[prop];
 			}
 		}
@@ -1077,7 +1077,7 @@ function compileViewModel(name, type) {
 				: value;
 		}
 		for (prop in model) {
-			if (prop !== "_is" && !getterNames[prop] && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$.isFunction(model[prop])) {
+			if (prop !== "_is" && !getterNames[prop] && prop !== $expando  && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$.isFunction(model[prop])) {
 				ob[prop] = model[prop];
 			}
 		}
@@ -1636,7 +1636,7 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 	}
 	//==== /end of nested functions ====
 
-	var result, newNode, hasHandlers,
+	var i, result, newNode, hasHandlers, bindings,
 		allowCode = $subSettings.allowCode || tmpl && tmpl.allowCode
 			|| $viewsSettings.allowCode === true, // include direct setting of settings.allowCode true for backward compat only
 		astTop = [],
@@ -1677,7 +1677,12 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 
 	if (isLinkExpr) {
 		result = buildCode(astTop, markup, isLinkExpr);
-		setPaths(result, [astTop[0][7]]); // With data-link expressions, pathBindings array is astTop[0][7]
+		bindings = [];
+		i = astTop.length;
+		while (i--) {
+			bindings.unshift(astTop[i][7]);  // With data-link expressions, pathBindings array for tagCtx[i] is astTop[i][7]
+		}
+		setPaths(result, bindings);
 	} else {
 		result = buildCode(astTop, tmpl);
 	}
@@ -2017,7 +2022,8 @@ function buildCode(ast, tmpl, isLinkExpr) {
 							: "{" + tagCtx + "}") + ")")
 						: tagName === ">"
 							? (hasEncoder = true, "h(" + params[0] + ")")
-							: (getsVal = true, "((v=" + params[0] + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
+							: (getsVal = true, "((v=" + params[0] + ')!=null?v:' + (isLinkExpr ? 'null)' : '"")'))
+							// Non strict equality so data-link="title{:expr}" with expr=null/undefined removes title attribute
 					)
 					: (hasTag = true, "\n{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 						+ (content ? nestedTmpls.length : "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
@@ -2114,10 +2120,8 @@ function getTargetProps(source) {
 	if (typeof source === OBJECT) {
 		for (key in source) {
 			prop = source[key];
-			if (!prop || !prop.toJSON || prop.toJSON()) {
-				if (!$isFunction(prop)) {
-					props.push({key: key, prop: prop});
-				}
+			if (key !== $expando  && !$isFunction(prop)) {
+				props.push({key: key, prop: prop});
 			}
 		}
 	}
@@ -2167,7 +2171,7 @@ if (!(jsr || $ && $.render)) {
 		// jQuery (= $) is loaded
 
 		$.fn.render = $fnRender;
-
+		$expando = $.expando;
 		if ($.observable) {
 			$extend($sub, $.views.sub); // jquery.observable.js was loaded before jsrender.js
 			$views.map = $.views.map;
@@ -2202,12 +2206,12 @@ if (!(jsr || $ && $.render)) {
 				$ = jq;
 				$.fn.render = $fnRender;
 				delete $.jsrender;
+				$expando = $.expando;
 			}
 		};
 
 		$.jsrender = versionNumber;
 	}
-
 	$subSettings = $sub.settings;
 	$subSettings.allowCode = false;
 	$isFunction = $.isFunction;
