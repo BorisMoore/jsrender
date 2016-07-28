@@ -816,6 +816,7 @@ test("", function() {
 		"Setting $.views.settings.advanced({useViews: true}) WILL prevent a simpler template from rendering without views.");
 
 	$.views.settings.advanced({useViews: false});
+	$.views.settings.allowCode(false);
 	document.title = "";
 });
 
@@ -1190,11 +1191,10 @@ test("render", 25, function() {
 		"a0 b0 c0 d0 a1 b1 c1 d1 ",
 		"#getIndex gives inherited index in nested blocks.");
 
-	$.views.helpers({ myKeyIsCorrect: function() {
-		var view = this;
+	$.views.helpers({ myKeyIsCorrect: function(view) {
 		return view.parent.views[view._.key] === view;
 	}});
-	$.templates("myTmpl12", "{{for people}}nested {{:~myKeyIsCorrect()}}|{{if #index===0}}nested if {{:~myKeyIsCorrect()}}|{{else}}nested else {{:~myKeyIsCorrect()}}|{{/if}}{{/for}}");
+	$.templates("myTmpl12", "{{for people}}nested {{:~myKeyIsCorrect(#view)}}|{{if #index===0}}nested if {{:~myKeyIsCorrect(#view)}}|{{else}}nested else {{:~myKeyIsCorrect(#view)}}|{{/if}}{{/for}}");
 
 	equal($.render.myTmpl12({ people: people }), "nested true|nested if true|nested true|nested else true|",
 										'view._key gives the key of this view in the parent views collection/object');
