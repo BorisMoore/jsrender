@@ -18,7 +18,9 @@ test("Loading JsRender, without jQuery, using RequireJS", function(assert) {
 	undefine();
 	console.log("1");
 
+
 	require(["//www.jsviews.com/download/jsrender.js"], function($) { // Or point to correct local path for jsrender.js on your system
+//	require(["../../download/jsrender.js"], function($) { // Or point to correct local path for jsrender.js on your system
 		// Here $ is the global jQuery object, (jq - loaded by script block in page header, for QUnit)
 		// If there was no global jQuery it would be the jsviews object - but no global would be created.
 
