@@ -2092,4 +2092,108 @@ $.templates({
 		'Inner template, helper, and converter override outer template, helper, and converter');
 });
 
+QUnit.module("Custom tags");
+
+test("contentCtx", function() {
+
+var tmpl = $.templates("\
+{{for 'parent'}}\
+{{mytag 'arg1' 'arg2' 'arg3'}}\
+  {{:#data}}A\
+{{else 'elseArg1'}}\
+  {{:#data}}B\
+{{else}}\
+  {{:#data}}C\
+{{/mytag}}\
+{{/for}}\
+");
+
+	// =============================== Arrange ===============================
+
+$.views.tags({mytag: {
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'No contentCtx - context is 1st arg or parentView.data');
+
+	// =============================== Arrange ===============================
+
+$.views.tags({mytag: {
+	contentCtx: function(val) {}
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'contentCtx returns undefined - context is 1st arg or parentView.data');
+
+	// =============================== Arrange ===============================
+
+$.views.tags({mytag: {
+	contentCtx: function(val) {
+		return val;
+	}
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'contentCtx returns first arg/parentView - context is 1st arg or parentView.data');
+
+	// =============================== Arrange ===============================
+
+$.views.tags({mytag: {
+	contentCtx: function(val) {
+		return this.tagCtx.view;
+	}
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  parentA  parentB  parentC", 'contentCtx returns this.tagCtx.view - context is parentView.data');
+
+	// =============================== Arrange ===============================
+
+$.views.tags({mytag: {
+	contentCtx: function(val) {
+		return this.tagCtx.view.data;
+	}
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  parentA  parentB  parentC", 'contentCtx returns this.tagCtx.view.data - context is parentView.data');
+
+	// =============================== Arrange ===============================
+
+$.views.tags({mytag: {
+	contentCtx: function(val) {
+		return this.tagCtxs[0].args[this.tagCtx.index];
+	}
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  arg1A  arg2B  arg3C", 'contentCtx returns arg from first tagCtx indexed on else - context is arg1/arg2/arg3');
+
+	// =============================== Arrange ===============================
+
+var tmpl = $.templates("\
+{{for 'outerparent'}}\
+{{for 'parent'}}\
+{{mytag 'arg1' 'arg2' 'arg3'}}\
+  {{:#data}}A\
+{{else 'elseArg1'}}\
+  {{:#data}}B\
+{{else}}\
+  {{:#data}}C\
+{{/mytag}}\
+{{/for}}\
+{{/for}}\
+");
+
+$.views.tags({mytag: {
+	contentCtx: function(val) {
+		return this.tagCtx.view.parent;
+	}
+}}, tmpl);
+
+	// ............................... Assert .................................
+	equal(tmpl.render("outer"), "  outerparentA  outerparentB  outerparentC", 'contentCtx returns this.tagCtx.view.parent');
+
+});
+
 })();
