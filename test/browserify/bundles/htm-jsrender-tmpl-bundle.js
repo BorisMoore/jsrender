@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*! JsRender v0.9.82 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.83 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -45,7 +45,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.82",
+var versionNumber = "v0.9.83",
 	jsvStoreName, rTag, rTmplString, topView, $views,	$expando,
 
 //TODO	tmplFnsCache = {},
@@ -353,9 +353,9 @@ function getHelper(helper, isContextCb) {
 		res = $helpers[helper];
 	}
 	if (res && res._cp) { // If this helper resource is a contextual parameter, ~foo=expr
-		if (isContextCb) { // In a context callback for a contextual param, return the [currentData, dependencies...] array - needed for observe call
+		if (isContextCb) {  // In a context callback for a contextual param, return the [view, dependencies...] array - needed for observe call
 			deps = $sub._ceo(res[1].deps);  // fn deps, with any exprObs cloned
-			deps.unshift(res[0].data);      // view.data
+			deps.unshift(res[0]);           // view
 			deps._cp = true;
 			return deps;
 		}
@@ -628,7 +628,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 			if (itemRet === undefined) {
 				contentCtx = args[0]; // Default data context for wrapped block content is the first argument. Defined tag.contentCtx function to override this.
 				if (tag.contentCtx) {
-					contentCtx = tag.contentCtx(contentCtx) || contentCtx;
+					contentCtx = tag.contentCtx(contentCtx);
 				}
 				itemRet = tagCtx.render(contentCtx, true) || (isUpdate ? undefined : "");
 			}
@@ -1714,15 +1714,15 @@ function setPaths(fn, pathsArr) {
 		i = 0,
 		l = pathsArr.length;
 	fn.deps = [];
+	fn.paths = []; // The array of path binding (array/dictionary)s for each tag/else block's args and props
 	for (; i < l; i++) {
-		paths = pathsArr[i];
+		fn.paths.push(paths = pathsArr[i]);
 		for (key in paths) {
-			if (key !== "_jsvto" && paths.hasOwnProperty(key) && paths[key].length) {
+			if (key !== "_jsvto" && paths.hasOwnProperty(key) && paths[key].length && !paths[key].skp) {
 				fn.deps = fn.deps.concat(paths[key]); // deps is the concatenation of the paths arrays for the different bindings
 			}
 		}
 	}
-	fn.paths = paths; // The array of paths arrays for the different bindings
 }
 
 function parsedParam(args, props, ctx) {
@@ -1879,7 +1879,8 @@ function parseParams(params, pathBindings, tmpl) {
 						)
 						: eq
 				// named param. Remove bindings for arg and create instead bindings array for prop
-							? (parenDepth && syntaxError(params), bindings && pathBindings.pop(), named = path, boundName = bound, paramIndex = index + all.length, bound && (bindings = bndCtx.bd = pathBindings[named] = []), path + ':')
+							? (parenDepth && syntaxError(params), bindings && pathBindings.pop(), named = path, boundName = bound, paramIndex = index + all.length,
+									bindings && ((bindings = bndCtx.bd = pathBindings[named] = []), bindings.skp = !bound), path + ':')
 							: path
 				// path
 								? (path.split("^").join(".").replace(rPath, parsePath)
@@ -2149,7 +2150,7 @@ function getTargetProps(source) {
 }
 
 function $fnRender(data, context, noIteration) {
-	var tmplElem = this.jquery && (this[0] || error('Unknown template: "' + this.selector + '"')),
+	var tmplElem = this.jquery && (this[0] || error('Unknown template')), // Targeted element not found for jQuery template selector such as "#myTmpl"
 		tmpl = tmplElem.getAttribute(tmplAttr);
 
 	return renderContent.call(tmpl ? $.data(tmplElem)[jsvTmpl] : $templates(tmplElem), data, context, noIteration);

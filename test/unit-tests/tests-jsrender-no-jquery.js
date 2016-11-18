@@ -848,7 +848,7 @@ test("itemVar", 10, function() {
 		+ "{{/for}}"
 		).render({ people: people}),
 		"Jo Bill ",
-		"Setting {{for people itemVar='~person'}} creates ~person contextual variable");
+		"Setting {{for people itemVar='~person'}} creates ~person contextual parameter");
 
 	equal($.templates(
 		"{{for people}}"
@@ -2119,11 +2119,13 @@ $.views.tags({mytag: {
 	// =============================== Arrange ===============================
 
 $.views.tags({mytag: {
-	contentCtx: function(val) {}
+	contentCtx: function(val) {
+		return 0;
+	}
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'contentCtx returns undefined - context is 1st arg or parentView.data');
+	equal(tmpl.render("outer"), "  0A  0B  0C", 'contentCtx returns 0 - context is 0 (even for falsy values like 0');
 
 	// =============================== Arrange ===============================
 
