@@ -16,8 +16,6 @@ test("Loading JsRender, without jQuery, using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
-	console.log("1");
-
 
 	require(["//www.jsviews.com/download/jsrender.js"], function($) { // Or point to correct local path for jsrender.js on your system
 //	require(["../../download/jsrender.js"], function($) { // Or point to correct local path for jsrender.js on your system
@@ -34,7 +32,6 @@ test("Loading JsRender and jQuery, without forcing load order, using RequireJS",
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
-	console.log("2");
 
 // Note JsRender does not require jQuery - so its AMD definition does not specify jQuery dependency.
 
@@ -54,7 +51,6 @@ test("Loading JsRender with jQuery, and force jQuery to load before JsRender, us
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
-	console.log("3");
 
 // Note JsRender does not require jQuery - so its AMD definition does not specify jQuery dependency.
 // So we will force loading order here by nesting require call for JsRender inside require call for jQuery.

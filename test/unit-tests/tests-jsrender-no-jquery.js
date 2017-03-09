@@ -42,12 +42,12 @@ function sort(array) {
 	return ret;
 }
 
-var person = { name: "Jo" },
-	people = [{ name: "Jo" }, { name: "Bill" }],
-	towns = [{ name: "Seattle" }, { name: "Paris" }, { name: "Delhi" }];
+var person = {name: "Jo"},
+	people = [{name: "Jo"}, {name: "Bill"}],
+	towns = [{name: "Seattle"}, {name: "Paris"}, {name: "Delhi"}];
 
 var tmplString = "A_{{:name}}_B";
-$.views.tags({ sort: sort });
+$.views.tags({sort: sort});
 
 QUnit.module("tagParser");
 test("{{if}} {{else}}", 4, function() {
@@ -110,30 +110,30 @@ test("convert", 4, function() {
 	equal($.templates("{{:#data}}").render("<br/>'\"&"), "<br/>'\"&", "no convert");
 
 	function loc(data) {
-		switch (data) { case "desktop": return "bureau"; }
+		switch (data) {case "desktop": return "bureau";}
 	}
 	$.views.converters("loc", loc);
 	equal($.templates("{{loc:#data}}:{{loc:'desktop'}}").render("desktop"), "bureau:bureau", '$.views.converters("loc", locFunction);... {{loc:#data}}');
 });
 
 test("paths", 17, function() {
-	equal($.templates("{{:a}}").render({ a: "aVal" }), "aVal", "a");
-	equal($.templates("{{:a.b}}").render({ a: { b: "bVal" }}), "bVal", "a.b");
-	equal($.templates("{{:a.b.c}}").render({ a: { b: { c: "cVal" }}}), "cVal", "a.b.c");
-	equal($.templates("{{:a.name}}").render({ a: { name: "aName" }}), "aName", "a.name");
-	equal($.templates("{{:a['name']}}").render({ a: { name: "aName"} }), "aName", "a['name']");
-	equal($.templates("{{:a['x - _*!']}}").render({ a: { "x - _*!": "aName"} }), "aName", "a['x - _*!']");
-	equal($.templates("{{:#data['x - _*!']}}").render({ "x - _*!": "aName"}), "aName", "#data['x - _*!']");
-	equal($.templates('{{:a["x - _*!"]}}').render({ a: { "x - _*!": "aName"} }), "aName", 'a["x - _*!"]');
-	equal($.templates("{{:a.b[1].d}}").render({ a: { b: [0, { d: "dVal"}]} }), "dVal", "a.b[1].d");
-	equal($.templates("{{:a.b[1].d}}").render({ a: { b: {1:{ d: "dVal" }}}}), "dVal", "a.b[1].d");
-	equal($.templates("{{:a.b[~incr(1-1)].d}}").render({ a: { b: {1:{ d: "dVal" }}}}, { incr:function(val) { return val + 1; }}), "dVal", "a.b[~incr(1-1)].d");
-	equal($.templates("{{:a.b.c.d}}").render({ a: { b: {'c':{ d: "dVal" }}}}), "dVal", "a.b.c.d");
-	equal($.templates("{{:a[0]}}").render({ a: [ "bVal" ]}), "bVal", "a[0]");
-	equal($.templates("{{:a.b[1][0].msg}}").render({ a: { b: [22,[{ msg: " yes - that's right. "}]] }}), " yes - that's right. ", "a.b[1][0].msg");
-	equal($.templates("{{:#data.a}}").render({ a: "aVal" }), "aVal", "#data.a");
-	equal($.templates("{{:#view.data.a}}").render({ a: "aVal" }), "aVal", "#view.data.a");
-	equal($.templates("{{:#index === 0}}").render([{ a: "aVal" }]), "true", "#index");
+	equal($.templates("{{:a}}").render({a: "aVal"}), "aVal", "a");
+	equal($.templates("{{:a.b}}").render({a: {b: "bVal"}}), "bVal", "a.b");
+	equal($.templates("{{:a.b.c}}").render({a: {b: {c: "cVal"}}}), "cVal", "a.b.c");
+	equal($.templates("{{:a.name}}").render({a: {name: "aName"}}), "aName", "a.name");
+	equal($.templates("{{:a['name']}}").render({a: {name: "aName"}}), "aName", "a['name']");
+	equal($.templates("{{:a['x - _*!']}}").render({a: {"x - _*!": "aName"}}), "aName", "a['x - _*!']");
+	equal($.templates("{{:#data['x - _*!']}}").render({"x - _*!": "aName"}), "aName", "#data['x - _*!']");
+	equal($.templates('{{:a["x - _*!"]}}').render({a: {"x - _*!": "aName"}}), "aName", 'a["x - _*!"]');
+	equal($.templates("{{:a.b[1].d}}").render({a: {b: [0, {d: "dVal"}]}}), "dVal", "a.b[1].d");
+	equal($.templates("{{:a.b[1].d}}").render({a: {b: {1:{d: "dVal"}}}}), "dVal", "a.b[1].d");
+	equal($.templates("{{:a.b[~incr(1-1)].d}}").render({a: {b: {1:{d: "dVal"}}}}, {incr:function(val) {return val + 1;}}), "dVal", "a.b[~incr(1-1)].d");
+	equal($.templates("{{:a.b.c.d}}").render({a: {b: {'c':{d: "dVal"}}}}), "dVal", "a.b.c.d");
+	equal($.templates("{{:a[0]}}").render({a: [ "bVal" ]}), "bVal", "a[0]");
+	equal($.templates("{{:a.b[1][0].msg}}").render({a: {b: [22,[{msg: " yes - that's right. "}]]}}), " yes - that's right. ", "a.b[1][0].msg");
+	equal($.templates("{{:#data.a}}").render({a: "aVal"}), "aVal", "#data.a");
+	equal($.templates("{{:#view.data.a}}").render({a: "aVal"}), "aVal", "#view.data.a");
+	equal($.templates("{{:#index === 0}}").render([{a: "aVal"}]), "true", "#index");
 });
 
 test("types", function() {
@@ -143,9 +143,9 @@ test("types", function() {
 	equal($.templates("{{:false}}").render(), "false", "false");
 	equal($.templates("{{:null}}").render(), "", 'null -> ""');
 	equal($.templates("{{:199}}").render(), "199", "199");
-	equal($.templates("{{: 199.9 }}").render(), "199.9", "| 199.9 |");
+	equal($.templates("{{: 199.9}}").render(), "199.9", "| 199.9 |");
 	equal($.templates("{{:-33.33}}").render(), "-33.33", "-33.33");
-	equal($.templates("{{: -33.33 }}").render(), "-33.33", "| -33.33 |");
+	equal($.templates("{{: -33.33}}").render(), "-33.33", "| -33.33 |");
 	equal($.templates("{{:-33.33 - 2.2}}").render(), "-35.53", "-33.33 - 2.2");
 	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
 	equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
@@ -428,43 +428,43 @@ test("comparisons", 22,function() {
 });
 
 test("array access", function() {
-	equal($.templates("{{:a[1]}}").render({ a: ["a0","a1"] }), "a1", "a[1]");
-	equal($.templates("{{:a[1+1]+5}}").render({ a: [11,22,33] }), "38", "a[1+1]+5)");
-	equal($.templates("{{:a[~incr(1)]+5}}").render({ a: [11,22,33] }, { incr:function(val) { return val + 1; }}), "38", "a[~incr(1)]+5");
-	equal($.templates("{{:true && (a[0] || 'default')}}").render({ a: [0,22,33] }, { incr:function(val) { return val + 1; }}), "default", "true && (a[0] || 'default')");
+	equal($.templates("{{:a[1]}}").render({a: ["a0","a1"]}), "a1", "a[1]");
+	equal($.templates("{{:a[1+1]+5}}").render({a: [11,22,33]}), "38", "a[1+1]+5)");
+	equal($.templates("{{:a[~incr(1)]+5}}").render({a: [11,22,33]}, {incr:function(val) {return val + 1;}}), "38", "a[~incr(1)]+5");
+	equal($.templates("{{:true && (a[0] || 'default')}}").render({a: [0,22,33]}, {incr:function(val) {return val + 1;}}), "default", "true && (a[0] || 'default')");
 });
 
 test("context", 5, function() {
-	equal($.templates("{{:~val}}").render(1, { val: "myvalue" }), "myvalue", "~val");
+	equal($.templates("{{:~val}}").render(1, {val: "myvalue"}), "myvalue", "~val");
 	function format(value, upper) {
 		return value[upper ? "toUpperCase" : "toLowerCase"]();
 	}
-	equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, { format: format }), "joJO",
-		"render(data, { format: formatFn }); ... {{:~format(name, true)}}");
-	equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({ people: people}, { format: format, type: "PascalCase" }), "pascalcaseJO",
-		"render(data, { format: formatFn }); ... {{:~format(name, true)}}");
-	equal($.templates("{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}").render({ people: people, town:"Redmond" }, { format: format }),
+	equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, {format: format}), "joJO",
+		"render(data, {format: formatFn}); ... {{:~format(name, true)}}");
+	equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({people: people}, {format: format, type: "PascalCase"}), "pascalcaseJO",
+		"render(data, {format: formatFn}); ... {{:~format(name, true)}}");
+	equal($.templates("{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}").render({people: people, town:"Redmond"}, {format: format}),
 		"Jo lives in REDMOND. Bill lives in REDMOND. ",
 		"Passing in context to nested templates: {{for people ~twn=town}}");
-	equal($.templates("{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({ people: people}), "JoJo",
+	equal($.templates("{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({people: people}), "JoJo",
 		"{{:~root}} returns the top-level data");
 });
 
 test("values", 4, function() {
-	equal($.templates("{{:a}}").render({ a: 0 }), "0", '{{:0}} returns "0"');
+	equal($.templates("{{:a}}").render({a: 0}), "0", '{{:0}} returns "0"');
 	equal($.templates("{{:a}}").render({}), "", "{{:undefined}} returns empty string");
-	equal($.templates("{{:a}}").render({ a: "" }), "", "{{:''}} returns empty string");
-	equal($.templates("{{:a}}").render({ a: null }), "", "{{:null}} returns empty string");
+	equal($.templates("{{:a}}").render({a: ""}), "", "{{:''}} returns empty string");
+	equal($.templates("{{:a}}").render({a: null}), "", "{{:null}} returns empty string");
 });
 
 test("expressions", 18, function() {
 	equal(compileTmpl("{{:a++}}"), "Syntax error\na++", "a++");
 	equal(compileTmpl("{{:(a,b)}}"), "Syntax error\n(a,b)", "(a,b)");
-	equal($.templates("{{: a+2}}").render({ a: 2, b: false }), "4", "a+2");
-	equal($.templates("{{: b?'yes':'no' }}").render({ a: 2, b: false }), "no", "b?'yes':'no'");
-	equal($.templates("{{:(a||-1) + (b||-1) }}").render({ a: 2, b: 0 }), "1", "a||-1");
-	equal($.templates("{{:3*b()*!a*4/3}}").render({ a: false, b: function() { return 3; }}), "12", "3*b()*!a*4/3");
-	equal($.templates("{{:a%b}}").render({ a: 30, b: 16}), "14", "a%b");
+	equal($.templates("{{: a+2}}").render({a: 2, b: false}), "4", "a+2");
+	equal($.templates("{{: b?'yes':'no'}}").render({a: 2, b: false}), "no", "b?'yes':'no'");
+	equal($.templates("{{:(a||-1) + (b||-1)}}").render({a: 2, b: 0}), "1", "a||-1");
+	equal($.templates("{{:3*b()*!a*4/3}}").render({a: false, b: function() {return 3;}}), "12", "3*b()*!a*4/3");
+	equal($.templates("{{:a%b}}").render({a: 30, b: 16}), "14", "a%b");
 	equal($.templates("A_{{if v1 && v2 && v3 && v4}}no{{else !v1 && v2 || v3 && v4}}yes{{/if}}_B").render({v1:true,v2:false,v3:2,v4:"foo"}), "A_yes_B", "x && y || z");
 	equal($.templates("{{:!true}}").render({}), "false", "!true");
 	equal($.templates("{{if !true}}yes{{else}}no{{/if}}").render({}), "no", "{{if !true}}...");
@@ -489,9 +489,9 @@ test("{{for}}", 17, function() {
 		testTmpl: "xxx{{:name}} {{:~foo}}"
 	});
 
-	equal($.render.forTmpl({ people: people }), "header_JoBill_footer", '{{for people}}...{{/for}}');
+	equal($.render.forTmpl({people: people}), "header_JoBill_footer", '{{for people}}...{{/for}}');
 	equal($.render.templateForArray([people]), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
-	equal($.render.pageTmpl({ people: people }), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}');
+	equal($.render.pageTmpl({people: people}), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}');
 	equal($.templates("{{for}}xxx{{:name}} {{:~foo}}{{/for}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}");
 	equal($.templates("{{for tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", ": {{for tmpl=.../}} no parameter - equivalent to {{include tmpl=.../}} - renders once with parent #data context");
 	equal($.templates("{{include tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "{{include tmpl=.../}} with tmpl parameter - renders once with parent #data context. Equivalent to {{for tmpl=.../}}");
@@ -523,10 +523,10 @@ test("{{props}}", 15, function() {
 		testTmpl: "xxx{{:name}} {{:~foo}}"
 	});
 
-	equal($.render.propsTmpl({ person: people[0] }), "header_Key: name - Prop: Jo| _footer", '{{props person}}...{{/props}} for an object iterates over properties');
-	equal($.render.propsTmplObjectArray({ people: people }), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", '{{props people}}...{{/props}} for an array iterates over the array - with index as key and object a prop');
+	equal($.render.propsTmpl({person: people[0]}), "header_Key: name - Prop: Jo| _footer", '{{props person}}...{{/props}} for an object iterates over properties');
+	equal($.render.propsTmplObjectArray({people: people}), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", '{{props people}}...{{/props}} for an array iterates over the array - with index as key and object a prop');
 	equal($.render.templatePropsArray([people]), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
-	equal($.render.pageTmpl({ person: people[0] }), "Key: name - Prop: Jo", '{{props person tmpl="propTmpl"/}}');
+	equal($.render.pageTmpl({person: people[0]}), "Key: name - Prop: Jo", '{{props person tmpl="propTmpl"/}}');
 	equal($.templates("{{props}}{{:key}} {{:prop}}{{/props}}").render({name: "Jeff"}), "name Jeff", "no parameter - defaults to current data item");
 	equal($.templates("{{props foo}}xxx{{:key}} {{:prop}} {{:~foo}}{{/props}}").render({name: "Jeff"}), "", "undefined arg - renders nothing");
 	equal($.templates("{{props tmpl='propTmpl'/}}").render({name: "Jeff"}), "Key: name - Prop: Jeff", ": {{props tmpl=.../}} no parameter - defaults to current data item");
@@ -782,7 +782,7 @@ test("", function() {
 
 	// ................................ Assert ..................................
 	equal(tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
-		"A template with richer features, (such as a custom tag, or nested tags) will automatically have tmpl.useViews=truew and will render with views, even if $.views.settings.advanced({useViews: ...}) is set to false");
+		"A template with richer features, (such as a custom tag, or nested tags) will automatically have tmpl.useViews=true and will render with views, even if $.views.settings.advanced({useViews: ...}) is set to false");
 
 	// ................................ Act ..................................
 	var originalUseViews = tmpl.useViews;
@@ -833,7 +833,7 @@ test("itemVar", 10, function() {
 			"{{for people itemVar='person'}}"
 				+ "{{:~person.name}} "
 			+ "{{/for}}"
-			).render({ people: people});
+			).render({people: people});
 	}
 	catch (e) {
 		message = e.message;
@@ -846,7 +846,7 @@ test("itemVar", 10, function() {
 		"{{for people itemVar='~person'}}"
 			+ "{{:~person.name}} "
 		+ "{{/for}}"
-		).render({ people: people}),
+		).render({people: people}),
 		"Jo Bill ",
 		"Setting {{for people itemVar='~person'}} creates ~person contextual parameter");
 
@@ -870,7 +870,7 @@ test("itemVar", 10, function() {
 				+ "{{:~stillperson.name}} "
 			+ "{{/if}}"
 		+ "{{/for}}"
-		).render({ people: otherPeople }),
+		).render({people: otherPeople}),
 		"Jo Bill Bill Fred ",
 		"itemVar works also on {{if}}{{else}}{{/if}} even though the context is same as outer context for {{if}}.");
 
@@ -888,7 +888,7 @@ test("itemVar", 10, function() {
 				+ "no phones"
 			+ "{{/for}}"
 		+ "{{/for}}"
-		).render({ people: otherPeople }),
+		).render({people: otherPeople}),
 		"Jo 1 Jo 2 Bill 91 Bill 92 true Fred no phones",
 		"itemVar works also on {{for arr1}}{{else arr2}}{{else}}{{/for}}" +
 		"\neven though the context for the final {{else}} is the same as outer context for {{if}}.");
@@ -903,7 +903,7 @@ test("itemVar", 10, function() {
 					+ "{{/for}}"
 				+ "{{/if}}. "
 			+ "{{/for}}"
-		).render({ people: otherPeople }),
+		).render({people: otherPeople}),
 		"Jo. Bill Phones: 91 92. Fred. ",
 		"Using itemVar and passing context to nested templates");
 
@@ -919,7 +919,7 @@ test("itemVar", 10, function() {
 			+ "{{/for}}"
 			+ ". "
 		+ "{{/for}}"
-		).render({ people: otherPeople }),
+		).render({people: otherPeople}),
 		"Jo 1 2. Bill 91 92. Fred (No phones). ",
 		"Additional example using itemVar and passing context to nested templates");
 
@@ -940,7 +940,7 @@ test("itemVar", 10, function() {
 					}
 				}
 			}
-		}).render({ people: otherPeople }),
+		}).render({people: otherPeople}),
 		"<u>Jo  <b>1 2 </b>Bill <i>91 92 </i> Fred   </u>",
 		"itemVar with custom tags {{wrappedFor}}{{else}}{{/wrappedFor}}, and passing context to nested templates");
 
@@ -950,7 +950,7 @@ test("itemVar", 10, function() {
 				+ "{{:~prop.key}}: {{:~prop.prop}} "
 			+ "{{/props}}"
 		+ "{{/for}}"
-		).render({ people: otherPeople }),
+		).render({people: otherPeople}),
 		"name: Jo otherTels: 1,2 name: Bill tels: 91,92 name: Fred ",
 		"itemVar with {{props}}, and passing context to nested templates");
 
@@ -962,7 +962,7 @@ test("itemVar", 10, function() {
 				+ "{{:~personWithoutTels.name}}: has no tels "
 			+ "{{/props}}"
 		+ "{{/for}}"
-		).render({ people: otherPeople }),
+		).render({people: otherPeople}),
 		"Jo: has no tels Bill Tel: 0: 91 Bill Tel: 1: 92 Fred: has no tels ",
 		"itemVar with {{props}}{{else}}{{/props}}, and passing context to nested templates");
 });
@@ -1038,23 +1038,23 @@ test("templates", function() {
 		'Compile and register named template: $.templates("myTmpl", tmplString);');
 
 	// =============================== Arrange ===============================
-	$.templates({ myTmpl2: tmplString, myTmpl3: "X_{{:name}}_Y" });
+	$.templates({myTmpl2: tmplString, myTmpl3: "X_{{:name}}_Y"});
 
 	// ............................... Assert .................................
 	equal($.render.myTmpl2(person) + $.render.myTmpl3(person), "A_Jo_BX_Jo_Y",
-		'Compile and register named templates: $.templates({ myTmpl: tmplString, myTmpl2: tmplString2 });');
+		'Compile and register named templates: $.templates({myTmpl: tmplString, myTmpl2: tmplString2});');
 
 	// =============================== Arrange ===============================
 	$.templates("!'-#==", "x");
-	$.templates({ '&^~>"2': "y" });
+	$.templates({'&^~>"2': "y"});
 	equal($.render["!'-#=="](person) + $.render['&^~>"2'](person), "xy",
 		'Named templates can have arbitrary names;');
 
-	$.templates({ myTmpl4: "A_B" });
+	$.templates({myTmpl4: "A_B"});
 
 	// ............................... Assert .................................
 	equal($.render.myTmpl4(person), "A_B",
-		'$.templates({ myTmpl: htmlWithNoTags });');
+		'$.templates({myTmpl: htmlWithNoTags});');
 
 	// =============================== Arrange ===============================
 	$.templates("myTmpl5", {
@@ -1066,11 +1066,11 @@ test("templates", function() {
 		'$.templates("myTmpl", {markup: markupString});');
 
 	// ............................... Assert .................................
-	equal($.templates("", { markup: tmplString }).render(person), "A_Jo_B",
+	equal($.templates("", {markup: tmplString}).render(person), "A_Jo_B",
 		'Compile from template object without registering: var tmpl = $.templates("", {markup: markupString});');
 
 	// ............................... Assert .................................
-	equal($.templates({ markup: tmplString }).render(person), "A_Jo_B",
+	equal($.templates({markup: tmplString}).render(person), "A_Jo_B",
 		'Compile from template object without registering: var tmpl = $.templates({markup: markupString});');
 
 	// =============================== Arrange ===============================
@@ -1129,8 +1129,59 @@ test("templates", function() {
 	$.templates("myTmpl", null);
 
 	// ............................... Assert .................................
-	equal($.templates.myTmpl === undefined && $.render.myTmpl === undefined, false,
+	equal($.templates.myTmpl === undefined && $.render.myTmpl === undefined, true,
 		'Remove a named template: $.templates("myTmpl", null);');
+
+	//// =============================== Arrange ===============================
+	//var theTmpl = $.templates("theTmpl", "a ");
+
+	//// ............................... Assert .................................
+	//result = theTmpl.render() + "|"
+	//	+ $.render.theTmpl() + "|"
+	//	+ (theTmpl === $.templates.theTmpl);
+
+	//equal(result, "a |a |true",
+	//	'Registered named template overwriting existing template of same name reassigns existing one to name2');
+
+	//// ................................ Act ..................................
+	//var theTmpl2 = $.templates("theTmpl", "b ");
+
+	//// ............................... Assert .................................
+	//result = theTmpl.render() + theTmpl2.render() + "|"
+	//	+ $.render.theTmpl() + $.render.theTmpl2() + "|"
+	//	+ (theTmpl2 === $.templates.theTmpl) + (theTmpl === $.templates.theTmpl2);
+
+	//equal(result, "a b |b a |truetrue",
+	//	'Second registered named template overwriting existing template of same name reassigns existing one to name3');
+
+	//// ................................ Act ..................................
+	//var theTmpl3 = $.templates("theTmpl", "c ");
+
+	//// ............................... Assert .................................
+	//result = theTmpl.render() + theTmpl2.render() + theTmpl3.render() + "|"
+	//	+ $.render.theTmpl() + $.render.theTmpl2() + $.render.theTmpl3() + "|"
+	//	+ (theTmpl3 === $.templates.theTmpl) + (theTmpl2 === $.templates.theTmpl3) + (theTmpl === $.templates.theTmpl2);
+
+	//equal(result, "a b c |c a b |truetruetrue",
+	//	'Third registered named template overwriting existing template of same name reassigns existing one to name4');
+
+	//// ................................ Act ..................................
+	//var theTmpl4 = $.templates("myTmpl", "d ", theTmpl);
+
+	//// ............................... Assert .................................
+	//result = theTmpl.render() + theTmpl2.render() + theTmpl3.render() + theTmpl4.render() + "|"
+	//	+ $.render.theTmpl() + $.render.theTmpl2() + $.render.theTmpl3() + !$.render.theTmpl4 + "|"
+	//	+ (theTmpl3 === $.templates.theTmpl) + (theTmpl2 === $.templates.theTmpl3) + (theTmpl === $.templates.theTmpl2);
+
+	//equal(result, "a b c d |c a b true|truetruetrue",
+	//	'Registering named template child of template does not create $.render.theTmpl binding');
+
+	//// ............................... Reset ................................
+	//$.templates({
+	//	theTmpl: null,
+	//	theTmpl2: null,
+	//	theTmpl3: null
+	//});
 });
 
 test("render", 25, function() {
@@ -1154,7 +1205,7 @@ test("render", 25, function() {
 
 	$.templates("myTmpl11", "top index:{{:#index}}|{{for people}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#get('item').index}}|{{else}}nested else index:{{:#get('item').index}}|{{/if}}{{/for}}");
 
-	equal($.render.myTmpl11({ people: people }), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
+	equal($.render.myTmpl11({people: people}), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
 										"#get('item').index gives the integer index even in nested blocks");
 
 	$.views.tags({
@@ -1191,12 +1242,12 @@ test("render", 25, function() {
 		"a0 b0 c0 d0 a1 b1 c1 d1 ",
 		"#getIndex gives inherited index in nested blocks.");
 
-	$.views.helpers({ myKeyIsCorrect: function(view) {
+	$.views.helpers({myKeyIsCorrect: function(view) {
 		return view.parent.views[view._.key] === view;
 	}});
 	$.templates("myTmpl12", "{{for people}}nested {{:~myKeyIsCorrect(#view)}}|{{if #index===0}}nested if {{:~myKeyIsCorrect(#view)}}|{{else}}nested else {{:~myKeyIsCorrect(#view)}}|{{/if}}{{/for}}");
 
-	equal($.render.myTmpl12({ people: people }), "nested true|nested if true|nested true|nested else true|",
+	equal($.render.myTmpl12({people: people}), "nested true|nested if true|nested true|nested else true|",
 										'view._key gives the key of this view in the parent views collection/object');
 
 	equal($.templates(tmplString).render(person), "A_Jo_B", 'Compile from string: var html = $.templates(tmplString).render(data);');
@@ -1221,34 +1272,34 @@ test("render", 25, function() {
 
 test("converters", function() {
 	function loc(data) {
-		switch (data) { case "desktop": return "bureau"; }
+		switch (data) {case "desktop": return "bureau";}
 		return data;
 	}
-	$.views.converters({ loc2: loc });
-	equal($.templates("{{loc2:#data}}:{{loc2:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({ loc: locFunction })");
+	$.views.converters({loc2: loc});
+	equal($.templates("{{loc2:#data}}:{{loc2:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({loc: locFunction})");
 
 	var locFn = $.views.converters("loc", loc);
 	equal(locFn === loc && $.views.converters.loc === loc && $.views.converters.loc2 === loc, true, 'locFunction === $.views.converters.loc === $.views.converters.loc2');
 
-	$.views.converters({ loc2: null});
-	equal($.views.converters.loc2, undefined, '$.views.converters({ loc2: null }) to remove registered converter');
+	$.views.converters({loc2: null});
+	equal($.views.converters.loc2, undefined, '$.views.converters({loc2: null}) to remove registered converter');
 
-	equal($.templates("{{attr:a}}").render({ a: 0 }), "0", '{{attr:0}} returns "0"');
+	equal($.templates("{{attr:a}}").render({a: 0}), "0", '{{attr:0}} returns "0"');
 	equal($.templates("{{attr:a}}").render({}), "", "{{attr:undefined}} returns empty string");
-	equal($.templates("{{attr:a}}").render({ a: "" }), "", "{{attr:''}} returns empty string");
-	equal($.templates("{{attr:a}}").render({ a: null }), "", '{{attr:null}} returns empty string');
-	equal($.templates("{{attr:a}}").render({ a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{attr:"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
+	equal($.templates("{{attr:a}}").render({a: ""}), "", "{{attr:''}} returns empty string");
+	equal($.templates("{{attr:a}}").render({a: null}), "", '{{attr:null}} returns empty string');
+	equal($.templates("{{attr:a}}").render({a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{attr:"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
 
-	equal($.templates("{{>a}}").render({ a: 0 }), "0", '{{>0}} returns "0"');
+	equal($.templates("{{>a}}").render({a: 0}), "0", '{{>0}} returns "0"');
 	equal($.templates("{{>a}}").render({}), "", "{{>undefined}} returns empty string");
-	equal($.templates("{{>a}}").render({ a: "" }), "", "{{>''}} returns empty string");
-	equal($.templates("{{>a}}").render({ a: null }), "", "{{>null}} returns empty string");
-	equal($.templates("{{>a}}").render({ a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{>"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
+	equal($.templates("{{>a}}").render({a: ""}), "", "{{>''}} returns empty string");
+	equal($.templates("{{>a}}").render({a: null}), "", "{{>null}} returns empty string");
+	equal($.templates("{{>a}}").render({a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{>"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
 
-	equal($.templates("{{loc:a}}").render({ a: 0 }), "0", '{{cnvt:0}} returns "0"');
+	equal($.templates("{{loc:a}}").render({a: 0}), "0", '{{cnvt:0}} returns "0"');
 	equal($.templates("{{loc:a}}").render({}), "", '{{cnvt:undefined}} returns empty string');
-	equal($.templates("{{loc:a}}").render({ a: "" }), "", "{{cnvt:''}} returns empty string");
-	equal($.templates("{{loc:a}}").render({ a: null }), "", "{{cnvt:null}} returns empty string");
+	equal($.templates("{{loc:a}}").render({a: ""}), "", "{{cnvt:''}} returns empty string");
+	equal($.templates("{{loc:a}}").render({a: null}), "", "{{cnvt:null}} returns empty string");
 
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "|||", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
 	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:0}), "0|0|0|0", "{{attr:0}}|{{>0}}|{{loc:0}}|{{:0}} returns correct values");
@@ -1275,16 +1326,16 @@ test("{{sometag convert=converter}}", function() {
 
 test("tags", function() {
 	// ................................ Reset ..................................
-	towns = [{ name: "Seattle" }, { name: "Paris" }, { name: "Delhi" }];
+	towns = [{name: "Seattle"}, {name: "Paris"}, {name: "Delhi"}];
 
 	// ................................ Act ..................................
-	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })");
+	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
 
-	equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({ people: people }), "BillJo", "Calling render() with inline data-binding {^{...}} renders normally without binding");
+	equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({people: people}), "BillJo", "Calling render() with inline data-binding {^{...}} renders normally without binding");
 
-	equal($.templates("{{sort people reverse=true towns}}{{:name}}{{/sort}}").render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}");
+	equal($.templates("{{sort people reverse=true towns}}{{:name}}{{/sort}}").render({people: people, towns:towns}), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}");
 
-	equal($.templates("{{sort reverse=false people reverse=true towns}}{{:name}}{{/sort}}").render({ people: people, towns:towns }), "DelhiParisSeattleBillJo", "Duplicate named parameters - last wins: {{sort reverse=false people reverse=true towns}}");
+	equal($.templates("{{sort reverse=false people reverse=true towns}}{{:name}}{{/sort}}").render({people: people, towns:towns}), "DelhiParisSeattleBillJo", "Duplicate named parameters - last wins: {{sort reverse=false people reverse=true towns}}");
 
 	var sort2 = $.views.tags("sort2", sort);
 	equal(sort2.render === sort && $.views.tags.sort.render === sort && $.views.tags.sort2.render === sort, true, 'sortFunction === $.views.tags.sort.render === $.views.tags.sort2.render');
@@ -1304,7 +1355,7 @@ test("tags", function() {
 	equal($.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
 		'Data context inside the built-in template of a self-closing tag using tagCtx.render() is the same as the outer context');
 
-	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })");
+	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
@@ -1337,7 +1388,7 @@ test("tags", function() {
 	$.views.tags({
 		noRenderNoTemplate: {},
 		voidRender: function() {},
-		emptyRender: function() { return ""; },
+		emptyRender: function() {return "";},
 		emptyTemplate: {
 			template: ""
 		},
@@ -1364,9 +1415,11 @@ test("tags", function() {
 
 	$.views.tags({
 		tagJustTemplate: {
+			argDefault: false,
 			template: "{{:#data ? name||length : 'Not defined'}} "
 		},
 		tagJustTemplateObject: {
+			argDefault: false,
 			template: {markup: "{{:#data ? name||length : 'Not defined'}} "}
 		},
 		tagWithTemplateWhichIteratesAgainstCurrentData: {
@@ -1382,6 +1435,7 @@ test("tags", function() {
 			return val.length + " ";
 		},
 		tagWithTemplateNoIteration: {
+			contentCtx: true,
 			render: function(val) {
 				return this.tagCtx.render(val, true); // Render without iteration
 			},
@@ -1397,6 +1451,13 @@ test("tags", function() {
 			template: "{{:#data ? name : 'Not defined'}} ",
 			render: function(val) {
 				return this.tagCtx.render(val); // Renders against first arg - defaults to current data - and iterates if array
+			}
+		},
+		tagWithTemplateWhichIteratesFirstArgNoDefaultArg: {
+			template: "{{:#data ? name : 'Not defined'}} ",
+			argDefault: false,
+			render: function(val) {
+				return this.tagCtx.render(val); // Renders against first arg and iterates if array. Does not default to current data
 			}
 		}
 	});
@@ -1432,6 +1493,10 @@ test("tags", function() {
 	"If current data is an array, a tag with a template and a render method calling" +
 	"\ntagCtx.render(val, true) and no param renders against array without iteration");
 
+	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArgNoDefaultArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aNot defined ",
+	"Tag with a template and no param and render method calling tagCtx.render(val) but with tag.argDefault=false renders against first arg" +
+	"\n- and does not default to current data if arg is undefined");
+
 	equal($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
 	"If current data is an array, a tag with a template and a render method calling" +
 	"\ntagCtx.render(val, helpers, true) and no param renders against array without iteration");
@@ -1459,7 +1524,7 @@ test("derived tags", function() {
 	var tmpl = $.templates("a:{{A 1/}} b:{{B 2/}}"),
 
 		tagA = $.views.tags("A",
-			function(val) { return "A" + val; },
+			function(val) {return "A" + val;},
 			tmpl
 		);
 
@@ -1483,7 +1548,7 @@ test("derived tags", function() {
 	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}} d:{{D 31 32 33/}} e:{{E 41 42 43/}}");
 
 		tagA = $.views.tags("A",
-			function(val) { return "A" + val; },
+			function(val) {return "A" + val;},
 			tmpl
 		);
 
@@ -1837,7 +1902,7 @@ test("helpers", 4, function() {
 			return "".concat.apply("", arguments) + "top";
 		}
 	});
-	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({ a: "aVal" }), "aValbtruetop", "~concat('a')");
+	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({a: "aVal"}), "aValbtruetop", "~concat('a')");
 
 	function toUpperCase(value) {
 		return value.toUpperCase();
@@ -1845,7 +1910,7 @@ test("helpers", 4, function() {
 	var toUpperCaseFn = $.views.helpers("toUpperCase", toUpperCase);
 	equal($.templates("{{:~toUpperCase(name)}} {{:~toUpperCase('Foo')}}").render(person), "JO FOO", '$.views.helpers("toUpperCase", toUpperCaseFn);... {{:~toUpperCase(name)}}');
 
-	$.views.helpers({ toUpperCase2: toUpperCase });
+	$.views.helpers({toUpperCase2: toUpperCase});
 	equal(toUpperCaseFn === toUpperCase && $.views.helpers.toUpperCase === toUpperCase && $.views.helpers.toUpperCase2 === toUpperCase, true, 'sortFunction === $.views.helpers.toUpperCase === $.views.helpers("toUpperCase")');
 
 	$.views.helpers("toUpperCase2", null);
@@ -1988,7 +2053,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl6({ people: people }), "BillJo", '$.templates("myTmpl", tmplObjWithNestedItems);');
+	equal($.render.myTmpl6({people: people}), "BillJo", '$.templates("myTmpl", tmplObjWithNestedItems);');
 
 	// =============================== Arrange ===============================
 	$.views.helpers("h1", "globalHelper");

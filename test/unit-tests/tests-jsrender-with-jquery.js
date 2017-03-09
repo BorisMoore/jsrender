@@ -18,9 +18,9 @@ function sort(array) {
 	return ret;
 }
 
-var person = { name: "Jo" },
-	people = [{ name: "Jo" },{ name: "Bill" }],
-	towns = [{ name: "Seattle" },{ name: "Paris" },{ name: "Delhi" }];
+var person = {name: "Jo"},
+	people = [{name: "Jo"},{name: "Bill"}],
+	towns = [{name: "Seattle"},{name: "Paris"},{name: "Delhi"}];
 
 var tmplString = "A_{{:name}}_B";
 
@@ -101,8 +101,8 @@ test("templates", function() {
 	$.templates("my_tmpl", tmplString);
 	equal($.render.my_tmpl(person), "A_Jo_B", 'Compile a template and then render it: $.templates("my_tmpl", tmplString); $.render.my_tmpl(data);');
 
-	$.templates({ myTmpl2: tmplString });
-	equal($.render.myTmpl2(person), "A_Jo_B", 'Compile and register templates: $.templates({ "my_tmpl", tmplString, ... }); $.render.my_tmpl(data);');
+	$.templates({myTmpl2: tmplString});
+	equal($.render.myTmpl2(person), "A_Jo_B", 'Compile and register templates: $.templates({"my_tmpl", tmplString, ...}); $.render.my_tmpl(data);');
 
 	equal($.templates.myTmpl2.render(person), "A_Jo_B", 'Get named template: $.templates.my_tmpl.render(data);');
 
@@ -118,17 +118,17 @@ test("templates", function() {
 		}
 	});
 
-	equal($.render.my_tmpl3 === $.templates.my_tmpl3 && $.templates.my_tmpl3 !== tmpl2 && $.trim($.render.my_tmpl3(person)), "A_Jo_B", 'Named template for template object with selector: { markup: "#my_tmpl" }');
+	equal($.render.my_tmpl3 === $.templates.my_tmpl3 && $.templates.my_tmpl3 !== tmpl2 && $.trim($.render.my_tmpl3(person)), "A_Jo_B", 'Named template for template object with selector: {markup: "#my_tmpl"}');
 
 	tmpl3 = $.templates("", {
 		markup: "#my_tmpl"
 	});
-	equal($.trim(tmpl3.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: { markup: "#my_tmpl" }');
+	equal($.trim(tmpl3.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
 
 	var tmpl4 = $.templates({
 		markup: "#my_tmpl"
 	});
-	equal($.trim(tmpl4.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: { markup: "#my_tmpl" }');
+	equal($.trim(tmpl4.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
 
 	equal($.templates("#my_tmpl"), $.templates("#my_tmpl"), '$.templates("#my_tmpl") caches compiled template, and does not recompile each time;');
 
@@ -139,14 +139,14 @@ test("templates", function() {
 	var renamed = $.templates("renamed", "#my_tmpl");
 	ok(renamed === tmpl2 && renamed.tmplName === "renamed", '$.templates("renamed", "#my_tmpl") will rename the cached template');
 
-	$.templates({ renamed2: "#my_tmpl" });
-	ok($.templates.renamed2 === tmpl2 && $.templates.renamed2.tmplName === "renamed2", '$.templates({ renamed2: "#my_tmpl" }) will rename the cached template');
+	$.templates({renamed2: "#my_tmpl"});
+	ok($.templates.renamed2 === tmpl2 && $.templates.renamed2.tmplName === "renamed2", '$.templates({renamed2: "#my_tmpl"}) will rename the cached template');
 
 	$.templates("cloned", {markup: "#my_tmpl"});
-	ok($.templates.cloned !== tmpl2 && $.templates.cloned.tmplName === "cloned", '$.templates("cloned", {markup: "#my_tmpl" } }) will clone the cached template');
+	ok($.templates.cloned !== tmpl2 && $.templates.cloned.tmplName === "cloned", '$.templates("cloned", {markup: "#my_tmpl"}}) will clone the cached template');
 
-	$.templates({ cloned2: {markup: "#my_tmpl"} });
-	ok($.templates.cloned2 !== tmpl2 && $.templates.cloned2.tmplName === "cloned2", '$.templates({ cloned: {markup: "#my_tmpl" } }) will clone the cached template');
+	$.templates({cloned2: {markup: "#my_tmpl"}});
+	ok($.templates.cloned2 !== tmpl2 && $.templates.cloned2.tmplName === "cloned2", '$.templates({cloned: {markup: "#my_tmpl"}}) will clone the cached template');
 
 	$.templates("my_tmpl", null);
 	equal($.templates.my_tmpl, undefined, 'Remove a named template: $.templates("my_tmpl", null);');
@@ -193,27 +193,27 @@ test("render", 7, function() {
 
 test("converters", 3, function() {
 	function loc(data) {
-		switch (data) { case "desktop": return "bureau"; }
+		switch (data) {case "desktop": return "bureau"; }
 	}
-	$.views.converters({ loc: loc });
-	equal($.templates("{{loc:#data}}:{{loc:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({ loc: locFunction })");
+	$.views.converters({loc: loc});
+	equal($.templates("{{loc:#data}}:{{loc:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({loc: locFunction})");
 
 	$.views.converters("loc2", loc);
 	equal($.views.converters.loc2 === loc, true, 'locFunction === $.views.converters.loc');
 
-	$.views.converters({ loc2: null});
-	equal($.views.converters.loc2, undefined, 'Remove a registered converter: $.views.converters({ loc: null })');
+	$.views.converters({loc2: null});
+	equal($.views.converters.loc2, undefined, 'Remove a registered converter: $.views.converters({loc: null})');
 });
 
 test("tags", 3, function() {
-	$.views.tags({ sort1: sort });
-	equal($.templates("{{sort1 people reverse=true}}{{:name}}{{/sort1}}").render({ people: people }), "BillJo", "$.views.tags({ sort: sortFunction })");
+	$.views.tags({sort1: sort});
+	equal($.templates("{{sort1 people reverse=true}}{{:name}}{{/sort1}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
 
 	$.views.tags("sort2", sort);
 	equal($.views.tags.sort1.render === sort, true, 'sortFunction === $.views.tags.sort');
 
 	$.views.tags("sort2", null);
-	equal($.views.tags.sort2, undefined, 'Remove a registered tag: $.views.tag({ sor: null })');
+	equal($.views.tags.sort2, undefined, 'Remove a registered tag: $.views.tag({sor: null})');
 });
 
 test("helpers", 3, function() {
@@ -227,14 +227,14 @@ test("helpers", 3, function() {
 		},
 		concat: concat
 	});
-	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({ a: "aVal" }), "aValbtrue", "$.views.helpers({ concat: concatFunction })");
+	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({a: "aVal"}), "aValbtrue", "$.views.helpers({concat: concatFunction})");
 
-	$.views.helpers({ concat2: concat });
+	$.views.helpers({concat2: concat});
 
 	equal($.views.helpers.concat === concat, true, 'concatFunction === $.views.helpers.concat');
 
 	$.views.helpers("concat2", null);
-	equal($.views.helpers.concat2, undefined, 'Remove a registered helper: $.views.helpers({ concat: null })');
+	equal($.views.helpers.concat2, undefined, 'Remove a registered helper: $.views.helpers({concat: null})');
 });
 
 test("template encapsulation", 1, function() {
@@ -246,7 +246,7 @@ test("template encapsulation", 1, function() {
 			}
 		}
 	});
-	equal($.render.myTmpl6({ people: people }), "BillJo", '$.templates("my_tmpl", tmplObjWithNestedItems);');
+	equal($.render.myTmpl6({people: people}), "BillJo", '$.templates("my_tmpl", tmplObjWithNestedItems);');
 });
 
 test("$.views.viewModels", function() {
