@@ -1,4 +1,4 @@
-/*! JsRender v0.9.84 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.85 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v0.9.84",
+var versionNumber = "v0.9.85",
 
 	// global var is the this object, which is window when running in the usual browser environment
 
@@ -169,7 +169,7 @@ function getMethod(baseMethod, method) {
 
 function tagHandlersFromProps(tag, tagCtx) {
 	for (var prop in tagCtx.props) {
-		if (rHasHandlers.test(prop)) {
+		if (rHasHandlers.test(prop) && !(tag[prop] && tag[prop].fix)) { // Don't override handlers with fix expando
 			tag[prop] = getMethod(tag.constructor.prototype[prop], tagCtx.props[prop]);
 			// Copy over the onFoo props, convert and convertBack from tagCtx.props to tag (overrides values in tagDef).
 			// Note: unsupported scenario: if handlers are dynamically added ^onFoo=expression this will work, but dynamically removing will not work.
@@ -390,6 +390,7 @@ function convertVal(converter, view, tagCtx, onError) {
 	value = tagCtx.args[0];
 	if (converter || boundTag) {
 		tag = linkCtx && linkCtx.tag;
+		tagCtx.view = view;
 		if (!tag) {
 			tag = $extend(new $sub._tg(), {
 				_: {
@@ -407,12 +408,9 @@ function convertVal(converter, view, tagCtx, onError) {
 				tag.linkCtx = linkCtx;
 			}
 			tagCtx.ctx = extendCtx(tagCtx.ctx, (linkCtx ? linkCtx.view : view).ctx);
+			tagHandlersFromProps(tag, tagCtx);
 		}
 		tag._er = onError && value;
-		tagHandlersFromProps(tag, tagCtx);
-
-		tagCtx.view = view;
-
 		tag.ctx = tagCtx.ctx || tag.ctx || {};
 		tagCtx.ctx = undefined;
 
@@ -501,8 +499,7 @@ function getResource(resourceType, itemName) {
 	return res || $views[resourceType][itemName];
 }
 
-function createCtxPrm(key, ctxPrmName, bindTo) { // tagCtx.ctxPrm() - create tag contextual parameter
-	var tagCtx = this;
+function createCtxPrm(tagCtx, key, ctxPrmName, bindTo) { // Create tag contextual parameter
 	tagCtx.ctx[ctxPrmName] = $sub._cp(argOrProp(tagCtx, key), argOrProp(tagCtx.params, key), tagCtx.view, bindTo);
 }
 
@@ -550,7 +547,6 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 			tagCtx.index = i;
 			tagCtx.tmpl = content; // Set the tmpl property to the content of the block tag
 			tagCtx.render = renderContent;
-			tagCtx.ctxPrm = createCtxPrm;
 			tagCtx.view = parentView;
 			tagCtx.ctx = extendCtx(tagCtx.ctx, ctx); // Clone and extend parentView.ctx
 		}
@@ -611,28 +607,6 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		for (i = 0; i < l; i++) {
 			tagCtx = tag.tagCtx = tagCtxs[i];
 			props = tagCtx.props;
-			args = tag.cvtArgs();
-			if (tag.linkedCtxParam) {
-				m = bindTo.length;
-				while (m--) {
-					if (ctxPrm = tag.linkedCtxParam[m]) {
-						key = bindTo[m];
-						tagCtx.ctxPrm(key, ctxPrm, {tag: tag, ind: m});
-					}
-				}
-			}
-			if (mapDef = props.dataMap || tagDataMap) {
-				if (args.length || props.dataMap) {
-					thisMap = tagCtx.map;
-					if (!thisMap || thisMap.src !== args[0] || isUpdate) {
-						if (thisMap && thisMap.src) {
-							thisMap.unmap(); // only called if observable map - not when only used in JsRender, e.g. by {{props}}
-						}
-						thisMap = tagCtx.map = mapDef.map(args[0], props, undefined, !tag._.bnd);
-					}
-					args = [thisMap.tgt];
-				}
-			}
 			tag.ctx = tagCtx.ctx;
 
 			if (!i) {
@@ -648,6 +622,28 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 				}
 				attr = tag.attr;
 				tag._.noVws = attr && attr !== HTML;
+			}
+			args = tag.cvtArgs();
+			if (tag.linkedCtxParam) {
+				m = bindTo.length;
+				while (m--) {
+					if (ctxPrm = tag.linkedCtxParam[m]) {
+						key = bindTo[m];
+						createCtxPrm(tagCtx, key, ctxPrm, {tag: tag, ind: m});
+					}
+				}
+			}
+			if (mapDef = props.dataMap || tagDataMap) {
+				if (args.length || props.dataMap) {
+					thisMap = tagCtx.map;
+					if (!thisMap || thisMap.src !== args[0] || isUpdate) {
+						if (thisMap && thisMap.src) {
+							thisMap.unmap(); // only called if observable map - not when only used in JsRender, e.g. by {{props}}
+						}
+						thisMap = tagCtx.map = mapDef.map(args[0], props, undefined, !tag._.bnd);
+					}
+					args = [thisMap.tgt];
+				}
 			}
 
 			itemRet = undefined;
@@ -955,7 +951,7 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 //=================
 
 function getDefaultVal(defaultVal, data) {
-	return $.isFunction(defaultVal)
+	return $isFunction(defaultVal)
 		? defaultVal.call(data)
 		: defaultVal;
 }
@@ -1131,7 +1127,7 @@ function compileViewModel(name, type) {
 				: value;
 		}
 		for (prop in model) {
-			if (prop !== "_is" && !getterNames[prop] && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$.isFunction(model[prop])) {
+			if (prop !== "_is" && !getterNames[prop] && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$isFunction(model[prop])) {
 				ob[prop] = model[prop];
 			}
 		}
@@ -2205,7 +2201,8 @@ function $fnRender(data, context, noIteration) {
 	var tmplElem = this.jquery && (this[0] || error('Unknown template')), // Targeted element not found for jQuery template selector such as "#myTmpl"
 		tmpl = tmplElem.getAttribute(tmplAttr);
 
-	return renderContent.call(tmpl ? $.data(tmplElem)[jsvTmpl] : $templates(tmplElem), data, context, noIteration);
+	return renderContent.call(tmpl && $.data(tmplElem)[jsvTmpl] || $templates(tmplElem),
+		data, context, noIteration);
 }
 
 //========================== Register converters ==========================
