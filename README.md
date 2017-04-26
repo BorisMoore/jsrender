@@ -6,7 +6,7 @@
 
 **[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.
 
-<h3>Documentation and downloads</h3>
+### Documentation and downloads
 **[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
 
 The content of this ***ReadMe*** is available also as a *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)*.
@@ -23,7 +23,7 @@ It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, wh
 *CDN delivery* is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsrender](https://cdnjs.com/libraries/jsrender).
 
 Alternatively:
-- It can be installed with ***[Bower](http://bower.io/search/?q=jsrender)***, using `$ bower install jsrender` 
+- It can be installed with **[Bower](http://bower.io/search/?q=jsrender)**, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
 - For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
 - (For browser loading using *Browserify* or *webpack* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*, *[JsRender as a Browserify module](http://www.jsviews.com/#node/browserify@jsrender)* and *[JsRender as a webpack module](http://www.jsviews.com/#node/webpack@jsrender)*)
@@ -388,7 +388,7 @@ or
 
 See the [www.jsviews.com](http://www.jsviews.com) site, including the *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)* and [JsRender APIs](http://www.jsviews.com/#jsrapi) topics.
 
-<h3><i>Demos</i></h3>
+### <i>Demos</i>
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples/jsr), and throughout the [API documentation](http://www.jsviews.com/#jsrapi).
 
 (See also the [demos](https://github.com/BorisMoore/jsrender/tree/master/demos) folder of the GitHub repository - available [here](http://borismoore.github.io/jsrender/demos/index.html) as live samples).
