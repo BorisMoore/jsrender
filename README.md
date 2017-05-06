@@ -1,6 +1,7 @@
 ## JsRender: best-of-breed templating
 
 *Simple and intuitive, powerful and extensible, lightning fast*
+
 *For templated content in the browser or on Node.js (with Express 4, Hapi and Browserify integration)*
 
 **JsRender** is a light-weight but powerful templating engine, highly extensible, and optimized for high-performance rendering, without DOM dependency. It is designed for use in the browser or on Node.js, with or without jQuery.
