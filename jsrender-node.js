@@ -862,9 +862,13 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 		var currentName, tmpl;
 		if (("" + value === value) || value.nodeType > 0 && (elem = value)) {
 			if (!elem) {
-				if (/^\.\/[^\\:*?"<>]*$/.test(value)) {
-					// tmpl="./some/file.html"
-					// If the template is not named, use "./some/file.html" as name.
+				//first validate the string has no bad characters
+				if (/^[^\\:*?"<>]*$/.test(value)) {
+					// tmpl="./some/file.html" 
+                                        // tmpl2="/usr/local/file.html"
+                                        // tmpl3="file.html"
+
+					// If the template exists, use it
 					if (tmpl = $templates[name = name || value]) {
 						value = tmpl;
 					} else {

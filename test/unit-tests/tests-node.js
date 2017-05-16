@@ -29,6 +29,19 @@ test("jsrender.templates", function() {
 	tmpl = jsrender.templates({markup: 'Some {{:~upper("Markup")}} Name: {{:~upper(name)}} {{lower:name}}', helpers: {upper:upper}, converters: {lower:lower}});
 	html = tmpl({ name: "Jo" });
 	equal(html, "Some MARKUP Name: JO jo", 'jsrender.templates({markup: ..., helpers: ..., ...}) compiles template with options');
+
+	// local path (not relative)
+	var tmpl = jsrender.templates('test/templates/name-template.html');
+	var html = tmpl({ name: "Jo" });
+	equal(html, "Name: Jo (name-template.html)", 'jsrender.templates("file.path.html") compiles template');
+
+
+	// absolute path 
+	var fs = require('fs');
+	var path = require('path');
+	var tmpl = jsrender.templates(path.resolve('.test/templates/name-template.html'));
+	var html = tmpl({ name: "Jo" });
+	equal(html, "Name: Jo (name-template.html)", 'jsrender.templates("/absolute/path/file.path.html") compiles template');
 });
 
 test("jsrender.compile", function() {
