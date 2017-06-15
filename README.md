@@ -10,10 +10,7 @@
 
 ### Documentation and downloads
 
-[Documentation](http://www.jsviews.com), 
-[downloads](http://www.jsviews.com/#download), 
-[samples](http://www.jsviews.com/#samples) and 
-[API docs and tutorials](http://www.jsviews.com/#jsrapi) are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
+**[Documentation](http://www.jsviews.com)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsrapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsrender)**.
 
 The content of this ***ReadMe*** is available also as a *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)*.
 
@@ -33,7 +30,7 @@ Alternatively:
 - It can be installed with **[Bower](http://bower.io/search/?q=jsrender)**, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
 - For installation using *Node.js* (*npm*) see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
-- (For browser loading using *Browserify* or *webpack* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*, *[JsRender as a Browserify module](http://www.jsviews.com/#node/browserify@jsrender)* and *[JsRender as a webpack module](http://www.jsviews.com/#node/webpack@jsrender)*)
+- (For browser loading using *Browserify* or *webpack* - see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*, *[JsRender as a Browserify module](http://www.jsviews.com/#node/browserify@jsrender)* and *[JsRender as a webpack module](http://www.jsviews.com/#node/webpack@jsrender)*)
 
 #### Using JsRender with jQuery
 
@@ -82,7 +79,9 @@ From a template declared as markup in a script block:
 Name: {{:name}}
 </script>
 ```
-Then, somewhere in your script:
+
+then, somewhere in your script:
+
 ```js
 var tmpl = $.templates("#myTemplate");
 ```
@@ -308,6 +307,7 @@ $.views.tags("fullName", function(val) {
   return val.first + " " + val.last;
 });
 ```
+
 Or as a template string:
 
 ```js
