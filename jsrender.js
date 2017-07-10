@@ -1,4 +1,4 @@
-/*! JsRender v0.9.86 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.87 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.86",
+var versionNumber = "v0.9.87",
 	jsvStoreName, rTag, rTmplString, topView, $views,	$expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
@@ -194,7 +194,7 @@ function getMethod(baseMethod, method) {
 
 function tagHandlersFromProps(tag, tagCtx) {
 	for (var prop in tagCtx.props) {
-		if (rHasHandlers.test(prop) && !(tag[prop] && tag[prop].fix)) { // Don't override handlers with fix expando
+		if (rHasHandlers.test(prop) && !(tag[prop] && tag[prop].fix)) { // Don't override handlers with fix expando (used in datepicker and spinner)
 			tag[prop] = getMethod(tag.constructor.prototype[prop], tagCtx.props[prop]);
 			// Copy over the onFoo props, convert and convertBack from tagCtx.props to tag (overrides values in tagDef).
 			// Note: unsupported scenario: if handlers are dynamically added ^onFoo=expression this will work, but dynamically removing will not work.
@@ -228,10 +228,12 @@ function JsViewsError(message) {
 }
 
 function $extend(target, source) {
-	for (var name in source) {
-		target[name] = source[name];
+	if (target) {
+		for (var name in source) {
+			target[name] = source[name];
+		}
+		return target;
 	}
-	return target;
 }
 
 (JsViewsError.prototype = new Error()).constructor = JsViewsError;
@@ -354,33 +356,18 @@ function contextParameter(key, value, isContextCb) {
 
 	if (key in store || key in (store = $helpers)) {
 		res = store && store[key];
-		if (res && $isFunction(res)) {
-			// If a helper is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
-			// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
-			// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
-			// For example, ~util.foo() will have the ~util object as 'this' pointer
-			wrapped = function() {
-				return res.apply((!this || this === global) ? storeView : this, arguments);
-			};
-			$extend(wrapped, res); // Attach same expandos (if any) to the wrapped function
-			wrapped._vw = storeView;
-			return wrapped;
-		}
 		if (key === "tag" || key === "root" || key === "parentTags" || storeView._.it === key ) {
 			return res;
 		}
 	} else {
 		store = undefined;
 	}
-	if (storeView.linked || storeView.tagCtx) { // Data-linked view, or tag instance
+	if (!res || !$isFunction(res) && storeView.linked || storeView.tagCtx) { // Data-linked view, or tag instance
 		if (!res || !res._cxp) {
 			// Not a contextual parameter
 			if (store !== $helpers) {
-				if (res === undefined || (storeView.tagCtx ? (storeView = storeView.tagCtx.view) : storeView).root.ctx[key] !== res) {
-					// This is not an instance parameter (passed in with tmpl.link() call)
-					// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view (view under top view)
-					storeView = storeView.ctx && storeView.ctx.tag || storeView.root;
-				}
+				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view (view under top view)
+				storeView = storeView.ctx && storeView.ctx.tag || storeView.root;
 				store = storeView._ocps;
 				res = store && store[key] || res;
 			}
@@ -406,7 +393,18 @@ function contextParameter(key, value, isContextCb) {
 				: res[0]._ocp; // Observable contextual parameter (uninitialized, or initialized as static expression, so no path dependencies)
 		}
 	}
-	return res;
+	if (res && $isFunction(res)) {
+		// If a helper is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
+		// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
+		// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
+		// For example, ~util.foo() will have the ~util object as 'this' pointer
+		wrapped = function() {
+			return res.apply((!this || this === global) ? storeView : this, arguments);
+		};
+		$extend(wrapped, res); // Attach same expandos (if any) to the wrapped function
+		wrapped._vw = storeView;
+	}
+	return wrapped || res;
 }
 
 function getTemplate(tmpl) {
@@ -514,9 +512,7 @@ function convertArgs(converter, bound, tagElse) { // tag.cvtArgs()
 		bindTo = bindTo || [0];
 		converter = converter.apply(tag, boundArgs || args);
 		l = bindTo.length;
-		if (l < 2) {
-			converter = [converter];
-		}
+		converter = l < 2 ? [converter] : converter || [];
 		if (bound) {        // Call to bndArgs convertBoundArgs() - so apply converter to all boundArgs
 			args = converter; // The array of values returned from the converter
 		} else {            // Call to cvtArgs()
@@ -558,7 +554,7 @@ function getResource(resourceType, itemName) {
 function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 	parentView = parentView || topView;
 	var tag, tag_, tagDef, template, tags, attr, parentTag, l, m, n, itemRet, tagCtx, tagCtxCtx, ctxPrm, bindTo,
-		content, callInit, mapDef, thisMap, args, props, initialTmpl, tagDataMap, contentCtx, key,
+		content, callInit, mapDef, thisMap, args, props, tagDataMap, contentCtx, key,
 		i = 0,
 		ret = "",
 		linkCtx = parentView.linkCtx || 0,
@@ -663,7 +659,6 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 
 			if (!i) {
 				if (callInit) {
-					initialTmpl = tag.template;
 					tag.init(tagCtx, linkCtx, tag.ctx);
 					callInit = undefined;
 				}
@@ -707,12 +702,13 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 					// to provide a contentView for the tag, which will correctly dispose bindings if deleted. The 'tmpl' for this view will
 					// be a dumbed down template which will always return the  itemRet string (no matter what the data is). The itemRet string
 					// is not compiled as template markup, so can include "{{" or "}}" without triggering syntax errors
-					itemRet = renderWithViews({
-						fn: function() { // 'Dumbed down' template which always renders 'static' itemRet string
-							return itemRet;
-						},
-						links: []},
-						parentView.data, undefined, true, parentView, undefined, undefined, tag);
+					tmpl = { // 'Dumbed down' template which always renders 'static' itemRet string
+						links: []
+					};
+					tmpl.render = tmpl.fn = function() {
+						return itemRet;
+					};
+					itemRet = renderWithViews(tmpl, parentView.data, undefined, true, parentView, undefined, undefined, tag);
 				}
 			}
 			if (!args.length) {
