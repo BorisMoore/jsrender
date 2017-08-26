@@ -309,12 +309,12 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		'{{for ... ~foo=missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
 
 	equal($.templates({
-			markup: "{{myTag foo='a'/}} {{myTag foo=missing.willThrow.path onError='Missing Object'/}} {{myTag foo='c' bar=missing.willThrow.path onError='Missing Object'/}} {{myTag foo='c' missing.willThrow.path onError='Missing Object'/}} {{myTag foo='b'/}}",
+			markup: "{{mytag foo='a'/}} {{mytag foo=missing.willThrow.path onError='Missing Object'/}} {{mytag foo='c' bar=missing.willThrow.path onError='Missing Object'/}} {{mytag foo='c' missing.willThrow.path onError='Missing Object'/}} {{mytag foo='b'/}}",
 			tags: {
-				myTag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
+				mytag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
 			}
 		}).render({a:1}), "MyTag: a end Missing Object Missing Object Missing Object MyTag: b end",
-		'onError=... for custom tags: e.g. {{myTag foo=missing.willThrow.path onError="Missing Object"/}}');
+		'onError=... for custom tags: e.g. {{mytag foo=missing.willThrow.path onError="Missing Object"/}}');
 
 	equal($.templates({
 		markup: "1: {{for a.missing.willThrow.path onError=defaultVal}}yes{{/for}}" +
@@ -324,14 +324,14 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		" 5: {{for a.undefined onError='missing'}}yes{{/for}}" +
 		" 6: {{if a.missing.willThrow onError=myCb}}yes{{/if}}" +
 		" 7: {{withfallback:a.undefined fallback='undefined prop'}} end" +
-		" 8: {{myTag foo=missing.willThrow.path onError='Missing Object'/}}",
+		" 8: {{mytag foo=missing.willThrow.path onError='Missing Object'/}}",
 		converters: {
 			withfallback: function(val) {
 				return val || this.tagCtx.props.fallback;
 			}
 		},
 		tags: {
-			myTag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
+			mytag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
 		}
 	}).render(
 		{
@@ -1684,21 +1684,21 @@ test('{{include}} and wrapping content', function() {
 			}
 		}).render(people);
 
-	equal(result, "Before headerJofooter AfterBefore headerBillfooter After", 'Using {{include ... tmpl="wrapper"}}}wrapped{{/include}}');
+	equal(result, "Before headerJofooter AfterBefore headerBillfooter After", 'Using {{include ... tmpl="wrapper"}}wrapped{{/include}}');
 
 	result = $.templates({
 		markup:
-			 'This (render method) replaces: {{myTag override="replacementText" tmpl="wrapper"}}'
+			 'This (render method) replaces: {{mytag override="replacementText" tmpl="wrapper"}}'
 				+ '{{:name}}'
-			+ '{{/myTag}} | '
-			+ 'This (original template) adds: {{myTag}}'
+			+ '{{/mytag}} | '
+			+ 'This (original template) adds: {{mytag}}'
 				+ '{{:name}}'
-			+ '{{/myTag}} | '
-			+ 'This (new template) wraps: {{myTag setTmpl="wrapper"}}'
+			+ '{{/mytag}} | '
+			+ 'This (new template) wraps: {{mytag setTmpl="wrapper"}}'
 				+ '{{:name}}'
-			+ '{{/myTag}} | ',
+			+ '{{/mytag}} | ',
 		tags: {
-			myTag: {
+			mytag: {
 				template: "add{{include tmpl=#content/}}",
 				init: function() {
 					this.template = this.tagCtx.props.setTmpl || this.template;
@@ -1720,7 +1720,7 @@ test('{{include}} and wrapping content', function() {
 		+ " This (render method) replaces: replacementText |" 
 		+ " This (original template) adds: addBill |" 
 		+ " This (new template) wraps: headerBillfooter | ",
-		'Custom tag with wrapped content: {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+		'Custom tag with wrapped content: {{mytag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
 	result = $.templates({
 		markup:
@@ -1732,18 +1732,18 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render({people: people});
 
-	equal(result, "Before headerJoBillfooter After", 'Using {{for ... tmpl="wrapper"}}}wrapped{{/for}}');
+	equal(result, "Before headerJoBillfooter After", 'Using {{for ... tmpl="wrapper"}}wrapped{{/for}}');
 
 	result = $.templates({
 		markup:
-				'This replaces:{{myTag override="replacementText"}}'
+				'This replaces:{{mytag override="replacementText"}}'
 				+ '{{:name}}'
-			+ '{{/myTag}}'
-			+ 'This wraps:{{myTag tmpl="wrapper"}}'
+			+ '{{/mytag}}'
+			+ 'This wraps:{{mytag tmpl="wrapper"}}'
 				+ '{{:name}}'
-			+ '{{/myTag}}',
+			+ '{{/mytag}}',
 		tags: {
-			myTag: function() {
+			mytag: function() {
 				return this.tagCtx.props.override;
 			}
 		},
@@ -1752,45 +1752,45 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render({people: people});
 
-	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{myTag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{mytag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
 	result = $.templates({
 		markup:
-		'{{myTag}}'
+		'{{mytag}}'
 			+ '{{:name}}'
-		+ '{{/myTag}} | '
-		+ '{{myTag tmpl="innerwrap"}}'
+		+ '{{/mytag}} | '
+		+ '{{mytag tmpl="innerwrap"}}'
 			+ '{{:name}}'
-		+ '{{/myTag}} | ' 
-		+ '{{myTag tmpl="middlewrap"}}'
+		+ '{{/mytag}} | ' 
+		+ '{{mytag tmpl="middlewrap"}}'
 			+ '{{:name}}'
-		+ '{{/myTag}} | '
-		+ '{{myTag tmpl="wrapper"}}'
+		+ '{{/mytag}} | '
+		+ '{{mytag tmpl="wrapper"}}'
 			+ '{{:name}}'
-		+ '{{/myTag}} | '
+		+ '{{/mytag}} | '
 
-		+ '{{myTag2}}'
+		+ '{{mytag2}}'
 			+ '{{:name}}'
-		+ '{{/myTag2}} | '
-		+ '{{myTag2 tmpl="innerwrap"}}'
+		+ '{{/mytag2}} | '
+		+ '{{mytag2 tmpl="innerwrap"}}'
 			+ '{{:name}}'
-		+ '{{/myTag2}} | ' 
-		+ '{{myTag2 tmpl="middlewrap"}}'
+		+ '{{/mytag2}} | ' 
+		+ '{{mytag2 tmpl="middlewrap"}}'
 			+ '{{:name}}'
-		+ '{{/myTag2}} | '
-		+ '{{myTag2 tmpl="wrapper"}}'
+		+ '{{/mytag2}} | '
+		+ '{{mytag2 tmpl="wrapper"}}'
 			+ '{{:name}}'
-		+ '{{/myTag2}} | ',
+		+ '{{/mytag2}} | ',
 		templates: {
 			wrapper: "middle {{include tmpl=#content/}} {{include tmpl='middlewrap'/}} {{include tmpl='innerwrap'/}}/middle",
 			middlewrap: "inner {{include tmpl=#content/}} and {{include tmpl='innerwrap'/}} /inner",
 			innerwrap: "innermost {{include tmpl=#content/}} /innermost"
 		},
 		tags: {
-			myTag: {
+			mytag: {
 			template: "outer {{include tmpl=#content/}} /outer"
 			},
-			myTag2: {
+			mytag2: {
 			}
 		}
 	}).render(people);
@@ -1828,20 +1828,20 @@ test('{{include}} and wrapping content', function() {
 
 	result = $.templates({
 		markup:
-		  '{{myTag tmpl="phonelist"}}'
+		  '{{mytag tmpl="phonelist"}}'
 			+ '{{:number}} '
-		+ '{{/myTag}} | '
-		+ '{{myTag2 tmpl="phonelist"}}'
+		+ '{{/mytag}} | '
+		+ '{{mytag2 tmpl="phonelist"}}'
 		  + '{{:number}} '
-		+ '{{/myTag2}}',
+		+ '{{/mytag2}}',
 		templates: {
 			phonelist: "{{for phones}}{{include tmpl=#content/}}{{/for}}"
 		},
 		tags: {
-			myTag: {
+			mytag: {
 				template: "outer {{include tmpl=#content/}} /outer"
 			},
-			myTag2: {
+			mytag2: {
 			}
 		}
 	}).render(data);
@@ -1853,20 +1853,20 @@ test('{{include}} and wrapping content', function() {
 
 	result = $.templates({
 		markup:
-		  '{{myTag tmpl="phonelist"}}'
+		  '{{mytag tmpl="phonelist"}}'
 			+ '{{:number}}'
 		+ '{{else tmpl="altlist"}}'
 		  + '{{:alt}}'
 		+ '{{else tmpl="altlist2"}}'
 		  + '{{:alt}}'
-		+ '{{/myTag}}'
-		+ '{{myTag2 tmpl="phonelist"}}'
+		+ '{{/mytag}}'
+		+ '{{mytag2 tmpl="phonelist"}}'
 		  + '{{:number}}'
 		+ '{{else tmpl="altlist"}}'
 		  + '{{:alt}}'
 		+ '{{else tmpl="altlist2"}}'
 		  + '{{:alt}}'
-		+ '{{/myTag2}}',
+		+ '{{/mytag2}}',
 		templates: {
 			phonelist: "A< {{for phones}}{{include tmpl=#content/}} {{/for}} > ",
 			altlist: "B< {{for phones tmpl='titlewrap'/}} > ",
@@ -1874,10 +1874,10 @@ test('{{include}} and wrapping content', function() {
 			titlewrap: "alternate: {{include tmpl=#content/}} "
 		},
 		tags: {
-			myTag: {
+			mytag: {
 				template: "outer {{include tmpl=#content/}} /outer | "
 			},
-			myTag2: {
+			mytag2: {
 			}
 		}
 	}).render(data);

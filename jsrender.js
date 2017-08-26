@@ -1,4 +1,4 @@
-/*! JsRender v0.9.87 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.88 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.87",
+var versionNumber = "v0.9.88",
 	jsvStoreName, rTag, rTmplString, topView, $views,	$expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
@@ -1571,7 +1571,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 			result += newView._.onRender ? newView._.onRender(itemResult, childView) : itemResult;
 		}
 	} else {
-		// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "myTag" except for
+		// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "mytag" except for
 		// "item", "array" and "data" views. A "data" view is from programmatic render(object) against a 'singleton'.
 		if (itemVar) {
 			setItemVar(data);
