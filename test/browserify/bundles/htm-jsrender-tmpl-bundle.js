@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*! JsRender v0.9.88 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.89 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -45,7 +45,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.88",
+var versionNumber = "v0.9.89",
 	jsvStoreName, rTag, rTmplString, topView, $views,	$expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
@@ -139,7 +139,6 @@ var versionNumber = "v0.9.88",
 			_tag: renderTag,
 			_er: error,
 			_err: onRenderError,
-			_html: htmlEncode,
 			_cp: retVal, // Get observable contextual parameters (or properties) ~foo=expr. In JsRender, simply returns val.
 			_sq: function(token) {
 				if (token === "constructor") {
@@ -367,8 +366,10 @@ function contextParameter(key, value, isContextCb) {
 		if (!res || !res._cxp) {
 			// Not a contextual parameter
 			if (store !== $helpers) {
-				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view (view under top view)
-				storeView = storeView.ctx && storeView.ctx.tag || storeView.root;
+				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view ("data" view of linked template)
+				storeView = storeView.views // Is a view, not a tag?
+					? (storeView = storeView.scope || storeView, !storeView.isTop && storeView.ctx.tag || storeView)
+					: storeView.ctx.tag;
 				store = storeView._ocps;
 				res = store && store[key] || res;
 			}
@@ -420,7 +421,7 @@ function getTemplate(tmpl) {
 
 function convertVal(converter, view, tagCtx, onError) {
 	// self is template object or linkCtx object
-	var tag, value,
+	var tag, value, argsLen, bindTo,
 		// If tagCtx is an integer, then it is the key for the compiled function to return the boundTag tagCtx
 		boundTag = typeof tagCtx === "number" && view.tmpl.bnds[tagCtx-1],
 		linkCtx = view.linkCtx; // For data-link="{cvt:...}"...
@@ -441,15 +442,22 @@ function convertVal(converter, view, tagCtx, onError) {
 		if (!tag) {
 			tag = $extend(new $sub._tg(), {
 				_: {
-					inline: !linkCtx,
 					bnd: boundTag,
 					unlinked: true
 				},
+				inline: !linkCtx,
 				tagName: ":",
 				cvt: converter,
 				flow: true,
 				tagCtx: tagCtx
 			});
+			argsLen = tagCtx.args.length;
+			if (argsLen>1) {
+				bindTo = tag.bindTo = [];
+				while (argsLen--) {
+					bindTo.unshift(argsLen); // Bind to all the arguments - generate bindTo array: [0,1,2...]
+				}
+			}
 			if (linkCtx) {
 				linkCtx.tag = tag;
 				tag.linkCtx = linkCtx;
@@ -511,16 +519,20 @@ function convertArgs(converter, bound, tagElse) { // tag.cvtArgs()
 
 	if (converter) {
 		bindTo = bindTo || [0];
-		converter = converter.apply(tag, boundArgs || args);
 		l = bindTo.length;
-		converter = l < 2 ? [converter] : converter || [];
+		converter = converter.apply(tag, boundArgs || args);
+		if (!$isArray(converter) || converter.length !== l) {
+			converter = [converter];
+			bindTo = [0];
+			l = 1;
+		}
 		if (bound) {        // Call to bndArgs convertBoundArgs() - so apply converter to all boundArgs
 			args = converter; // The array of values returned from the converter
 		} else {            // Call to cvtArgs()
 			while (l--) {
 				key = bindTo[l];
 				if (+key === key) {
-					args[key] = converter ? converter[l] : undefined;
+					args[key] = converter[l];
 				}
 			}
 		}
@@ -587,14 +599,14 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 	l = tagCtxs.length;
 	for (; i < l; i++) {
 		tagCtx = tagCtxs[i];
-		if (!linkCtx || !linkCtx.tag || i && !linkCtx.tag._.inline || tag._er) {
+		content = tagCtx.tmpl;
+		if (!linkCtx || !linkCtx.tag || i && !linkCtx.tag.inline || tag._er || content && +content===content) {
 			// Initialize tagCtx
 			// For block tags, tagCtx.tmpl is an integer > 0
-			if (content = parentTmpl.tmpls && tagCtx.tmpl) {
-				content = tagCtx.content = parentTmpl.tmpls[content - 1];
+			if (content && parentTmpl.tmpls) {
+				tagCtx.tmpl = tagCtx.content = parentTmpl.tmpls[content - 1]; // Set the tmpl property to the content of the block tag
 			}
 			tagCtx.index = i;
-			tagCtx.tmpl = content; // Set the tmpl property to the content of the block tag
 			tagCtx.render = renderContent;
 			tagCtx.view = parentView;
 			tagCtx.ctx = extendCtx(tagCtx.ctx, ctx); // Clone and extend parentView.ctx
@@ -617,7 +629,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 			tagDataMap = tag.dataMap;
 
 			if (linkCtx) {
-				tag._.inline = false;
+				tag.inline = false;
 				linkCtx.tag = tag;
 				tag.linkCtx = linkCtx;
 			}
@@ -701,9 +713,9 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 				if (parentView.linked && itemRet && !rWrappedInViewMarker.test(itemRet)) {
 					// When a tag renders content from the render method, with data linking then we need to wrap with view markers, if absent,
 					// to provide a contentView for the tag, which will correctly dispose bindings if deleted. The 'tmpl' for this view will
-					// be a dumbed down template which will always return the  itemRet string (no matter what the data is). The itemRet string
+					// be a dumbed-down template which will always return the  itemRet string (no matter what the data is). The itemRet string
 					// is not compiled as template markup, so can include "{{" or "}}" without triggering syntax errors
-					tmpl = { // 'Dumbed down' template which always renders 'static' itemRet string
+					tmpl = { // 'Dumbed-down' template which always renders 'static' itemRet string
 						links: []
 					};
 					tmpl.render = tmpl.fn = function() {
@@ -731,7 +743,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 	tag.ctx = tag.tagCtx.ctx;
 
 	if (tag._.noVws) {
-			if (tag._.inline) {
+		if (tag.inline) {
 			// inline tag with attr set to "text" will insert HTML-encoded content - as if it was element-based innerText
 			ret = attr === "text"
 				? $converters.html(ret)
@@ -753,28 +765,29 @@ function View(context, type, parentView, data, template, key, onRender, contentT
 	var views, parentView_, tag, self_,
 		self = this,
 		isArray = type === "array";
+		// If the data is an array, this is an 'array view' with a views array for each child 'item view'
+		// If the data is not an array, this is an 'item view' with a views 'hash' object for any child nested views
 
 	self.content = contentTmpl;
 	self.views = isArray ? [] : {};
-	self.parent = parentView;
-	self.type = type || "top";
-	self.root = parentView && parentView.root || type && self; // view whose parent is top view
 	self.data = data;
 	self.tmpl = template;
-	// If the data is an array, this is an 'array view' with a views array for each child 'item view'
-	// If the data is not an array, this is an 'item view' with a views 'hash' object for any child nested views
-	// ._.useKey is non zero if is not an 'array view' (owning a data array). Use this as next key for adding to child views hash
 	self_ = self._ = {
 		key: 0,
+		// ._.useKey is non zero if is not an 'array view' (owning a data array). Use this as next key for adding to child views hash
 		useKey: isArray ? 0 : 1,
 		id: "" + viewId++,
 		onRender: onRender,
 		bnds: {}
 	};
 	self.linked = !!onRender;
-	if (parentView) {
+	self.type = type || "top";
+	if (self.parent = parentView) {
+		self.root = parentView.root || self; // view whose parent is top view
 		views = parentView.views;
 		parentView_ = parentView._;
+		self.isTop = parentView_.scp; // Is top content view of a link("#container", ...) call
+		self.scope = (!context.tag || context.tag === parentView.ctx.tag) && !self.isTop && parentView.scope || self;
 		if (parentView_.useKey) {
 			// Parent is not an 'array view'. Add this view to its views object
 			// self._key = is the key in the parent view hash
@@ -831,10 +844,9 @@ function compileTag(name, tagDef, parentTmpl) {
 	function Tag() {
 		var tag = this;
 		tag._ = {
-			inline: true,
 			unlinked: true
 		};
-
+		tag.inline = true;
 		tag.tagName = name;
 	}
 
@@ -981,6 +993,7 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 
 	var elem, compiledTmpl,
 		tmplOrMarkup = tmpl = tmpl || "";
+	$sub._html = $converters.html;
 
 	//==== Compile the template ====
 	if (options === 0) {
@@ -2094,7 +2107,7 @@ function buildCode(ast, tmpl, isLinkExpr) {
 				converter = node[1];
 				content = !isLinkExpr && node[2];
 				tagCtx = paramStructure(node[3], 'params') + '},' + paramStructure(params = node[4]);
-				onError = node[5];
+				onError = node[5] || $subSettings.debugMode !== false && "undefined"; // If debugMode not false, set default onError handler on tag to "undefined" (see onRenderError)
 				trigger = node[6];
 				lateRender = node[7];
 				markup = node[9] && node[9].replace(rUnescapeQuotes, "$1");
@@ -2220,10 +2233,6 @@ function buildCode(ast, tmpl, isLinkExpr) {
 		+ (tmplOptions.debug ? "debugger;" : "")
 		+ code
 		+ (isLinkExpr ? "\n" : ";\nreturn ret;");
-
-	if ($subSettings.debugMode !== false) {
-		code = "try {\n" + code + "\n}catch(e){\nreturn j._err(e, view);\n}";
-	}
 
 	try {
 		code = new Function("data,view,j,u", code);

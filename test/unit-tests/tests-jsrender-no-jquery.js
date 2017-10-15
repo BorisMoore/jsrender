@@ -395,9 +395,9 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		myCb: function(e, view) {
 			return "myCallback: " + this.a;
 		}
-	}).slice(0, 8), "{Error: ",
+	}).slice(0, 21), "1: defaultFromData 2:",
 	'In debug mode, onError/fallback converter and regular thrown error message in same template:' +
-	'\nthrown error replaces the rest of the output (rather than concatenating)');
+	'\override errors and regular thrown error each render for the corrresponding tag');
 	$.views.settings.debugMode(false);
 
 });
@@ -1382,7 +1382,7 @@ test("tags", function() {
 		}).render(person);
 
 	// ............................... Assert .................................
-	equal(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
+	equal(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: init render');
 
 	// =============================== Arrange ===============================
 	$.views.tags({
@@ -1629,7 +1629,7 @@ test("derived tags", function() {
 	result = tmpl.render({});
 
 	// ............................... Assert .................................
-	equal(result.slice(0, 8), "{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
+	equal(result.slice(0, 10), "a:{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}}");
