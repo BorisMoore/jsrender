@@ -815,9 +815,49 @@ test("", function() {
 	equal(!tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
 		"Setting $.views.settings.advanced({useViews: true}) WILL prevent a simpler template from rendering without views.");
 
+	// =========================== Reset settings ============================
 	$.views.settings.advanced({useViews: false});
 	$.views.settings.allowCode(false);
 	document.title = "";
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates("{{:a.getHtml()}} {{if true}}{{:b}} {{/if}}"),
+		innerTmpl = $.templates("{{:inner}}"),
+
+		data = {
+			a: {
+				getHtml: function() {
+					return $.templates("{{:inner}}").render(this);
+				},
+				inner: "INNER"
+			},
+			b: "OUTER"
+		};
+
+	// ................................ Act ..................................
+		html = tmpl.render(data);
+
+	// ................................ Assert ..................................
+	equal(!tmpl.useViews && !innerTmpl.useViews && html, "INNER OUTER ",
+		"Nested top-level programmatic template calls which do not use views work correctly");
+		// See https://github.com/BorisMoore/jsrender/issues/333
+
+	// ................................ Act ..................................
+	tmpl = $.templates({
+		markup: "{{:a.getHtml()}} {{if true}}{{:b}} {{/if}}",
+		useViews: true
+	});
+	innerTmpl = $.templates({
+		markup: "{{:inner}}",
+		useViews: true
+	});
+	html = tmpl.render(data);
+
+	// ................................ Assert ..................................
+	equal(tmpl.useViews && innerTmpl.useViews && html, "INNER OUTER ",
+		"Nested top-level programmatic template calls using views work correctly");
+		// See https://github.com/BorisMoore/jsrender/issues/333
+
 });
 
 QUnit.module("All tags");
@@ -1317,7 +1357,7 @@ test("{{sometag convert=converter}}", function() {
 
 	equal($.templates("1{{:#data convert='loc'}} 2{{:'desktop' convert='loc'}} 3{{:#data convert=~myloc}} 4{{:'desktop' convert=~myloc}}").render("desktop", {myloc: loc}), "1bureau 2bureau 3bureau 4bureau", "{{: convert=~myconverter}}");
 	equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
-		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a&lt;b",
+		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a moins <que b",
 		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}}" +
 		"\nor {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
 	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val;}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");

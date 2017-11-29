@@ -1,6 +1,6 @@
 {
   "name": "jsrender",
-  "version": "v0.9.89",
+  "version": "v0.9.90",
   "description": "Best-of-breed templating in browser or on Node.js (with Express 4, Hapi and Browserify integration)",
   "main": "./jsrender-node.js",
   "browser": "./jsrender.js",
