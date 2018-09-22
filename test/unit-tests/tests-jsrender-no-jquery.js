@@ -311,7 +311,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 	equal($.templates({
 			markup: "{{mytag foo='a'/}} {{mytag foo=missing.willThrow.path onError='Missing Object'/}} {{mytag foo='c' bar=missing.willThrow.path onError='Missing Object'/}} {{mytag foo='c' missing.willThrow.path onError='Missing Object'/}} {{mytag foo='b'/}}",
 			tags: {
-				mytag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
+				mytag: {template: "MyTag: {{:~tagCtx.props.foo}} end"}
 			}
 		}).render({a:1}), "MyTag: a end Missing Object Missing Object Missing Object MyTag: b end",
 		'onError=... for custom tags: e.g. {{mytag foo=missing.willThrow.path onError="Missing Object"/}}');
@@ -331,7 +331,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 			}
 		},
 		tags: {
-			mytag: {template: "MyTag: {{:~tag.tagCtx.props.foo}} end"}
+			mytag: {template: "MyTag: {{:~tagCtx.props.foo}} end"}
 		}
 	}).render(
 		{
@@ -508,6 +508,123 @@ test("{{for}}", 17, function() {
 	equal($.render.simpleFor({}), "ab", 'if #data is undefined, renders empty string');
 	equal($.render.forPrimitiveDataTypes({people:[0, 1, "abc", "", ,null ,true ,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey');
 });
+test("{{for start end sort filter reverse}}", function() {
+	// =============================== Arrange ===============================
+	function level(aField, bField) {
+		return aField > bField ? 1 : aField < bField ? -1 : 0;
+	}
+
+	var oddValue = function(item, index, items) { return item%2; };
+	var oddIndex = function(item, index, items) { return index%2; };
+	var sortAgeName = function(a, b) {
+		return level(a.details.role.toLowerCase(), b.details.role.toLowerCase()) // First level sort: by role
+			|| level(b.details.age, a.details.age) // 2nd level sort: reverse sort by age
+			|| level(a.name.toLowerCase(), b.name.toLowerCase()); // 3rd level sort: sort by name
+	};
+	var under20 = function(item, index, items) { 
+		return item.details.age < 20;
+	};
+
+	// ................................ Assert ..................................
+
+	equal($.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
+	equal($.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
+	equal($.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
+	equal($.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array, with reverse");
+	equal($.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
+	equal($.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
+	equal($.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
+	equal($.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
+	equal($.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
+	equal($.templates("{{for start=8 end=4  step=-1 reverse=true sort=true filter=~oddIndex}}{{:}} {{/for}}").render({}, {oddIndex: oddIndex}), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true sort=true}}: Auto-create array, sort and filter not supported with auto-create arrays - do nothing");
+
+	// =============================== Arrange ===============================
+
+	var myarray = [1, 9, 2, 8, 3, 7, 4, 6, 5];
+
+	equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 ", "{{for #data sort=''}}");
+	equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "1 2 3 4 5 6 7 8 9 ", "{{for #data sort=true}}");
+	equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
+	equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 ", "{{for myarray start=1 end=-1}}");
+	equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 5 ", "{{for myarray start=1}}");
+	equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 ", "{{for myarray end=-1}}");
+	equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "1 2 3 4 5 6 7 8 9 ", "{{for myarray sort=true}}");
+	equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "9 8 7 6 5 4 3 2 1 ", "{{for myarray sort=true reverse=true}}");
+
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
+	equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 ", "{{for myarray filter=~oddValue}}");
+	equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray filter=~oddIndex}}");
+	equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
+	equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true filter=~oddIndex}}");
+	equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
+	equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
+	equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
+}
+	equal($.templates("{{for myarray step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray step=2 start=1}}");
+	equal($.templates("{{for myarray sort=true step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true step=2 start=1}}");
+	equal($.templates("{{for myarray sort=true step=2 start=3 end=6}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=3 end=6}}");
+	equal($.templates("{{for myarray sort=true step=2 start=-6 end=-3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=-6 end=-3}} Negative start or end count from the end");
+	equal($.templates("{{for myarray sort=true step=2 start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true step=2 start=3 end=3}} (outputs nothing)");
+	equal($.templates("{{for myarray step=3.5}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 8 4 ", "{{for myarray step=3.5}} - equivalent to step=3");
+	equal($.templates("{{for myarray step=-2}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 ", "{{for myarray step=-2}} equivalent to no step");
+	equal($.templates("{{for myarray step=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 ", "{{for myarray step=1}} equivalent to no step");
+	// =============================== Arrange ===============================
+
+	var mypeople = [
+		{name: "Jo", details: {age: 22}},
+		{name: "Bob", details: {age: 2}},
+		{name: "Emma", details: {age: 12}},
+		{name: "Jeff", details: {age: 13.5}},
+		{name: "Julia", details: {age: 0.6}},
+		{name: "Xavier", details: {age: 0}}
+	];
+
+	// ................................ Assert ..................................
+
+	equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ",
+		"{{for mypeople  sort='name'}}");
+	equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ",
+		"{{for mypeople  sort='details.age'}}");
+
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
+	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ",
+		"{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
+	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+		"{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+		"{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+}
+	// =============================== Arrange ===============================
+
+	var mypeople2 = [
+		{name: "Bill", details: {age: 22, role: "Lead"}},
+		{name: "Anne", details: {age: 32, role: "Assistant"}},
+		{name: "Emma", details: {age: 19.1, role: "Team member"}},
+		{name: "Jeff", details: {age: 33.5, role: "Lead"}},
+		{name: "Xavier", details: {age: 32, role: "Team member"}},
+		{name: "Julia", details: {age: 18, role: "Assistant"}},
+		{name: "Bill", details: {age: 32, role: "Team member"}}
+	];
+
+	// ................................ Assert ..................................
+
+	equal($.templates("{{for mypeople sort=~sortAgeName}}{{:name}}: ({{:details.role}}) age {{:details.age}} -{{/for}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+		"Anne: (Assistant) age 32 -Julia: (Assistant) age 18 -Jeff: (Lead) age 33.5 -Bill: (Lead) age 22 -Bill: (Team member) age 32 -Xavier: (Team member) age 32 -Emma: (Team member) age 19.1 -",
+		"{{for mypeople  sort=~sortAgeName}}: custom sort function");
+
+	// =============================== Arrange ===============================
+
+	$.views.tags("for2", {
+		baseTag: "for"
+	});
+
+	// ................................ Assert ..................................
+
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
+	equal($.templates("{{for2 mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+		"{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
+}
+});
 
 QUnit.module("{{props}}");
 test("{{props}}", 15, function() {
@@ -544,6 +661,103 @@ test("{{props}}", 15, function() {
 	equal($.render.propsTmpl({person:{zero: 0, one: 1, str: "abc", emptyStr: "", nullVal: null , trueVal: true , falseVal: false}}),
 	"header_Key: zero - Prop: 0| Key: one - Prop: 1| Key: str - Prop: abc| Key: emptyStr - Prop: | Key: nullVal - Prop: | Key: trueVal - Prop: true| Key: falseVal - Prop: false| _footer",
 	'Primitive types render correctly, even if falsey');
+});
+
+test("{{props start end sort filter reverse}}", function() {
+	// =============================== Arrange ===============================
+		function level(aField, bField) {
+			return aField > bField ? 1 : aField < bField ? -1 : 0;
+		}
+
+	var oddValue = function(item, index, items) { return item.prop%2; };
+	var oddIndex = function(item, index, items) { return index%2; };
+	var sortAgeName = function(a, b) {
+		return level(a.prop.details.role.toLowerCase(), b.prop.details.role.toLowerCase()) // First level sort: by role
+			|| level(b.prop.details.age, a.prop.details.age) // 2nd level sort: reverse sort by age
+			|| level(a.prop.name.toLowerCase(), b.prop.name.toLowerCase()); // 3rd level sort: sort by name
+	};
+
+	var under20 = function(item, index, items) { 
+		return item.prop.details.age < 20;
+	};
+
+	var myobject = {a: 1, b: 9, c: 2, d:8, A:3, B:7, C:4, D:6, e:5};
+
+	equal($.templates("{{props myobject}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject}} (original order)");
+	equal($.templates("{{props #data sort='prop'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "a 1 - c 2 - A 3 - C 4 - e 5 - D 6 - B 7 - d 8 - b 9 - ", "{{props #data sort='prop'}}");
+	equal($.templates("{{props #data sort='key'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), 	"a 1 - A 3 - b 9 - B 7 - c 2 - C 4 - d 8 - D 6 - e 5 - ", "{{props #data sort='key'}}");
+	equal($.templates("{{props #data sort='prop' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "b 9 - d 8 - B 7 - D 6 - e 5 - C 4 - A 3 - c 2 - a 1 - ", "{{props #data sort='prop' reverse=true}}");
+	equal($.templates("{{props #data sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props #data sort='key' reverse=true}}");
+	equal($.templates("{{props myobject reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - D 6 - C 4 - B 7 - A 3 - d 8 - c 2 - b 9 - a 1 - ", "{{props myobject reverse=true}}")
+	equal($.templates("{{props myobject sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props myobject sort='key' reverse=true}}")
+	equal($.templates("{{props myobject start=1 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject start=1 end=-1}}");
+	equal($.templates("{{props myobject start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject start=1}}");
+	equal($.templates("{{props myobject end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}),  "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject end=-1}}");
+
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
+	equal($.templates("{{props myobject filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - b 9 - A 3 - B 7 - e 5 - ", "{{props myobject filter=~oddValue}}");
+	equal($.templates("{{props myobject filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject filter=~oddIndex}}");
+	equal($.templates("{{props myobject sort='prop' filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - A 3 - e 5 - B 7 - b 9 - ", "{{props myobject sort='prop' filter=~oddValue}}");
+	equal($.templates("{{props myobject sort='prop' filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' filter=~oddIndex}}");
+	equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}");
+	equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
+	equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' filter=~oddIndex start=3 end=3}} (outputs nothing)");
+}
+	equal($.templates("{{props myobject step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject step=2 start=1}}");
+	equal($.templates("{{props myobject sort='prop' step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' step=2 start=1}}");
+	equal($.templates("{{props myobject sort='prop' step=2 start=3 end=6}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=3 end=6}}");
+	equal($.templates("{{props myobject sort='prop' step=2 start=-6 end=-3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=-6 end=-3}} Negative start or end count from the end");
+	equal($.templates("{{props myobject sort='prop' step=2 start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' step=2 start=3 end=3}} (outputs nothing)");
+	// =============================== Arrange ===============================
+
+	var mypeople = {
+		p1: {name: "Jo", details: {age: 22}},
+		p2: {name: "Bob", details: {age: 2}},
+		p3: {name: "Emma", details: {age: 12}},
+		p7: {name: "Jeff", details: {age: 13.5}},
+		p6: {name: "Julia", details: {age: 0.6}},
+		p5: {name: "Xavier", details: {age: 0}}
+	};
+
+	// ................................ Assert ..................................
+
+	equal($.templates("{{props mypeople sort='prop.name'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='name'}}");
+	equal($.templates("{{props mypeople sort='prop.details.age'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{props mypeople  sort='details.age'}}");
+
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
+	equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20}}");
+	equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+}
+	// =============================== Arrange ===============================
+
+	var mypeople2 = {
+		p1: {name: "Bill", details: {age: 22, role: "Lead"}},
+		p2: {name: "Anne", details: {age: 32, role: "Assistant"}},
+		p3: {name: "Emma", details: {age: 19.1, role: "Team member"}},
+		p7: {name: "Jeff", details: {age: 33.5, role: "Lead"}},
+		p6: {name: "Xavier", details: {age: 32, role: "Team member"}},
+		p5: {name: "Julia", details: {age: 18, role: "Assistant"}},
+		p4: {name: "Bill", details: {age: 32, role: "Team member"}}
+	};
+
+	// ................................ Assert ..................................
+
+	equal($.templates("{{props mypeople sort=~sortAgeName}}{{:prop.name}}: ({{:prop.details.role}}) age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+		"Anne: (Assistant) age 32 - Julia: (Assistant) age 18 - Jeff: (Lead) age 33.5 - Bill: (Lead) age 22 - Bill: (Team member) age 32 - Xavier: (Team member) age 32 - Emma: (Team member) age 19.1 - ",
+		"{{props mypeople sort=~sortAgeName}}: custom sort function");
+
+	// =============================== Arrange ===============================
+
+	$.views.tags("props2", {
+		baseTag: "props"
+	});
+
+	// ................................ Assert ..................................
+
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
+	equal($.templates("{{props2 mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
+}
 });
 
 QUnit.module("{{!-- --}}");

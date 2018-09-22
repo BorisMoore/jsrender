@@ -157,11 +157,16 @@ test("templates", function() {
 			debug:true
 		},
 		"tmplFromString": {
-			markup: "testDebug",
+			markup: "X_{{:name}}_Y",
 			debug:true
 		}
 	});
-	equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0 && $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0, true, 'Debug a template: set debug:true on object');
+	equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0
+		&& $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0
+		&& $.templates.scriptTmpl({name: "Jo"}) + $.templates.tmplFromString({name: "Jo"}), isIE8 
+		? "\nA_Jo_BX_Jo_Y"
+		: "A_Jo_BX_Jo_Y",
+		'Debug a template: set debug:true on object');
 
 	// reset
 	$("#my_tmpl")[0].removeAttribute("data-jsv-tmpl");
