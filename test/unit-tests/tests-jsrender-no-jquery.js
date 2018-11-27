@@ -1,4 +1,4 @@
-/*global test, equal, ok, QUnit*/
+/*global QUnit*/
 (function(undefined) {
 "use strict";
 
@@ -50,142 +50,142 @@ var tmplString = "A_{{:name}}_B";
 $.views.tags({sort: sort});
 
 QUnit.module("tagParser");
-test("{{if}} {{else}}", 4, function() {
-	equal(compileTmpl("A_{{if true}}{{/if}}_B"), "compiled", "Empty if block: {{if}}{{/if}}");
-	equal(compileTmpl("A_{{if true}}yes{{/if}}_B"), "compiled", "{{if}}...{{/if}}");
-	equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing {{/if}}, in template:\nA_{{if true/}}yes{{/if}}_B", "unmatched or missing tag error");
-	equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
+QUnit.test("{{if}} {{else}}", function(assert) {
+	assert.equal(compileTmpl("A_{{if true}}{{/if}}_B"), "compiled", "Empty if block: {{if}}{{/if}}");
+	assert.equal(compileTmpl("A_{{if true}}yes{{/if}}_B"), "compiled", "{{if}}...{{/if}}");
+	assert.equal(compileTmpl("A_{{if true/}}yes{{/if}}_B"), "Syntax error\nUnmatched or missing {{/if}}, in template:\nA_{{if true/}}yes{{/if}}_B", "unmatched or missing tag error");
+	assert.equal($.templates("<span id='x'></span> a'b\"c\\").render(), "<span id=\'x\'></span> a\'b\"c\\", "Correct escaping of quotes and backslash");
 });
 
-test("syntax errors", 15, function() {
-	equal(compileTmpl("{^{*:foo}}"), "Syntax error\n{^{*:foo}}", "Syntax error for {^{* ...}}");
-	equal(compileTmpl("{{:foo/}}"), "Syntax error\n{{:foo/}}", "Syntax error for {{: ... /}}");
-	equal(compileTmpl("{{:foo:}}"), "Syntax error\n{{:foo:}}", "Syntax error for {{: ... :}}");
-	equal(compileTmpl("{^{:foo:}}"), "Syntax error\n{^{:foo:}}", "Syntax error for {^{: ... :}}");
-	equal(compileTmpl("{{mytag foo :}}"), "Syntax error\n{{mytag foo :}}", "Syntax error for {{mytag ... :}}");
-	equal(compileTmpl("{^{mytag foo :}}"), "Syntax error\n{^{mytag foo :}}", "Syntax error for {^{mytag ... :}}");
-	equal(compileTmpl("{{if foo?bar:baz}}{{/if}}"), "compiled", "No syntax error for {{tag foo?bar:baz}}");
-	equal(compileTmpl("{{for [1,2]/}}"), "Syntax error\n[1,2]", "Syntax error for {{for [1,2]}} - top-level array");
-	equal(compileTmpl("{{:constructor()}}"), "Syntax error\nconstructor", "Syntax error for {{: ...constructor ...}}");
-	equal(compileTmpl("{{for #tmpl.constructor()}}"), "Syntax error\n#tmpl.constructor", "Syntax error for {{for ...constructor ...}}");
+QUnit.test("syntax errors", function(assert) {
+	assert.equal(compileTmpl("{^{*:foo}}"), "Syntax error\n{^{*:foo}}", "Syntax error for {^{* ...}}");
+	assert.equal(compileTmpl("{{:foo/}}"), "Syntax error\n{{:foo/}}", "Syntax error for {{: ... /}}");
+	assert.equal(compileTmpl("{{:foo:}}"), "Syntax error\n{{:foo:}}", "Syntax error for {{: ... :}}");
+	assert.equal(compileTmpl("{^{:foo:}}"), "Syntax error\n{^{:foo:}}", "Syntax error for {^{: ... :}}");
+	assert.equal(compileTmpl("{{mytag foo :}}"), "Syntax error\n{{mytag foo :}}", "Syntax error for {{mytag ... :}}");
+	assert.equal(compileTmpl("{^{mytag foo :}}"), "Syntax error\n{^{mytag foo :}}", "Syntax error for {^{mytag ... :}}");
+	assert.equal(compileTmpl("{{if foo?bar:baz}}{{/if}}"), "compiled", "No syntax error for {{tag foo?bar:baz}}");
+	assert.equal(compileTmpl("{{for [1,2]/}}"), "Syntax error\n[1,2]", "Syntax error for {{for [1,2]}} - top-level array");
+	assert.equal(compileTmpl("{{:constructor()}}"), "Syntax error\nconstructor", "Syntax error for {{: ...constructor ...}}");
+	assert.equal(compileTmpl("{{for #tmpl.constructor()}}"), "Syntax error\n#tmpl.constructor", "Syntax error for {{for ...constructor ...}}");
 
 $.views.settings.debugMode(true);
-	equal($.templates('{{:#data["constructor"]["constructor"]("alert(0);")()}}').render(), "{Error: Syntax error\n}", 'Syntax error 1 for ["constructor]"');
-	equal($.templates('{{:valueOf["constructor"]("alert(1);")()}}').render(1), "{Error: Syntax error\n}", 'Syntax error 2 for ["constructor]"');
-	equal($.templates('{{:valueOf["const"+"ructor"]("alert(2);")()}}').render(1), "{Error: Syntax error\n}", 'Syntax error 3 for ["constructor]"');
-	equal($.templates('{{if true ~c=toString["con" + foo + "or"]}}{{:convert=~c("alert(3);")}}{{/if}}').render({foo: "struct"}), "{Error: Syntax error\n}", 'Syntax error 1 for indirect ["constructor]"');
-	equal($.templates('{{if true ~tmp="constructo"}}{{if true ~tmp2="r"}}{{:toString[~tmp + ~tmp2]}}{{/if}}{{/if}}').render(1), "{Error: Syntax error\n}", 'Syntax error 2 for indirect ["constructor]"');
+	assert.equal($.templates('{{:#data["constructor"]["constructor"]("alert(0);")()}}').render(), "{Error: Syntax error\n}", 'Syntax error 1 for ["constructor]"');
+	assert.equal($.templates('{{:valueOf["constructor"]("alert(1);")()}}').render(1), "{Error: Syntax error\n}", 'Syntax error 2 for ["constructor]"');
+	assert.equal($.templates('{{:valueOf["const"+"ructor"]("alert(2);")()}}').render(1), "{Error: Syntax error\n}", 'Syntax error 3 for ["constructor]"');
+	assert.equal($.templates('{{if true ~c=toString["con" + foo + "or"]}}{{:convert=~c("alert(3);")}}{{/if}}').render({foo: "struct"}), "{Error: Syntax error\n}", 'Syntax error 1 for indirect ["constructor]"');
+	assert.equal($.templates('{{if true ~tmp="constructo"}}{{if true ~tmp2="r"}}{{:toString[~tmp + ~tmp2]}}{{/if}}{{/if}}').render(1), "{Error: Syntax error\n}", 'Syntax error 2 for indirect ["constructor]"');
 $.views.settings.debugMode(false);
 });
 
 QUnit.module("{{if}}");
-test("{{if}}", 4, function() {
-	equal($.templates("A_{{if true}}yes{{/if}}_B").render(), "A_yes_B", "{{if a}}: a");
-	equal($.templates("A_{{if false}}yes{{/if}}_B").render(), "A__B", "{{if a}}: !a");
-	equal($.templates("A_{{if true}}{{/if}}_B").render(), "A__B", "{{if a}}: empty: a");
-	equal($.templates("A_{{if false}}{{/if}}_B").render(), "A__B", "{{if a}}: empty: !a");
+QUnit.test("{{if}}", function(assert) {
+	assert.equal($.templates("A_{{if true}}yes{{/if}}_B").render(), "A_yes_B", "{{if a}}: a");
+	assert.equal($.templates("A_{{if false}}yes{{/if}}_B").render(), "A__B", "{{if a}}: !a");
+	assert.equal($.templates("A_{{if true}}{{/if}}_B").render(), "A__B", "{{if a}}: empty: a");
+	assert.equal($.templates("A_{{if false}}{{/if}}_B").render(), "A__B", "{{if a}}: empty: !a");
 });
 
-test("{{if}} {{else}}", 9, function() {
-	equal($.templates("A_{{if true}}yes{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else}}: a");
-	equal($.templates("A_{{if false}}yes{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else}}: !a");
-	equal($.templates("A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a");
-	equal($.templates("A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_or_B", "{{if a}} {{else b}} {{else}}: b");
-	equal($.templates("A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b");
-	equal($.templates("A_{{if undefined}}yes{{else true}}or{{else}}no{{/if}}_B").render({}), "A_or_B", "{{if undefined}} {{else b}} {{else}}: !a!b");
-	equal($.templates("A_{{if false}}yes{{else undefined}}or{{else}}no{{/if}}_B").render({}), "A_no_B", "{{if a}} {{else undefined}} {{else}}: !a!b");
-	equal($.templates("A_{{if false}}<div title='yes'{{else}}<div title='no'{{/if}}>x</div>_B").render(), "A_<div title='no'>x</div>_B", "{{if}} and {{else}} work across HTML tags");
-	equal($.templates("A_<div title='{{if true}}yes'{{else}}no'{{/if}}>x</div>_B").render(), "A_<div title='yes'>x</div>_B", "{{if}} and {{else}} work across quoted strings");
+QUnit.test("{{if}} {{else}}", function(assert) {
+	assert.equal($.templates("A_{{if true}}yes{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else}}: a");
+	assert.equal($.templates("A_{{if false}}yes{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else}}: !a");
+	assert.equal($.templates("A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a");
+	assert.equal($.templates("A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_or_B", "{{if a}} {{else b}} {{else}}: b");
+	assert.equal($.templates("A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b");
+	assert.equal($.templates("A_{{if undefined}}yes{{else true}}or{{else}}no{{/if}}_B").render({}), "A_or_B", "{{if undefined}} {{else b}} {{else}}: !a!b");
+	assert.equal($.templates("A_{{if false}}yes{{else undefined}}or{{else}}no{{/if}}_B").render({}), "A_no_B", "{{if a}} {{else undefined}} {{else}}: !a!b");
+	assert.equal($.templates("A_{{if false}}<div title='yes'{{else}}<div title='no'{{/if}}>x</div>_B").render(), "A_<div title='no'>x</div>_B", "{{if}} and {{else}} work across HTML tags");
+	assert.equal($.templates("A_<div title='{{if true}}yes'{{else}}no'{{/if}}>x</div>_B").render(), "A_<div title='yes'>x</div>_B", "{{if}} and {{else}} work across quoted strings");
 });
 
-test("{{if}} {{else}} external templates", 2, function() {
-	equal($.templates("A_{{if true tmpl='yes<br/>'/}}_B").render(), "A_yes<br/>_B", "{{if a tmpl=foo/}}: a");
-	equal($.templates("A_{{if false tmpl='yes<br/>'}}{{else false tmpl='or<br/>'}}{{else tmpl='no<br/>'}}{{/if}}_B").render(), "A_no<br/>_B", "{{if a tmpl=foo}}{{else b tmpl=bar}}{{else tmpl=baz}}: !a!b");
+QUnit.test("{{if}} {{else}} external templates", function(assert) {
+	assert.equal($.templates("A_{{if true tmpl='yes<br/>'/}}_B").render(), "A_yes<br/>_B", "{{if a tmpl=foo/}}: a");
+	assert.equal($.templates("A_{{if false tmpl='yes<br/>'}}{{else false tmpl='or<br/>'}}{{else tmpl='no<br/>'}}{{/if}}_B").render(), "A_no<br/>_B", "{{if a tmpl=foo}}{{else b tmpl=bar}}{{else tmpl=baz}}: !a!b");
 });
 
 QUnit.module("{{:}}");
-test("convert", 4, function() {
-	equal($.templates("{{>#data}}").render("<br/>'\"&"), "&lt;br/&gt;&#39;&#34;&amp;", "default html converter");
-	equal($.templates("{{html:#data}}").render("<br/>'\"&"), "&lt;br/&gt;&#39;&#34;&amp;", "html converter");
-	equal($.templates("{{:#data}}").render("<br/>'\"&"), "<br/>'\"&", "no convert");
+QUnit.test("convert", function(assert) {
+	assert.equal($.templates("{{>#data}}").render("<br/>'\"&"), "&lt;br/&gt;&#39;&#34;&amp;", "default html converter");
+	assert.equal($.templates("{{html:#data}}").render("<br/>'\"&"), "&lt;br/&gt;&#39;&#34;&amp;", "html converter");
+	assert.equal($.templates("{{:#data}}").render("<br/>'\"&"), "<br/>'\"&", "no convert");
 
 	function loc(data) {
 		switch (data) {case "desktop": return "bureau";}
 	}
 	$.views.converters("loc", loc);
-	equal($.templates("{{loc:#data}}:{{loc:'desktop'}}").render("desktop"), "bureau:bureau", '$.views.converters("loc", locFunction);... {{loc:#data}}');
+	assert.equal($.templates("{{loc:#data}}:{{loc:'desktop'}}").render("desktop"), "bureau:bureau", '$.views.converters("loc", locFunction);... {{loc:#data}}');
 });
 
-test("paths", 17, function() {
-	equal($.templates("{{:a}}").render({a: "aVal"}), "aVal", "a");
-	equal($.templates("{{:a.b}}").render({a: {b: "bVal"}}), "bVal", "a.b");
-	equal($.templates("{{:a.b.c}}").render({a: {b: {c: "cVal"}}}), "cVal", "a.b.c");
-	equal($.templates("{{:a.name}}").render({a: {name: "aName"}}), "aName", "a.name");
-	equal($.templates("{{:a['name']}}").render({a: {name: "aName"}}), "aName", "a['name']");
-	equal($.templates("{{:a['x - _*!']}}").render({a: {"x - _*!": "aName"}}), "aName", "a['x - _*!']");
-	equal($.templates("{{:#data['x - _*!']}}").render({"x - _*!": "aName"}), "aName", "#data['x - _*!']");
-	equal($.templates('{{:a["x - _*!"]}}').render({a: {"x - _*!": "aName"}}), "aName", 'a["x - _*!"]');
-	equal($.templates("{{:a.b[1].d}}").render({a: {b: [0, {d: "dVal"}]}}), "dVal", "a.b[1].d");
-	equal($.templates("{{:a.b[1].d}}").render({a: {b: {1:{d: "dVal"}}}}), "dVal", "a.b[1].d");
-	equal($.templates("{{:a.b[~incr(1-1)].d}}").render({a: {b: {1:{d: "dVal"}}}}, {incr:function(val) {return val + 1;}}), "dVal", "a.b[~incr(1-1)].d");
-	equal($.templates("{{:a.b.c.d}}").render({a: {b: {'c':{d: "dVal"}}}}), "dVal", "a.b.c.d");
-	equal($.templates("{{:a[0]}}").render({a: [ "bVal" ]}), "bVal", "a[0]");
-	equal($.templates("{{:a.b[1][0].msg}}").render({a: {b: [22,[{msg: " yes - that's right. "}]]}}), " yes - that's right. ", "a.b[1][0].msg");
-	equal($.templates("{{:#data.a}}").render({a: "aVal"}), "aVal", "#data.a");
-	equal($.templates("{{:#view.data.a}}").render({a: "aVal"}), "aVal", "#view.data.a");
-	equal($.templates("{{:#index === 0}}").render([{a: "aVal"}]), "true", "#index");
+QUnit.test("paths", function(assert) {
+	assert.equal($.templates("{{:a}}").render({a: "aVal"}), "aVal", "a");
+	assert.equal($.templates("{{:a.b}}").render({a: {b: "bVal"}}), "bVal", "a.b");
+	assert.equal($.templates("{{:a.b.c}}").render({a: {b: {c: "cVal"}}}), "cVal", "a.b.c");
+	assert.equal($.templates("{{:a.name}}").render({a: {name: "aName"}}), "aName", "a.name");
+	assert.equal($.templates("{{:a['name']}}").render({a: {name: "aName"}}), "aName", "a['name']");
+	assert.equal($.templates("{{:a['x - _*!']}}").render({a: {"x - _*!": "aName"}}), "aName", "a['x - _*!']");
+	assert.equal($.templates("{{:#data['x - _*!']}}").render({"x - _*!": "aName"}), "aName", "#data['x - _*!']");
+	assert.equal($.templates('{{:a["x - _*!"]}}').render({a: {"x - _*!": "aName"}}), "aName", 'a["x - _*!"]');
+	assert.equal($.templates("{{:a.b[1].d}}").render({a: {b: [0, {d: "dVal"}]}}), "dVal", "a.b[1].d");
+	assert.equal($.templates("{{:a.b[1].d}}").render({a: {b: {1:{d: "dVal"}}}}), "dVal", "a.b[1].d");
+	assert.equal($.templates("{{:a.b[~incr(1-1)].d}}").render({a: {b: {1:{d: "dVal"}}}}, {incr:function(val) {return val + 1;}}), "dVal", "a.b[~incr(1-1)].d");
+	assert.equal($.templates("{{:a.b.c.d}}").render({a: {b: {'c':{d: "dVal"}}}}), "dVal", "a.b.c.d");
+	assert.equal($.templates("{{:a[0]}}").render({a: [ "bVal" ]}), "bVal", "a[0]");
+	assert.equal($.templates("{{:a.b[1][0].msg}}").render({a: {b: [22,[{msg: " yes - that's right. "}]]}}), " yes - that's right. ", "a.b[1][0].msg");
+	assert.equal($.templates("{{:#data.a}}").render({a: "aVal"}), "aVal", "#data.a");
+	assert.equal($.templates("{{:#view.data.a}}").render({a: "aVal"}), "aVal", "#view.data.a");
+	assert.equal($.templates("{{:#index === 0}}").render([{a: "aVal"}]), "true", "#index");
 });
 
-test("types", function() {
-	equal($.templates("{{:'abc'}}").render(), "abc", "'abc'");
-	equal($.templates('{{:"abc"}}').render(), "abc", '"abc"');
-	equal($.templates("{{:true}}").render(), "true", "true");
-	equal($.templates("{{:false}}").render(), "false", "false");
-	equal($.templates("{{:null}}").render(), "", 'null -> ""');
-	equal($.templates("{{:199}}").render(), "199", "199");
-	equal($.templates("{{: 199.9}}").render(), "199.9", "| 199.9 |");
-	equal($.templates("{{:-33.33}}").render(), "-33.33", "-33.33");
-	equal($.templates("{{: -33.33}}").render(), "-33.33", "| -33.33 |");
-	equal($.templates("{{:-33.33 - 2.2}}").render(), "-35.53", "-33.33 - 2.2");
-	equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
-	equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
-	equal($.templates("{{:x=22}}").render("aString"), "aString", "{{:x=...}} returns current data item");
-	equal($.templates("{{html:x=22}}").render("aString"), "aString", "{{html:x=...}} returns current data item");
-	equal($.templates("{{>x=22}}").render("aString"), "aString", "{{>x=...}} returns current data item");
-	equal($.templates("{{:'abc('}}").render(), "abc(", "'abc(': final paren in string is rendered correctly"); // https://github.com/BorisMoore/jsviews/issues/300
-	equal($.templates('{{:"abc("}}').render(), "abc(", '"abc(": final paren in string is rendered correctly');
-	equal($.templates("{{:(('(abc('))}}").render(), "(abc(", "(('(abc('))");
-	equal($.templates('{{:((")abc)"))}}').render(), ")abc)", '((")abc)"))');
+QUnit.test("types", function(assert) {
+	assert.equal($.templates("{{:'abc'}}").render(), "abc", "'abc'");
+	assert.equal($.templates('{{:"abc"}}').render(), "abc", '"abc"');
+	assert.equal($.templates("{{:true}}").render(), "true", "true");
+	assert.equal($.templates("{{:false}}").render(), "false", "false");
+	assert.equal($.templates("{{:null}}").render(), "", 'null -> ""');
+	assert.equal($.templates("{{:199}}").render(), "199", "199");
+	assert.equal($.templates("{{: 199.9}}").render(), "199.9", "| 199.9 |");
+	assert.equal($.templates("{{:-33.33}}").render(), "-33.33", "-33.33");
+	assert.equal($.templates("{{: -33.33}}").render(), "-33.33", "| -33.33 |");
+	assert.equal($.templates("{{:-33.33 - 2.2}}").render(), "-35.53", "-33.33 - 2.2");
+	assert.equal($.templates("{{:notdefined}}").render({}), "", "notdefined");
+	assert.equal($.templates("{{:}}").render("aString"), "aString", "{{:}} returns current data item");
+	assert.equal($.templates("{{:x=22}}").render("aString"), "aString", "{{:x=...}} returns current data item");
+	assert.equal($.templates("{{html:x=22}}").render("aString"), "aString", "{{html:x=...}} returns current data item");
+	assert.equal($.templates("{{>x=22}}").render("aString"), "aString", "{{>x=...}} returns current data item");
+	assert.equal($.templates("{{:'abc('}}").render(), "abc(", "'abc(': final paren in string is rendered correctly"); // https://github.com/BorisMoore/jsviews/issues/300
+	assert.equal($.templates('{{:"abc("}}').render(), "abc(", '"abc(": final paren in string is rendered correctly');
+	assert.equal($.templates("{{:(('(abc('))}}").render(), "(abc(", "(('(abc('))");
+	assert.equal($.templates('{{:((")abc)"))}}').render(), ")abc)", '((")abc)"))');
 });
 
-test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'fallback'}}, etc.", function() {
+QUnit.test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'fallback'}}, etc.", function(assert) {
 	var message;
 	try {
 		$.templates("{{:a.missing.willThrow.path}}").render({a:1});
 	} catch (e) {
 		message = e.message;
 	}
-	ok(!!message,
+	assert.ok(!!message,
 		"{{:a.missing.willThrow.path}} throws: " + message);
 
-	equal($.templates("{{:a.missing.willThrow.path onError='Missing Object'}}").render({a:1}), "Missing Object",
+	assert.equal($.templates("{{:a.missing.willThrow.path onError='Missing Object'}}").render({a:1}), "Missing Object",
 		'{{:a.missing.willThrow.path onError="Missing Object"}} renders "Missing Object"');
-	equal($.templates('{{:a.missing.willThrow.path onError=""}}').render({a:1}), "",
+	assert.equal($.templates('{{:a.missing.willThrow.path onError=""}}').render({a:1}), "",
 		'{{:a.missing.willThrow.path onError=""}} renders ""');
-	equal($.templates("{{:a.missing.willThrow.path onError=null}}").render({a:1}), "",
+	assert.equal($.templates("{{:a.missing.willThrow.path onError=null}}").render({a:1}), "",
 		'{{:a.missing.willThrow.path onError=null}} renders ""');
-	equal($.templates("{{>a.missing.willThrow.path onError='Missing Object'}}").render({a:1}), "Missing Object",
+	assert.equal($.templates("{{>a.missing.willThrow.path onError='Missing Object'}}").render({a:1}), "Missing Object",
 		'{{>a.missing.willThrow.path onError="Missing Object"}} renders "Missing Object"');
-	equal($.templates('{{>a.missing.willThrow.path onError=""}}').render({a:1}), "",
+	assert.equal($.templates('{{>a.missing.willThrow.path onError=""}}').render({a:1}), "",
 		'{{>a.missing.willThrow.path onError=""}} renders ""');
-	equal($.templates("{{>a.missing.willThrow.path onError=defaultVal}}").render(
+	assert.equal($.templates("{{>a.missing.willThrow.path onError=defaultVal}}").render(
 		{
 			a:1,
 			defaultVal: "defaultFromData"
 		}), "defaultFromData",
 		'{{>a.missing.willThrow.path onError=defaultVal}} renders "defaultFromData"');
 
-	equal($.templates("{{>a.missing.willThrow.path onError=~myOnErrorFunction}}").render({a:1}, {
+	assert.equal($.templates("{{>a.missing.willThrow.path onError=~myOnErrorFunction}}").render({a:1}, {
 		myOnErrorFunction: function(e, view) {
 			return "Override onError using a callback: " + view.ctx.helperValue + e.message;
 		},
@@ -194,7 +194,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		'{{>a.missing.willThrow.path onError=~myOnErrorFunction}}" >' +
 		'\nProviding a function "onError=~myOnErrorFunction" calls the function as onError callback');
 
-	equal($.templates("{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}").render(
+	assert.equal($.templates("{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}").render(
 		{
 			a: "dataValue",
 			myOnErrorDataMethod: function(e) {
@@ -205,7 +205,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		'{{>a.missing.willThrow.path onError=myOnErrorDataMethod}}" >' +
 		'\nProviding a function "onError=myOnErrorDataMethod" calls the function as onError callback');
 
-	equal($.templates("1: {{>a.missing.willThrow.path onError=defaultVal}}" +
+	assert.equal($.templates("1: {{>a.missing.willThrow.path onError=defaultVal}}" +
 		" 2: {{:a.missing.willThrow.path onError='Missing Object'}}" +
 		" 3: {{:a.missing.willThrow.path onError=''}}" +
 		" 4: {{:a.missing.willThrow.path onError=null}}" +
@@ -221,7 +221,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		}), "1: defaultFromData 2: Missing Object 3:  4:  5: aVal 6:  7: myCallback: aVal end",
 		'multiple onError fallbacks in same template - correctly concatenated into output');
 
-	equal($.templates({
+	assert.equal($.templates({
 		markup: "{{withfallback:a.notdefined fallback='fallback for undefined'}}",
 		converters: {
 			withfallback: function(val) {
@@ -232,7 +232,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		'{{withfallback:a.notdefined fallback="fallback for undefined"}}' +
 		'\nusing converter to get fallback value for undefined properties');
 
-	equal($.templates({
+	assert.equal($.templates({
 		markup: "1: {{withfallback:a.missing.y onError='Missing object' fallback='undefined prop'}}" +
 			" 2: {{withfallback:a.undefined onError='Missing object' fallback='undefined prop'}}",
 		converters: {
@@ -243,7 +243,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 	}).render({a:"yes"}), "1: Missing object 2: undefined prop",
 		'both fallback for undefined and onError for missing on same tags');
 
-	equal($.templates({
+	assert.equal($.templates({
 		markup: "1: {{>a.missing.willThrow.path onError=defaultVal}}" +
 		" 2: {{:a.missing.willThrow.path onError='Missing Object'}}" +
 		" 3: {{:a.missing.willThrow.path onError=''}}" +
@@ -293,22 +293,22 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		message = e.message;
 	}
 
-	ok(!!message,
+	assert.ok(!!message,
 		'onError/fallback converter and regular thrown error message in same template: throws:\n"' + message + '"');
 
-	equal($.templates("{{for missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+	assert.equal($.templates("{{for missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
 		'{{for missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates("{{for true missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+	assert.equal($.templates("{{for true missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
 		'{{for true missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates("{{for true foo=missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+	assert.equal($.templates("{{for true foo=missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
 		'{{for ... foo=missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates("{{for true ~foo=missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
+	assert.equal($.templates("{{for true ~foo=missing.willThrow.path onError='Missing Object'}}yes{{/for}}").render({a:1}), "Missing Object",
 		'{{for ... ~foo=missing.willThrow.path onError="Missing Object"}} -> "Missing Object"');
 
-	equal($.templates({
+	assert.equal($.templates({
 			markup: "{{mytag foo='a'/}} {{mytag foo=missing.willThrow.path onError='Missing Object'/}} {{mytag foo='c' bar=missing.willThrow.path onError='Missing Object'/}} {{mytag foo='c' missing.willThrow.path onError='Missing Object'/}} {{mytag foo='b'/}}",
 			tags: {
 				mytag: {template: "MyTag: {{:~tagCtx.props.foo}} end"}
@@ -316,7 +316,7 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		}).render({a:1}), "MyTag: a end Missing Object Missing Object Missing Object MyTag: b end",
 		'onError=... for custom tags: e.g. {{mytag foo=missing.willThrow.path onError="Missing Object"/}}');
 
-	equal($.templates({
+	assert.equal($.templates({
 		markup: "1: {{for a.missing.willThrow.path onError=defaultVal}}yes{{/for}}" +
 		" 2: {{if a.missing.willThrow.path onError='Missing Object'}}yes{{/if}}" +
 		" 3: {{include a.missing.willThrow.path onError=''/}}" +
@@ -370,11 +370,11 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 		message = e.message;
 	}
 
-	ok(!!message,
+	assert.ok(!!message,
 		'onError/fallback converter and regular thrown error message in same template: throws: \n"' + message + '"');
 
 	$.views.settings.debugMode(true);
-	equal($.templates({
+	assert.equal($.templates({
 		markup: "1: {{for a.missing.willThrow.path onError=defaultVal}}yes{{/for}}" +
 		" 2: {{if a.missing.willThrow.path onError='Missing Object'}}yes{{/if}}" +
 		" 3: {{include a.missing.willThrow.path onError=''/}}" +
@@ -402,84 +402,84 @@ test("Fallbacks for missing or undefined paths:\nusing {{:some.path onError = 'f
 
 });
 
-test("comparisons", 22,function() {
-	equal($.templates("{{:1<2}}").render(), "true", "1<2");
-	equal($.templates("{{:2<1}}").render(), "false", "2<1");
-	equal($.templates("{{:5===5}}").render(), "true", "5===5");
-	equal($.templates("{{:0==''}}").render(), "true", "0==''");
-	equal($.templates("{{:'ab'=='ab'}}").render(), "true", "'ab'=='ab'");
-	equal($.templates("{{:2>1}}").render(), "true", "2>1");
-	equal($.templates("{{:2 == 2}}").render(), "true", "2 == 2");
-	equal($.templates("{{:2<=2}}").render(), "true", "2<=2");
-	equal($.templates("{{:'ab'<'ac'}}").render(), "true", "'ab'<'ac'");
-	equal($.templates("{{:3>=3}}").render(), "true", "3 =3");
-	equal($.templates("{{:3>=2}}").render(), "true", "3>=2");
-	equal($.templates("{{:3>=4}}").render(), "false", "3>=4");
-	equal($.templates("{{:3 !== 2}}").render(), "true", "3 !== 2");
-	equal($.templates("{{:3 != 2}}").render(), "true", "3 != 2");
-	equal($.templates("{{:0 !== null}}").render(), "true", "0 !== null");
-	equal($.templates("{{:(3 >= 4)}}").render(), "false", "3>=4");
-	equal($.templates("{{:3 >= 4}}").render(), "false", "3>=4");
-	equal($.templates("{{:(3>=4)}}").render(), "false", "3>=4");
-	equal($.templates("{{:(3 < 4)}}").render(), "true", "3>=4");
-	equal($.templates("{{:3 < 4}}").render(), "true", "3>=4");
-	equal($.templates("{{:(3<4)}}").render(), "true", "3>=4");
-	equal($.templates("{{:0 != null}}").render(), "true", "0 != null");
+QUnit.test("comparisons", function(assert) {
+	assert.equal($.templates("{{:1<2}}").render(), "true", "1<2");
+	assert.equal($.templates("{{:2<1}}").render(), "false", "2<1");
+	assert.equal($.templates("{{:5===5}}").render(), "true", "5===5");
+	assert.equal($.templates("{{:0==''}}").render(), "true", "0==''");
+	assert.equal($.templates("{{:'ab'=='ab'}}").render(), "true", "'ab'=='ab'");
+	assert.equal($.templates("{{:2>1}}").render(), "true", "2>1");
+	assert.equal($.templates("{{:2 == 2}}").render(), "true", "2 == 2");
+	assert.equal($.templates("{{:2<=2}}").render(), "true", "2<=2");
+	assert.equal($.templates("{{:'ab'<'ac'}}").render(), "true", "'ab'<'ac'");
+	assert.equal($.templates("{{:3>=3}}").render(), "true", "3 =3");
+	assert.equal($.templates("{{:3>=2}}").render(), "true", "3>=2");
+	assert.equal($.templates("{{:3>=4}}").render(), "false", "3>=4");
+	assert.equal($.templates("{{:3 !== 2}}").render(), "true", "3 !== 2");
+	assert.equal($.templates("{{:3 != 2}}").render(), "true", "3 != 2");
+	assert.equal($.templates("{{:0 !== null}}").render(), "true", "0 !== null");
+	assert.equal($.templates("{{:(3 >= 4)}}").render(), "false", "3>=4");
+	assert.equal($.templates("{{:3 >= 4}}").render(), "false", "3>=4");
+	assert.equal($.templates("{{:(3>=4)}}").render(), "false", "3>=4");
+	assert.equal($.templates("{{:(3 < 4)}}").render(), "true", "3>=4");
+	assert.equal($.templates("{{:3 < 4}}").render(), "true", "3>=4");
+	assert.equal($.templates("{{:(3<4)}}").render(), "true", "3>=4");
+	assert.equal($.templates("{{:0 != null}}").render(), "true", "0 != null");
 });
 
-test("array access", function() {
-	equal($.templates("{{:a[1]}}").render({a: ["a0","a1"]}), "a1", "a[1]");
-	equal($.templates("{{:a[1+1]+5}}").render({a: [11,22,33]}), "38", "a[1+1]+5)");
-	equal($.templates("{{:a[~incr(1)]+5}}").render({a: [11,22,33]}, {incr:function(val) {return val + 1;}}), "38", "a[~incr(1)]+5");
-	equal($.templates("{{:true && (a[0] || 'default')}}").render({a: [0,22,33]}, {incr:function(val) {return val + 1;}}), "default", "true && (a[0] || 'default')");
+QUnit.test("array access", function(assert) {
+	assert.equal($.templates("{{:a[1]}}").render({a: ["a0","a1"]}), "a1", "a[1]");
+	assert.equal($.templates("{{:a[1+1]+5}}").render({a: [11,22,33]}), "38", "a[1+1]+5)");
+	assert.equal($.templates("{{:a[~incr(1)]+5}}").render({a: [11,22,33]}, {incr:function(val) {return val + 1;}}), "38", "a[~incr(1)]+5");
+	assert.equal($.templates("{{:true && (a[0] || 'default')}}").render({a: [0,22,33]}, {incr:function(val) {return val + 1;}}), "default", "true && (a[0] || 'default')");
 });
 
-test("context", 5, function() {
-	equal($.templates("{{:~val}}").render(1, {val: "myvalue"}), "myvalue", "~val");
+QUnit.test("context", function(assert) {
+	assert.equal($.templates("{{:~val}}").render(1, {val: "myvalue"}), "myvalue", "~val");
 	function format(value, upper) {
 		return value[upper ? "toUpperCase" : "toLowerCase"]();
 	}
-	equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, {format: format}), "joJO",
+	assert.equal($.templates("{{:~format(name) + ~format(name, true)}}").render(person, {format: format}), "joJO",
 		"render(data, {format: formatFn}); ... {{:~format(name, true)}}");
-	equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({people: people}, {format: format, type: "PascalCase"}), "pascalcaseJO",
+	assert.equal($.templates("{{for people[0]}}{{:~format(~type) + ~format(name, true)}}{{/for}}").render({people: people}, {format: format, type: "PascalCase"}), "pascalcaseJO",
 		"render(data, {format: formatFn}); ... {{:~format(name, true)}}");
-	equal($.templates("{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}").render({people: people, town:"Redmond"}, {format: format}),
+	assert.equal($.templates("{{for people ~twn=town}}{{:name}} lives in {{:~format(~twn, true)}}. {{/for}}").render({people: people, town:"Redmond"}, {format: format}),
 		"Jo lives in REDMOND. Bill lives in REDMOND. ",
 		"Passing in context to nested templates: {{for people ~twn=town}}");
-	equal($.templates("{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({people: people}), "JoJo",
+	assert.equal($.templates("{{if true}}{{for people}}{{:~root.people[0].name}}{{/for}}{{/if}}").render({people: people}), "JoJo",
 		"{{:~root}} returns the top-level data");
 });
 
-test("values", 4, function() {
-	equal($.templates("{{:a}}").render({a: 0}), "0", '{{:0}} returns "0"');
-	equal($.templates("{{:a}}").render({}), "", "{{:undefined}} returns empty string");
-	equal($.templates("{{:a}}").render({a: ""}), "", "{{:''}} returns empty string");
-	equal($.templates("{{:a}}").render({a: null}), "", "{{:null}} returns empty string");
+QUnit.test("values", function(assert) {
+	assert.equal($.templates("{{:a}}").render({a: 0}), "0", '{{:0}} returns "0"');
+	assert.equal($.templates("{{:a}}").render({}), "", "{{:undefined}} returns empty string");
+	assert.equal($.templates("{{:a}}").render({a: ""}), "", "{{:''}} returns empty string");
+	assert.equal($.templates("{{:a}}").render({a: null}), "", "{{:null}} returns empty string");
 });
 
-test("expressions", 18, function() {
-	equal(compileTmpl("{{:a++}}"), "Syntax error\na++", "a++");
-	equal(compileTmpl("{{:(a,b)}}"), "Syntax error\n(a,b)", "(a,b)");
-	equal($.templates("{{: a+2}}").render({a: 2, b: false}), "4", "a+2");
-	equal($.templates("{{: b?'yes':'no'}}").render({a: 2, b: false}), "no", "b?'yes':'no'");
-	equal($.templates("{{:(a||-1) + (b||-1)}}").render({a: 2, b: 0}), "1", "a||-1");
-	equal($.templates("{{:3*b()*!a*4/3}}").render({a: false, b: function() {return 3;}}), "12", "3*b()*!a*4/3");
-	equal($.templates("{{:a%b}}").render({a: 30, b: 16}), "14", "a%b");
-	equal($.templates("A_{{if v1 && v2 && v3 && v4}}no{{else !v1 && v2 || v3 && v4}}yes{{/if}}_B").render({v1:true,v2:false,v3:2,v4:"foo"}), "A_yes_B", "x && y || z");
-	equal($.templates("{{:!true}}").render({}), "false", "!true");
-	equal($.templates("{{if !true}}yes{{else}}no{{/if}}").render({}), "no", "{{if !true}}...");
-	equal($.templates("{{:!false}}").render({}), "true", "!false");
-	equal($.templates("{{if !false}}yes{{else}}no{{/if}}").render({}), "yes", "{{if !false}}...");
-	equal($.templates("{{:!!true}}").render({}), "true", "!!true");
-	equal($.templates("{{if !!true}}yes{{else}}no{{/if}}").render({}), "yes", "{{if !!true}}...");
-	equal($.templates("{{:!(true)}}").render({}), "false", "!(true)");
-	equal($.templates("{{:!true === false}}").render({}), "true", "!true === false");
-	equal($.templates("{{:false === !true}}").render({}), "true", "false === !true");
-	equal($.templates("{{:false === !null}}").render({}), "false", "false === !null");
+QUnit.test("expressions", function(assert) {
+	assert.equal(compileTmpl("{{:a++}}"), "Syntax error\na++", "a++");
+	assert.equal(compileTmpl("{{:(a,b)}}"), "Syntax error\n(a,b)", "(a,b)");
+	assert.equal($.templates("{{: a+2}}").render({a: 2, b: false}), "4", "a+2");
+	assert.equal($.templates("{{: b?'yes':'no'}}").render({a: 2, b: false}), "no", "b?'yes':'no'");
+	assert.equal($.templates("{{:(a||-1) + (b||-1)}}").render({a: 2, b: 0}), "1", "a||-1");
+	assert.equal($.templates("{{:3*b()*!a*4/3}}").render({a: false, b: function() {return 3;}}), "12", "3*b()*!a*4/3");
+	assert.equal($.templates("{{:a%b}}").render({a: 30, b: 16}), "14", "a%b");
+	assert.equal($.templates("A_{{if v1 && v2 && v3 && v4}}no{{else !v1 && v2 || v3 && v4}}yes{{/if}}_B").render({v1:true,v2:false,v3:2,v4:"foo"}), "A_yes_B", "x && y || z");
+	assert.equal($.templates("{{:!true}}").render({}), "false", "!true");
+	assert.equal($.templates("{{if !true}}yes{{else}}no{{/if}}").render({}), "no", "{{if !true}}...");
+	assert.equal($.templates("{{:!false}}").render({}), "true", "!false");
+	assert.equal($.templates("{{if !false}}yes{{else}}no{{/if}}").render({}), "yes", "{{if !false}}...");
+	assert.equal($.templates("{{:!!true}}").render({}), "true", "!!true");
+	assert.equal($.templates("{{if !!true}}yes{{else}}no{{/if}}").render({}), "yes", "{{if !!true}}...");
+	assert.equal($.templates("{{:!(true)}}").render({}), "false", "!(true)");
+	assert.equal($.templates("{{:!true === false}}").render({}), "true", "!true === false");
+	assert.equal($.templates("{{:false === !true}}").render({}), "true", "false === !true");
+	assert.equal($.templates("{{:false === !null}}").render({}), "false", "false === !null");
 });
 
 QUnit.module("{{for}}");
-test("{{for}}", 17, function() {
+QUnit.test("{{for}}", function(assert) {
 	$.templates({
 		forTmpl: "header_{{for people}}{{:name}}{{/for}}_footer",
 		templateForArray: "header_{{for #data}}{{:name}}{{/for}}_footer",
@@ -489,26 +489,26 @@ test("{{for}}", 17, function() {
 		testTmpl: "xxx{{:name}} {{:~foo}}"
 	});
 
-	equal($.render.forTmpl({people: people}), "header_JoBill_footer", '{{for people}}...{{/for}}');
-	equal($.render.templateForArray([people]), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
-	equal($.render.pageTmpl({people: people}), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}');
-	equal($.templates("{{for}}xxx{{:name}} {{:~foo}}{{/for}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}");
-	equal($.templates("{{for tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", ": {{for tmpl=.../}} no parameter - equivalent to {{include tmpl=.../}} - renders once with parent #data context");
-	equal($.templates("{{include tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "{{include tmpl=.../}} with tmpl parameter - renders once with parent #data context. Equivalent to {{for tmpl=.../}}");
-	equal($.templates("{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}").render({}), "", "missingProperty - renders empty string");
-	equal($.templates("{{for null}}xxx{{:#data===null}}{{/for}}").render(), "xxxtrue", "null - renders once with #data null: {{for null}}");
-	equal($.templates("{{for false}}xxx{{:#data}}{{/for}}").render(), "xxxfalse", "false - renders once with #data false: {{for false}}");
-	equal($.templates("{{for 0}}xxx{{:#data}}{{/for}}").render(), "xxx0", "0 - renders once with #data false: {{for 0}}");
-	equal($.templates("{{for ''}}xxx{{:#data===''}}{{/for}}").render(), "xxxtrue", "'' - renders once with #data false: {{for ''}}");
-	equal($.templates("{{for #data}}{{:name}}{{/for}}").render(people), "JoBill", "If #data is an array, {{for #data}} iterates");
+	assert.equal($.render.forTmpl({people: people}), "header_JoBill_footer", '{{for people}}...{{/for}}');
+	assert.equal($.render.templateForArray([people]), "header_JoBill_footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
+	assert.equal($.render.pageTmpl({people: people}), "header_JoBill_footer", '{{for [people] tmpl="templateForArray"/}}');
+	assert.equal($.templates("{{for}}xxx{{:name}} {{:~foo}}{{/for}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "no parameter - renders once with parent #data context: {{for}}");
+	assert.equal($.templates("{{for tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", ": {{for tmpl=.../}} no parameter - equivalent to {{include tmpl=.../}} - renders once with parent #data context");
+	assert.equal($.templates("{{include tmpl='testTmpl'/}}").render({name: "Jeff"}, {foo:"fooVal"}), "xxxJeff fooVal", "{{include tmpl=.../}} with tmpl parameter - renders once with parent #data context. Equivalent to {{for tmpl=.../}}");
+	assert.equal($.templates("{{for missingProperty}}xxx{{:#data===~undefined}}{{/for}}").render({}), "", "missingProperty - renders empty string");
+	assert.equal($.templates("{{for null}}xxx{{:#data===null}}{{/for}}").render(), "xxxtrue", "null - renders once with #data null: {{for null}}");
+	assert.equal($.templates("{{for false}}xxx{{:#data}}{{/for}}").render(), "xxxfalse", "false - renders once with #data false: {{for false}}");
+	assert.equal($.templates("{{for 0}}xxx{{:#data}}{{/for}}").render(), "xxx0", "0 - renders once with #data false: {{for 0}}");
+	assert.equal($.templates("{{for ''}}xxx{{:#data===''}}{{/for}}").render(), "xxxtrue", "'' - renders once with #data false: {{for ''}}");
+	assert.equal($.templates("{{for #data}}{{:name}}{{/for}}").render(people), "JoBill", "If #data is an array, {{for #data}} iterates");
 
-	equal($.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string');
-	equal($.render.simpleFor({people:["", false, null, undefined, 1]}), "aContent|Contentfalse|Content|Content|Content1|b", 'Empty string, false, null or undefined members of array are also rendered');
-	equal($.render.simpleFor({people:null}), "aContent|b", 'null is rendered once with #data null');
-	equal($.render.simpleFor({}), "ab", 'if #data is undefined, renders empty string');
-	equal($.render.forPrimitiveDataTypes({people:[0, 1, "abc", "", ,null ,true ,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey');
+	assert.equal($.render.simpleFor({people:[]}), "ab", 'Empty array renders empty string');
+	assert.equal($.render.simpleFor({people:["", false, null, undefined, 1]}), "aContent|Contentfalse|Content|Content|Content1|b", 'Empty string, false, null or undefined members of array are also rendered');
+	assert.equal($.render.simpleFor({people:null}), "aContent|b", 'null is rendered once with #data null');
+	assert.equal($.render.simpleFor({}), "ab", 'if #data is undefined, renders empty string');
+	assert.equal($.render.forPrimitiveDataTypes({people:[0, 1, "abc", "", ,null ,true ,false]}), "a|0|1|abc||||true|falseb", 'Primitive types render correctly, even if falsey');
 });
-test("{{for start end sort filter reverse}}", function() {
+QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 	// =============================== Arrange ===============================
 	function level(aField, bField) {
 		return aField > bField ? 1 : aField < bField ? -1 : 0;
@@ -527,47 +527,47 @@ test("{{for start end sort filter reverse}}", function() {
 
 	// ................................ Assert ..................................
 
-	equal($.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
-	equal($.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
-	equal($.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
-	equal($.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array, with reverse");
-	equal($.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
-	equal($.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
-	equal($.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
-	equal($.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
-	equal($.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
-	equal($.templates("{{for start=8 end=4  step=-1 reverse=true sort=true filter=~oddIndex}}{{:}} {{/for}}").render({}, {oddIndex: oddIndex}), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true sort=true}}: Auto-create array, sort and filter not supported with auto-create arrays - do nothing");
+	assert.equal($.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
+	assert.equal($.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
+	assert.equal($.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
+	assert.equal($.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array, with reverse");
+	assert.equal($.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
+	assert.equal($.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
+	assert.equal($.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
+	assert.equal($.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
+	assert.equal($.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
+	assert.equal($.templates("{{for start=8 end=4  step=-1 reverse=true sort=true filter=~oddIndex}}{{:}} {{/for}}").render({}, {oddIndex: oddIndex}), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true sort=true}}: Auto-create array, sort and filter not supported with auto-create arrays - do nothing");
 
 	// =============================== Arrange ===============================
 
 	var myarray = [1, 9, 2, 8, 3, 7, 4, 6, 5];
 
-	equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 ", "{{for #data sort=''}}");
-	equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "1 2 3 4 5 6 7 8 9 ", "{{for #data sort=true}}");
-	equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
-	equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 ", "{{for myarray start=1 end=-1}}");
-	equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 5 ", "{{for myarray start=1}}");
-	equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 ", "{{for myarray end=-1}}");
-	equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "1 2 3 4 5 6 7 8 9 ", "{{for myarray sort=true}}");
-	equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "9 8 7 6 5 4 3 2 1 ", "{{for myarray sort=true reverse=true}}");
+	assert.equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 ", "{{for #data sort=''}}");
+	assert.equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "1 2 3 4 5 6 7 8 9 ", "{{for #data sort=true}}");
+	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
+	assert.equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 ", "{{for myarray start=1 end=-1}}");
+	assert.equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 5 ", "{{for myarray start=1}}");
+	assert.equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 ", "{{for myarray end=-1}}");
+	assert.equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "1 2 3 4 5 6 7 8 9 ", "{{for myarray sort=true}}");
+	assert.equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "9 8 7 6 5 4 3 2 1 ", "{{for myarray sort=true reverse=true}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 ", "{{for myarray filter=~oddValue}}");
-	equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray filter=~oddIndex}}");
-	equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true filter=~oddIndex}}");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
+	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 ", "{{for myarray filter=~oddValue}}");
+	assert.equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray filter=~oddIndex}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true filter=~oddIndex}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
 }
-	equal($.templates("{{for myarray step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray step=2 start=1}}");
-	equal($.templates("{{for myarray sort=true step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true step=2 start=1}}");
-	equal($.templates("{{for myarray sort=true step=2 start=3 end=6}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=3 end=6}}");
-	equal($.templates("{{for myarray sort=true step=2 start=-6 end=-3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=-6 end=-3}} Negative start or end count from the end");
-	equal($.templates("{{for myarray sort=true step=2 start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true step=2 start=3 end=3}} (outputs nothing)");
-	equal($.templates("{{for myarray step=3.5}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 8 4 ", "{{for myarray step=3.5}} - equivalent to step=3");
-	equal($.templates("{{for myarray step=-2}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 ", "{{for myarray step=-2}} equivalent to no step");
-	equal($.templates("{{for myarray step=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 ", "{{for myarray step=1}} equivalent to no step");
+	assert.equal($.templates("{{for myarray step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray step=2 start=1}}");
+	assert.equal($.templates("{{for myarray sort=true step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true step=2 start=1}}");
+	assert.equal($.templates("{{for myarray sort=true step=2 start=3 end=6}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=3 end=6}}");
+	assert.equal($.templates("{{for myarray sort=true step=2 start=-6 end=-3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=-6 end=-3}} Negative start or end count from the end");
+	assert.equal($.templates("{{for myarray sort=true step=2 start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true step=2 start=3 end=3}} (outputs nothing)");
+	assert.equal($.templates("{{for myarray step=3.5}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 8 4 ", "{{for myarray step=3.5}} - equivalent to step=3");
+	assert.equal($.templates("{{for myarray step=-2}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 ", "{{for myarray step=-2}} equivalent to no step");
+	assert.equal($.templates("{{for myarray step=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 ", "{{for myarray step=1}} equivalent to no step");
 	// =============================== Arrange ===============================
 
 	var mypeople = [
@@ -581,17 +581,17 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 
 	// ................................ Assert ..................................
 
-	equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ",
+	assert.equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ",
 		"{{for mypeople  sort='name'}}");
-	equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ",
+	assert.equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ",
 		"{{for mypeople  sort='details.age'}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ",
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ",
 		"{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
-	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
 		"{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
-	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
 		"{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
 }
 	// =============================== Arrange ===============================
@@ -608,7 +608,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 
 	// ................................ Assert ..................................
 
-	equal($.templates("{{for mypeople sort=~sortAgeName}}{{:name}}: ({{:details.role}}) age {{:details.age}} -{{/for}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+	assert.equal($.templates("{{for mypeople sort=~sortAgeName}}{{:name}}: ({{:details.role}}) age {{:details.age}} -{{/for}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
 		"Anne: (Assistant) age 32 -Julia: (Assistant) age 18 -Jeff: (Lead) age 33.5 -Bill: (Lead) age 22 -Bill: (Team member) age 32 -Xavier: (Team member) age 32 -Emma: (Team member) age 19.1 -",
 		"{{for mypeople  sort=~sortAgeName}}: custom sort function");
 
@@ -621,13 +621,13 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Assert ..................................
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{for2 mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+	assert.equal($.templates("{{for2 mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
 		"{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
 }
 });
 
 QUnit.module("{{props}}");
-test("{{props}}", 15, function() {
+QUnit.test("{{props}}", function(assert) {
 	$.templates({
 		propsTmpl: "header_{{props person}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}_footer",
 		propsTmplObjectArray: "header_{{props people}}Key: {{:key}} - Prop: {{for prop}}{{:name}} {{/for}}{{/props}}_footer",
@@ -640,30 +640,30 @@ test("{{props}}", 15, function() {
 		testTmpl: "xxx{{:name}} {{:~foo}}"
 	});
 
-	equal($.render.propsTmpl({person: people[0]}), "header_Key: name - Prop: Jo| _footer", '{{props person}}...{{/props}} for an object iterates over properties');
-	equal($.render.propsTmplObjectArray({people: people}), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", '{{props people}}...{{/props}} for an array iterates over the array - with index as key and object a prop');
-	equal($.render.templatePropsArray([people]), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
-	equal($.render.pageTmpl({person: people[0]}), "Key: name - Prop: Jo", '{{props person tmpl="propTmpl"/}}');
-	equal($.templates("{{props}}{{:key}} {{:prop}}{{/props}}").render({name: "Jeff"}), "name Jeff", "no parameter - defaults to current data item");
-	equal($.templates("{{props foo}}xxx{{:key}} {{:prop}} {{:~foo}}{{/props}}").render({name: "Jeff"}), "", "undefined arg - renders nothing");
-	equal($.templates("{{props tmpl='propTmpl'/}}").render({name: "Jeff"}), "Key: name - Prop: Jeff", ": {{props tmpl=.../}} no parameter - defaults to current data item");
+	assert.equal($.render.propsTmpl({person: people[0]}), "header_Key: name - Prop: Jo| _footer", '{{props person}}...{{/props}} for an object iterates over properties');
+	assert.equal($.render.propsTmplObjectArray({people: people}), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", '{{props people}}...{{/props}} for an array iterates over the array - with index as key and object a prop');
+	assert.equal($.render.templatePropsArray([people]), "header_Key: 0 - Prop: Jo Key: 1 - Prop: Bill _footer", 'Can render a template against an array, as a "layout template", by wrapping array in an array');
+	assert.equal($.render.pageTmpl({person: people[0]}), "Key: name - Prop: Jo", '{{props person tmpl="propTmpl"/}}');
+	assert.equal($.templates("{{props}}{{:key}} {{:prop}}{{/props}}").render({name: "Jeff"}), "name Jeff", "no parameter - defaults to current data item");
+	assert.equal($.templates("{{props foo}}xxx{{:key}} {{:prop}} {{:~foo}}{{/props}}").render({name: "Jeff"}), "", "undefined arg - renders nothing");
+	assert.equal($.templates("{{props tmpl='propTmpl'/}}").render({name: "Jeff"}), "Key: name - Prop: Jeff", ": {{props tmpl=.../}} no parameter - defaults to current data item");
 
-	equal($.templates("{{props null}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "null - renders nothing");
-	equal($.templates("{{props false}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "false - renders nothing");
-	equal($.templates("{{props 0}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "0 - renders nothing");
-	equal($.templates("{{props 'abc'}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "'abc' - renders nothing");
-	equal($.templates("{{props ''}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "'' - renders nothing");
-	equal($.templates("{{props #data}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(people),
+	assert.equal($.templates("{{props null}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "null - renders nothing");
+	assert.equal($.templates("{{props false}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "false - renders nothing");
+	assert.equal($.templates("{{props 0}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "0 - renders nothing");
+	assert.equal($.templates("{{props 'abc'}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "'abc' - renders nothing");
+	assert.equal($.templates("{{props ''}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(), "", "'' - renders nothing");
+	assert.equal($.templates("{{props #data}}Key: {{:key}} - Prop: {{:prop}}| {{/props}}").render(people),
 	"Key: name - Prop: Jo| Key: name - Prop: Bill| ",
 	"If #data is an array, {{props #data}} iterates");
 
-	equal($.render.propsTmpl({person:{}}), "header__footer", 'Empty object renders empty string');
-	equal($.render.propsTmpl({person:{zero: 0, one: 1, str: "abc", emptyStr: "", nullVal: null , trueVal: true , falseVal: false}}),
+	assert.equal($.render.propsTmpl({person:{}}), "header__footer", 'Empty object renders empty string');
+	assert.equal($.render.propsTmpl({person:{zero: 0, one: 1, str: "abc", emptyStr: "", nullVal: null , trueVal: true , falseVal: false}}),
 	"header_Key: zero - Prop: 0| Key: one - Prop: 1| Key: str - Prop: abc| Key: emptyStr - Prop: | Key: nullVal - Prop: | Key: trueVal - Prop: true| Key: falseVal - Prop: false| _footer",
 	'Primitive types render correctly, even if falsey');
 });
 
-test("{{props start end sort filter reverse}}", function() {
+QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 	// =============================== Arrange ===============================
 		function level(aField, bField) {
 			return aField > bField ? 1 : aField < bField ? -1 : 0;
@@ -683,31 +683,31 @@ test("{{props start end sort filter reverse}}", function() {
 
 	var myobject = {a: 1, b: 9, c: 2, d:8, A:3, B:7, C:4, D:6, e:5};
 
-	equal($.templates("{{props myobject}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject}} (original order)");
-	equal($.templates("{{props #data sort='prop'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "a 1 - c 2 - A 3 - C 4 - e 5 - D 6 - B 7 - d 8 - b 9 - ", "{{props #data sort='prop'}}");
-	equal($.templates("{{props #data sort='key'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), 	"a 1 - A 3 - b 9 - B 7 - c 2 - C 4 - d 8 - D 6 - e 5 - ", "{{props #data sort='key'}}");
-	equal($.templates("{{props #data sort='prop' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "b 9 - d 8 - B 7 - D 6 - e 5 - C 4 - A 3 - c 2 - a 1 - ", "{{props #data sort='prop' reverse=true}}");
-	equal($.templates("{{props #data sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props #data sort='key' reverse=true}}");
-	equal($.templates("{{props myobject reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - D 6 - C 4 - B 7 - A 3 - d 8 - c 2 - b 9 - a 1 - ", "{{props myobject reverse=true}}")
-	equal($.templates("{{props myobject sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props myobject sort='key' reverse=true}}")
-	equal($.templates("{{props myobject start=1 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject start=1 end=-1}}");
-	equal($.templates("{{props myobject start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject start=1}}");
-	equal($.templates("{{props myobject end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}),  "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject end=-1}}");
+	assert.equal($.templates("{{props myobject}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject}} (original order)");
+	assert.equal($.templates("{{props #data sort='prop'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "a 1 - c 2 - A 3 - C 4 - e 5 - D 6 - B 7 - d 8 - b 9 - ", "{{props #data sort='prop'}}");
+	assert.equal($.templates("{{props #data sort='key'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), 	"a 1 - A 3 - b 9 - B 7 - c 2 - C 4 - d 8 - D 6 - e 5 - ", "{{props #data sort='key'}}");
+	assert.equal($.templates("{{props #data sort='prop' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "b 9 - d 8 - B 7 - D 6 - e 5 - C 4 - A 3 - c 2 - a 1 - ", "{{props #data sort='prop' reverse=true}}");
+	assert.equal($.templates("{{props #data sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props #data sort='key' reverse=true}}");
+	assert.equal($.templates("{{props myobject reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - D 6 - C 4 - B 7 - A 3 - d 8 - c 2 - b 9 - a 1 - ", "{{props myobject reverse=true}}")
+	assert.equal($.templates("{{props myobject sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props myobject sort='key' reverse=true}}")
+	assert.equal($.templates("{{props myobject start=1 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject start=1 end=-1}}");
+	assert.equal($.templates("{{props myobject start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject start=1}}");
+	assert.equal($.templates("{{props myobject end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}),  "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject end=-1}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{props myobject filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - b 9 - A 3 - B 7 - e 5 - ", "{{props myobject filter=~oddValue}}");
-	equal($.templates("{{props myobject filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject filter=~oddIndex}}");
-	equal($.templates("{{props myobject sort='prop' filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - A 3 - e 5 - B 7 - b 9 - ", "{{props myobject sort='prop' filter=~oddValue}}");
-	equal($.templates("{{props myobject sort='prop' filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' filter=~oddIndex}}");
-	equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}");
-	equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
-	equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' filter=~oddIndex start=3 end=3}} (outputs nothing)");
+	assert.equal($.templates("{{props myobject filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - b 9 - A 3 - B 7 - e 5 - ", "{{props myobject filter=~oddValue}}");
+	assert.equal($.templates("{{props myobject filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject filter=~oddIndex}}");
+	assert.equal($.templates("{{props myobject sort='prop' filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - A 3 - e 5 - B 7 - b 9 - ", "{{props myobject sort='prop' filter=~oddValue}}");
+	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' filter=~oddIndex}}");
+	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}");
+	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
+	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' filter=~oddIndex start=3 end=3}} (outputs nothing)");
 }
-	equal($.templates("{{props myobject step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject step=2 start=1}}");
-	equal($.templates("{{props myobject sort='prop' step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' step=2 start=1}}");
-	equal($.templates("{{props myobject sort='prop' step=2 start=3 end=6}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=3 end=6}}");
-	equal($.templates("{{props myobject sort='prop' step=2 start=-6 end=-3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=-6 end=-3}} Negative start or end count from the end");
-	equal($.templates("{{props myobject sort='prop' step=2 start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' step=2 start=3 end=3}} (outputs nothing)");
+	assert.equal($.templates("{{props myobject step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject step=2 start=1}}");
+	assert.equal($.templates("{{props myobject sort='prop' step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' step=2 start=1}}");
+	assert.equal($.templates("{{props myobject sort='prop' step=2 start=3 end=6}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=3 end=6}}");
+	assert.equal($.templates("{{props myobject sort='prop' step=2 start=-6 end=-3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=-6 end=-3}} Negative start or end count from the end");
+	assert.equal($.templates("{{props myobject sort='prop' step=2 start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' step=2 start=3 end=3}} (outputs nothing)");
 	// =============================== Arrange ===============================
 
 	var mypeople = {
@@ -721,13 +721,13 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 
 	// ................................ Assert ..................................
 
-	equal($.templates("{{props mypeople sort='prop.name'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='name'}}");
-	equal($.templates("{{props mypeople sort='prop.details.age'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{props mypeople  sort='details.age'}}");
+	assert.equal($.templates("{{props mypeople sort='prop.name'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='name'}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{props mypeople  sort='details.age'}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20}}");
-	equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
-	equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
 }
 	// =============================== Arrange ===============================
 
@@ -743,7 +743,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 
 	// ................................ Assert ..................................
 
-	equal($.templates("{{props mypeople sort=~sortAgeName}}{{:prop.name}}: ({{:prop.details.role}}) age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+	assert.equal($.templates("{{props mypeople sort=~sortAgeName}}{{:prop.name}}: ({{:prop.details.role}}) age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
 		"Anne: (Assistant) age 32 - Julia: (Assistant) age 18 - Jeff: (Lead) age 33.5 - Bill: (Lead) age 22 - Bill: (Team member) age 32 - Xavier: (Team member) age 32 - Emma: (Team member) age 19.1 - ",
 		"{{props mypeople sort=~sortAgeName}}: custom sort function");
 
@@ -756,12 +756,12 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Assert ..................................
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{props2 mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
+	assert.equal($.templates("{{props2 mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
 }
 });
 
 QUnit.module("{{!-- --}}");
-test("{{!-- --}}", function() {
+QUnit.test("{{!-- --}}", function(assert) {
 	// =============================== Arrange ===============================
 	var result,
 		tmpl = $.templates("a {{:'--1'}}\n {{for '--2} }'}} {{:}} {{/for}} \n b"),
@@ -769,12 +769,12 @@ test("{{!-- --}}", function() {
 
 	// ................................ Assert ..................................
 	result = tmpl.render() + "|" + tmplWrappedInComment.render();
-	equal(result, "a --1\n  --2} } \n b|a  b",
+	assert.equal(result, "a --1\n  --2} } \n b|a  b",
 		"{{!-- --}} comments out blocks including newlines and --");
 });
 
 QUnit.module("allowCode");
-test("{{*}}", function() {
+QUnit.test("{{*}}", function(assert) {
 	// =============================== Arrange ===============================
 	$.views.settings.allowCode(false);
 	global.glob = {a: "AA"};
@@ -782,7 +782,7 @@ test("{{*}}", function() {
 	var tmpl = $.templates("_{{*:glob.a}}_");
 
 	// ................................ Assert ..................................
-	equal(tmpl.render(), "__",
+	assert.equal(tmpl.render(), "__",
 		"{{*:expression}} returns nothing if allowCode not set to true");
 
 	// =============================== Arrange ===============================
@@ -795,7 +795,7 @@ test("{{*}}", function() {
 	result += "|" + !!tmpl.allowCode + " " + tmpl.render(); // Still returns "__" until we recompile
 
 	// ................................ Assert ..................................
-	equal(result, "false __|true __",
+	assert.equal(result, "false __|true __",
 		"If $.settings.allowCode() or tmpl.allowCode are set to true, previously compiled template is unchanged, so {{*}} still inactive");
 
 	// ................................ Act ..................................
@@ -804,7 +804,7 @@ test("{{*}}", function() {
 	result = "" + !!tmpl.allowCode + " " + tmpl.render(); // Now {{*}} is active
 
 	// ................................ Assert ..................................
-	equal(result, "true _AA_",
+	assert.equal(result, "true _AA_",
 		"If $.settings.allowCode() set to true, {{*: expression}} returns evaluated expression, with access to globals");
 
 	// =============================== Arrange ===============================
@@ -816,7 +816,7 @@ test("{{*}}", function() {
 	});
 
 	// ................................ Assert ..................................
-	equal(tmpl.render(), "_AA_",
+	assert.equal(tmpl.render(), "_AA_",
 		"If template allowCode property set to true, {{*: expression}} returns evaluated expression, with access to globals");
 
 	// ................................ Act ..................................
@@ -831,7 +831,7 @@ test("{{*}}", function() {
 	result += "|" + tmpl.allowCode + ":" + tmpl();
 
 	// ................................ Assert ..................................
-	equal(result, "false:__|true:_AA_",
+	assert.equal(result, "false:__|true:_AA_",
 		"Can recompile tmpl to allow code, using tmpl = $.templates({markup: tmpl, allowCode: true})");
 
 	// ................................ Act ..................................
@@ -850,7 +850,7 @@ test("{{*}}", function() {
 	result += "|" + tmpl.allowCode + ":" + tmpl();
 
 	// ................................ Assert ..................................
-	equal(result, "false:__|true:_AA_",
+	assert.equal(result, "false:__|true:_AA_",
 		'Can recompile named tmpl to allow code, using $.templates("myTemplateName", {markup: $.templates.myTmpl, allowCode:true})"');
 
 	// =============================== Arrange ===============================
@@ -866,7 +866,7 @@ test("{{*}}", function() {
 		+ "New value: {{*:myvar}}");
 
 	// ................................ Assert ..................................
-	equal(tmpl.render(), "Initial value: 6 New value: 17",
+	assert.equal(tmpl.render(), "Initial value: 6 New value: 17",
 		"{{* expression}} or {{*: expression}} can access globals as window.myVar or myVar");
 
 	// ................................ Act ..................................
@@ -880,7 +880,7 @@ test("{{*}}", function() {
 		+ "{{:end}}");
 
 	// ................................ Assert ..................................
-	equal(tmpl.render({title: "name", start: "Start", end: "End", sep: "..."}), "Start name = Jo ... ! name = Bill ... !End",
+	assert.equal(tmpl.render({title: "name", start: "Start", end: "End", sep: "..."}), "Start name = Jo ... ! name = Bill ... !End",
 		"If allowCode set to true, on recompiling the template, {{*:expression}} returns evaluated expression, with access to globals");
 
 	// ................................ Act ..................................
@@ -893,7 +893,7 @@ test("{{*}}", function() {
 	+ "{{/for}}");
 
 	// ................................ Assert ..................................
-	equal(tmpl.render({people: people}, {myHelper: "hi"}), " AA Jo 0 hi myGlobalfunction myTitle AA Bill 1 hi myGlobalfunction myTitle",
+	assert.equal(tmpl.render({people: people}, {myHelper: "hi"}), " AA Jo 0 hi myGlobalfunction myTitle AA Bill 1 hi myGlobalfunction myTitle",
 		"{{* expression}} or {{*: expression}} can access globals, the data, the view, the view context, global functions etc.");
 
 	document.title = "";
@@ -903,7 +903,7 @@ test("{{*}}", function() {
 });
 
 QUnit.module("useViews");
-test("", function() {
+QUnit.test("", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.views.settings.allowCode(true);
@@ -925,7 +925,7 @@ test("", function() {
 	}
 
 	// ................................ Assert ..................................
-	ok(tmpl.useViews === false && message.indexOf("undefined") > 0,
+	assert.ok(tmpl.useViews === false && message.indexOf("undefined") > 0,
 		"A simple template with useViews=false will not provide access to the views through allowCode");
 
 	// ................................ Act ..................................
@@ -933,7 +933,7 @@ test("", function() {
 	tmpl.useViews = true;
 
 	// ................................ Assert ..................................
-	equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+	assert.equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
 		"If tmpl.useViews set to true (for an existing template - without recompiling), the template renders with view hierarchy");
 
 	// ................................ Act ..................................
@@ -941,7 +941,7 @@ test("", function() {
 
 	$.views.settings.advanced({useViews: true});
 	// ................................ Assert ..................................
-	equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+	assert.equal(tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
 		"If tmpl.useViews is set to false, but $.views.settings.advanced({useViews: ...}) is set to true, the template renders with view hierarchy, (without recompiling).");
 
 	// ................................ Act ..................................
@@ -961,7 +961,7 @@ test("", function() {
 
 	var html = tmpl.render({towns: towns});
 
-	equal(tmpl.useViews && html, "data Seattle, Paris and Delhi",
+	assert.equal(tmpl.useViews && html, "data Seattle, Paris and Delhi",
 		"Recompiling the template with useViews: true will create a template that has tmpl.useViews = true, which renders with a 'data' view");
 
 	// ................................ Act ..................................
@@ -970,7 +970,7 @@ test("", function() {
 	html = tmpl.render({towns: towns});
 
 	// ................................ Assert ..................................
-	equal(!tmpl.useViews && html, "top Seattle, Paris and Delhi",
+	assert.equal(!tmpl.useViews && html, "top Seattle, Paris and Delhi",
 		"If tmpl.useViews set to false (for an existing template - without recompiling), the template renders without a 'data' view");
 
 	// ................................ Act ..................................
@@ -981,7 +981,7 @@ test("", function() {
 	$.views.settings.advanced({useViews: false});
 
 	// ................................ Assert ..................................
-	equal(tmpl.useViews && tmpl.render({towns: towns}), "data Seattle, Paris and Delhi",
+	assert.equal(tmpl.useViews && tmpl.render({towns: towns}), "data Seattle, Paris and Delhi",
 		"If $.views.settings.advanced({useViews: ...}) was true when the template was compiled, then the template renders with views, even if $.views.settings.advanced({useViews: ...}) is no longer set to true");
 
 	// =============================== Arrange ===============================
@@ -995,7 +995,7 @@ test("", function() {
 			+ "{{/for}}");
 
 	// ................................ Assert ..................................
-	equal(tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
+	assert.equal(tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
 		"A template with richer features, (such as a custom tag, or nested tags) will automatically have tmpl.useViews=true and will render with views, even if $.views.settings.advanced({useViews: ...}) is set to false");
 
 	// ................................ Act ..................................
@@ -1003,7 +1003,7 @@ test("", function() {
 	tmpl.useViews = false;
 	
 	// ................................ Assert ..................................
-	equal(originalUseViews && !tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
+	assert.equal(originalUseViews && !tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
 		"Setting tmpl.useViews=false will NOT prevent a richer template from rendering views.");
 
 	// =============================== Arrange ===============================
@@ -1018,7 +1018,7 @@ test("", function() {
 	tmpl.useViews = true;
 
 	// ................................ Assert ..................................
-	equal(!originalUseViews && tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+	assert.equal(!originalUseViews && tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
 		"Setting tmpl.useViews=true WILL prevent a simpler template from rendering without views.");
 
 	// ................................ Act ..................................
@@ -1026,7 +1026,7 @@ test("", function() {
 	$.views.settings.advanced({useViews: true});
 
 	// ................................ Assert ..................................
-	equal(!tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
+	assert.equal(!tmpl.useViews && tmpl.render({towns: towns}), "Seattle, Paris and Delhi",
 		"Setting $.views.settings.advanced({useViews: true}) WILL prevent a simpler template from rendering without views.");
 
 	// =========================== Reset settings ============================
@@ -1052,7 +1052,7 @@ test("", function() {
 		html = tmpl.render(data);
 
 	// ................................ Assert ..................................
-	equal(!tmpl.useViews && !innerTmpl.useViews && html, "INNER OUTER ",
+	assert.equal(!tmpl.useViews && !innerTmpl.useViews && html, "INNER OUTER ",
 		"Nested top-level programmatic template calls which do not use views work correctly");
 		// See https://github.com/BorisMoore/jsrender/issues/333
 
@@ -1068,14 +1068,14 @@ test("", function() {
 	html = tmpl.render(data);
 
 	// ................................ Assert ..................................
-	equal(tmpl.useViews && innerTmpl.useViews && html, "INNER OUTER ",
+	assert.equal(tmpl.useViews && innerTmpl.useViews && html, "INNER OUTER ",
 		"Nested top-level programmatic template calls using views work correctly");
 		// See https://github.com/BorisMoore/jsrender/issues/333
 
 });
 
 QUnit.module("All tags");
-test("itemVar", 10, function() {
+QUnit.test("itemVar", function(assert) {
 	var otherPeople = [
 		{name: "Jo", otherTels: [1, 2]},
 		{name: "Bill", tels: [91,92]},
@@ -1093,10 +1093,10 @@ test("itemVar", 10, function() {
 		message = e.message;
 	}
 
-	equal(message, "Syntax error\nUse itemVar='~myItem'",
+	assert.equal(message, "Syntax error\nUse itemVar='~myItem'",
 		"Setting itemVar='something' without initial '~' throws syntax error");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people itemVar='~person'}}"
 			+ "{{:~person.name}} "
 		+ "{{/for}}"
@@ -1104,7 +1104,7 @@ test("itemVar", 10, function() {
 		"Jo Bill ",
 		"Setting {{for people itemVar='~person'}} creates ~person contextual parameter");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people}}"
 			+ "{{:name}}"
 		+ "{{else others itemVar='~otherPerson'}}"
@@ -1114,7 +1114,7 @@ test("itemVar", 10, function() {
 		"Jo Bill ",
 		"Can use itemVar on {{for}}{{else}} too: {{else others itemVar='~otherPerson'}}");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people}}"
 			+ "{{if tels itemVar='~person'}}"
 				+ "{{:name}} {{:~person.name}} "
@@ -1128,7 +1128,7 @@ test("itemVar", 10, function() {
 		"Jo Bill Bill Fred ",
 		"itemVar works also on {{if}}{{else}}{{/if}} even though the context is same as outer context for {{if}}.");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people itemVar='~person'}}"
 			+ "{{for tels itemVar='~tel'}}"
 				+ "{{:~person.name}} "
@@ -1147,7 +1147,7 @@ test("itemVar", 10, function() {
 		"itemVar works also on {{for arr1}}{{else arr2}}{{else}}{{/for}}" +
 		"\neven though the context for the final {{else}} is the same as outer context for {{if}}.");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people itemVar='~person'}}"
 			+ "{{:~person.name}}"
 			+ "{{if ~person.tels itemVar='~ifVar'}}"
@@ -1161,7 +1161,7 @@ test("itemVar", 10, function() {
 		"Jo. Bill Phones: 91 92. Fred. ",
 		"Using itemVar and passing context to nested templates");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people itemVar='~person'}}"
 			+ "{{:~person.name}}"
 			+ "{{for ~person.tels itemVar='~tel'}}"
@@ -1177,7 +1177,7 @@ test("itemVar", 10, function() {
 		"Jo 1 2. Bill 91 92. Fred (No phones). ",
 		"Additional example using itemVar and passing context to nested templates");
 
-	equal($.templates({
+	assert.equal($.templates({
 		markup:
 			"{{wrappedFor people 'u' itemVar='~person'}}"
 				+ "{{:~person.name}} "
@@ -1198,7 +1198,7 @@ test("itemVar", 10, function() {
 		"<u>Jo  <b>1 2 </b>Bill <i>91 92 </i> Fred   </u>",
 		"itemVar with custom tags {{wrappedFor}}{{else}}{{/wrappedFor}}, and passing context to nested templates");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people itemVar='~person'}}"
 			+ "{{props ~person itemVar='~prop'}}"
 				+ "{{:~prop.key}}: {{:~prop.prop}} "
@@ -1208,7 +1208,7 @@ test("itemVar", 10, function() {
 		"name: Jo otherTels: 1,2 name: Bill tels: 91,92 name: Fred ",
 		"itemVar with {{props}}, and passing context to nested templates");
 
-	equal($.templates(
+	assert.equal($.templates(
 		"{{for people itemVar='~person'}}"
 			+ "{{props ~person.tels itemVar='~prop'}}"
 				+ "{{:~person.name}} Tel: {{:~prop.key}}: {{:~prop.prop}} "
@@ -1222,7 +1222,7 @@ test("itemVar", 10, function() {
 });
 
 QUnit.module("api no jQuery");
-test("templates", function() {
+QUnit.test("templates", function(assert) {
 	// ................................ Arrange ..................................
 	$.templates("./test/templates/file/path.html", null); // In case template has been stored in a previous test
 
@@ -1230,7 +1230,7 @@ test("templates", function() {
 	var tmpl0 = $.templates({markup: "./test/templates/file/path.html"}); // Compile template but do not cache
 
 	// ............................... Assert .................................
-	equal(!$.templates["./test/templates/file/path.html"] && tmpl0.render({name: "Jo0"}),
+	assert.equal(!$.templates["./test/templates/file/path.html"] && tmpl0.render({name: "Jo0"}),
 		isIE8 ? "\nServerRenderedTemplate_Jo0_B" : "ServerRenderedTemplate_Jo0_B",
 		"Compile server-generated template, without caching");
 
@@ -1238,7 +1238,7 @@ test("templates", function() {
 	var tmpl1 = $.templates("./test/templates/file/path.html"); // Compile and cache, using path as key
 
 	// ............................... Assert .................................
-	equal(tmpl1 !== tmpl0 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl1.render({name: "Jo1"}),
+	assert.equal(tmpl1 !== tmpl0 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl1.render({name: "Jo1"}),
 		isIE8 ? "\nServerRenderedTemplate_Jo1_B" : "ServerRenderedTemplate_Jo1_B",
 		"Compile server-generated template, and cache on file path");
 
@@ -1246,7 +1246,7 @@ test("templates", function() {
 	var tmpl2 = $.templates("./test/templates/file/path.html"); // Use cached template, accessed by path as key
 
 	// ............................... Assert .................................
-	equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}),
+	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}),
 		isIE8 ? "\nServerRenderedTemplate_Jo2_B" : "ServerRenderedTemplate_Jo2_B",
 		"Re-use cached server-generated template");
 
@@ -1254,7 +1254,7 @@ test("templates", function() {
 	var tmpl3 = $.templates({markup: "./test/templates/file/path.html"}); // Re-compile template but do not cache. Leaved cached template.
 
 	// ............................... Assert .................................
-	equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl3.render({name: "Jo3"}),
+	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl3.render({name: "Jo3"}),
 		isIE8 ? "\nServerRenderedTemplate_Jo3_B" : "ServerRenderedTemplate_Jo3_B",
 		"Recompile server-generated template, without caching");
 
@@ -1269,18 +1269,18 @@ test("templates", function() {
 
 	var tmpl = $.templates(tmplString);
 	// ............................... Assert .................................
-	equal(tmpl.render(person), "A_Jo_B",
+	assert.equal(tmpl.render(person), "A_Jo_B",
 		'Compile from string: var tmpl = $.templates(tmplString);');
 
 	// ............................... Assert .................................
-	equal(tmpl(person), "A_Jo_B",
+	assert.equal(tmpl(person), "A_Jo_B",
 		'Compiled template is itself the render function: html = tmpl(data);');
 
 	// =============================== Arrange ===============================
 	var fnToString = tmpl.fn.toString();
 
 	// ............................... Assert .................................
-	equal($.templates("", tmplString).fn.toString() === fnToString && $.templates(null, tmplString).fn.toString() === fnToString && $.templates(undefined, tmplString).fn.toString() === fnToString, true,
+	assert.equal($.templates("", tmplString).fn.toString() === fnToString && $.templates(null, tmplString).fn.toString() === fnToString && $.templates(undefined, tmplString).fn.toString() === fnToString, true,
 		'if name is "", null, or undefined, then var tmpl = $.templates(name, tmplString)' +
 		'\nis equivalent to var tmpl = $.templates(tmplString);');
 
@@ -1288,26 +1288,26 @@ test("templates", function() {
 	$.templates("myTmpl", tmplString);
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl(person), "A_Jo_B",
+	assert.equal($.render.myTmpl(person), "A_Jo_B",
 		'Compile and register named template: $.templates("myTmpl", tmplString);');
 
 	// =============================== Arrange ===============================
 	$.templates({myTmpl2: tmplString, myTmpl3: "X_{{:name}}_Y"});
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl2(person) + $.render.myTmpl3(person), "A_Jo_BX_Jo_Y",
+	assert.equal($.render.myTmpl2(person) + $.render.myTmpl3(person), "A_Jo_BX_Jo_Y",
 		'Compile and register named templates: $.templates({myTmpl: tmplString, myTmpl2: tmplString2});');
 
 	// =============================== Arrange ===============================
 	$.templates("!'-#==", "x");
 	$.templates({'&^~>"2': "y"});
-	equal($.render["!'-#=="](person) + $.render['&^~>"2'](person), "xy",
+	assert.equal($.render["!'-#=="](person) + $.render['&^~>"2'](person), "xy",
 		'Named templates can have arbitrary names;');
 
 	$.templates({myTmpl4: "A_B"});
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl4(person), "A_B",
+	assert.equal($.render.myTmpl4(person), "A_B",
 		'$.templates({myTmpl: htmlWithNoTags});');
 
 	// =============================== Arrange ===============================
@@ -1316,15 +1316,15 @@ test("templates", function() {
 	});
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl5(person), "A_Jo_B",
+	assert.equal($.render.myTmpl5(person), "A_Jo_B",
 		'$.templates("myTmpl", {markup: markupString});');
 
 	// ............................... Assert .................................
-	equal($.templates("", {markup: tmplString}).render(person), "A_Jo_B",
+	assert.equal($.templates("", {markup: tmplString}).render(person), "A_Jo_B",
 		'Compile from template object without registering: var tmpl = $.templates("", {markup: markupString});');
 
 	// ............................... Assert .................................
-	equal($.templates({markup: tmplString}).render(person), "A_Jo_B",
+	assert.equal($.templates({markup: tmplString}).render(person), "A_Jo_B",
 		'Compile from template object without registering: var tmpl = $.templates({markup: markupString});');
 
 	// =============================== Arrange ===============================
@@ -1335,22 +1335,22 @@ test("templates", function() {
 	});
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl6(person), "A_Jo_B",
+	assert.equal($.render.myTmpl6(person), "A_Jo_B",
 		'$.templates({myTmpl: {markup: markupString}});');
 
 	// =============================== Arrange ===============================
 	$.templates("myTmpl7", tmpl);
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl7(person), "A_Jo_B",
+	assert.equal($.render.myTmpl7(person), "A_Jo_B",
 		'Cloning a template: $.templates("newName", tmpl);');
 
 	// ............................... Assert .................................
-	equal($.templates(tmpl) === tmpl, true,
+	assert.equal($.templates(tmpl) === tmpl, true,
 		'$.templates(tmpl) returns tmpl');
 
 	// ............................... Assert .................................
-	equal($.templates("", tmpl) === tmpl, true,
+	assert.equal($.templates("", tmpl) === tmpl, true,
 		'$.templates("", tmpl) returns tmpl');
 
 	// =============================== Arrange ===============================
@@ -1361,29 +1361,29 @@ test("templates", function() {
 	result += "|" + tmplWithHelper2(person);
 
 	// ............................... Assert .................................
-	equal(result, "A_Jo_BthisFoo|A_Jo_BthatFoo",
+	assert.equal(result, "A_Jo_BthisFoo|A_Jo_BthatFoo",
 		'Cloning a template to add/replace/change some template properties: var tmpl2 = $.templates({markup: tmpl1, otherOptions...});');
 
 	// ............................... Assert .................................
-	equal($.templates("", tmpl) === tmpl, true,
+	assert.equal($.templates("", tmpl) === tmpl, true,
 		'$.templates(tmpl) returns tmpl');
 
 	// ............................... Assert .................................
-	equal($.templates("").render(), "",
+	assert.equal($.templates("").render(), "",
 		'$.templates("") is a template with empty string as content');
 
 	// =============================== Arrange ===============================
 	$.templates("myEmptyTmpl", "");
 
 	// ............................... Assert .................................
-	equal($.templates.myEmptyTmpl.render(), "",
+	assert.equal($.templates.myEmptyTmpl.render(), "",
 		'$.templates("myEmptyTmpl", "") is a template with empty string as content');
 
 	// =============================== Arrange ===============================
 	$.templates("myTmpl", null);
 
 	// ............................... Assert .................................
-	equal($.templates.myTmpl === undefined && $.render.myTmpl === undefined, true,
+	assert.equal($.templates.myTmpl === undefined && $.render.myTmpl === undefined, true,
 		'Remove a named template: $.templates("myTmpl", null);');
 
 	//// =============================== Arrange ===============================
@@ -1438,7 +1438,7 @@ test("templates", function() {
 	//});
 });
 
-test("render", 25, function() {
+QUnit.test("render", function(assert) {
 	var tmpl1 = $.templates("myTmpl8", tmplString);
 	$.templates({
 		simple: "Content{{:#data}}|",
@@ -1446,20 +1446,20 @@ test("render", 25, function() {
 		primitiveDataTypes: "|{{:#data}}"
 	});
 
-	equal(tmpl1.render(person), "A_Jo_B", 'tmpl1.render(data);');
-	equal($.render.myTmpl8(person), "A_Jo_B", '$.render.myTmpl8(data);');
+	assert.equal(tmpl1.render(person), "A_Jo_B", 'tmpl1.render(data);');
+	assert.equal($.render.myTmpl8(person), "A_Jo_B", '$.render.myTmpl8(data);');
 
 	$.templates("myTmpl9", "A_{{for}}inner{{:name}}content{{/for}}_B");
-	equal($.templates.myTmpl9.tmpls[0].render(person), "innerJocontent", 'Access nested templates: $.templates["myTmpl9[0]"];');
+	assert.equal($.templates.myTmpl9.tmpls[0].render(person), "innerJocontent", 'Access nested templates: $.templates["myTmpl9[0]"];');
 
 	$.templates("myTmpl10", "top index:{{:#index}}|{{for 1}}nested index:{{:#get('item').index}}|{{if #get('item').index===0}}nested if index:{{:#get('item').index}}|{{else}}nested else index:{{:#get('item').index}}|{{/if}}{{/for}}");
 
-	equal($.render.myTmpl10(people), "top index:0|nested index:0|nested if index:0|top index:1|nested index:1|nested else index:1|",
+	assert.equal($.render.myTmpl10(people), "top index:0|nested index:0|nested if index:0|top index:1|nested index:1|nested else index:1|",
 										"#get('item').index gives the integer index even in nested blocks");
 
 	$.templates("myTmpl11", "top index:{{:#index}}|{{for people}}nested index:{{:#index}}|{{if #index===0}}nested if index:{{:#get('item').index}}|{{else}}nested else index:{{:#get('item').index}}|{{/if}}{{/for}}");
 
-	equal($.render.myTmpl11({people: people}), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
+	assert.equal($.render.myTmpl11({people: people}), "top index:|nested index:0|nested if index:0|nested index:1|nested else index:1|",
 										"#get('item').index gives the integer index even in nested blocks");
 
 	$.views.tags({
@@ -1480,7 +1480,7 @@ test("render", 25, function() {
 	$.views.settings.debugMode(false);
 	var result2 = templateWithIndex.render({people: [1,2]});
 
-	equal(result2 === result && result,
+	assert.equal(result2 === result && result,
 		"a0 bFor #index in nested block use #getIndex(). c0 dFor #index in nested block use #getIndex(). a1 bFor #index in nested block use #getIndex(). c1 dFor #index in nested block use #getIndex(). ",
 		"#index gives error message in nested blocks (whether or not debugMode is true).");
 
@@ -1492,7 +1492,7 @@ test("render", 25, function() {
 			+ '{{myWrap}}d{{:#getIndex()}} {{/myWrap}}'
 		+ '{{/for}}');
 
-	equal(templateWithGetIndex.render({people: [1,2]}),
+	assert.equal(templateWithGetIndex.render({people: [1,2]}),
 		"a0 b0 c0 d0 a1 b1 c1 d1 ",
 		"#getIndex gives inherited index in nested blocks.");
 
@@ -1501,66 +1501,66 @@ test("render", 25, function() {
 	}});
 	$.templates("myTmpl12", "{{for people}}nested {{:~myKeyIsCorrect(#view)}}|{{if #index===0}}nested if {{:~myKeyIsCorrect(#view)}}|{{else}}nested else {{:~myKeyIsCorrect(#view)}}|{{/if}}{{/for}}");
 
-	equal($.render.myTmpl12({people: people}), "nested true|nested if true|nested true|nested else true|",
+	assert.equal($.render.myTmpl12({people: people}), "nested true|nested if true|nested true|nested else true|",
 										'view._key gives the key of this view in the parent views collection/object');
 
-	equal($.templates(tmplString).render(person), "A_Jo_B", 'Compile from string: var html = $.templates(tmplString).render(data);');
-	equal($.render.myTmpl8(people), "A_Jo_BA_Bill_B", '$.render.myTmpl(array);');
-	equal($.render.simple([]), "", 'Empty array renders empty string');
-	equal($.render.simple(["",false,null,undefined,1]), "Content|Contentfalse|Content|Content|Content1|", 'Empty string, false, null or undefined members of array are also rendered');
-	equal($.render.simple(null), "Content|", 'null renders once with #data null');
-	equal($.render.simple(), "Content|", 'Undefined renders once with #data undefined');
-	equal($.render.simple(false), "Contentfalse|", 'false renders once with #data false');
-	equal($.render.simple(0), "Content0|", '0 renders once with #data 0');
-	equal($.render.simple(""), "Content|", '"" renders once with #data ""');
+	assert.equal($.templates(tmplString).render(person), "A_Jo_B", 'Compile from string: var html = $.templates(tmplString).render(data);');
+	assert.equal($.render.myTmpl8(people), "A_Jo_BA_Bill_B", '$.render.myTmpl(array);');
+	assert.equal($.render.simple([]), "", 'Empty array renders empty string');
+	assert.equal($.render.simple(["",false,null,undefined,1]), "Content|Contentfalse|Content|Content|Content1|", 'Empty string, false, null or undefined members of array are also rendered');
+	assert.equal($.render.simple(null), "Content|", 'null renders once with #data null');
+	assert.equal($.render.simple(), "Content|", 'Undefined renders once with #data undefined');
+	assert.equal($.render.simple(false), "Contentfalse|", 'false renders once with #data false');
+	assert.equal($.render.simple(0), "Content0|", '0 renders once with #data 0');
+	assert.equal($.render.simple(""), "Content|", '"" renders once with #data ""');
 
-	equal($.render.templateForArray([[null,undefined,1]]), "Content012", 'Can render a template against an array without iteration, by wrapping array in an array');
-	equal($.render.templateForArray([null,undefined,1], true), "Content012", 'render(array, true) renders an array without iteration');
-	equal($.render.templateForArray([null,undefined,1], {foo:"foovalue"}, true), "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
-	equal($.templates.templateForArray.render([null,undefined,1], {foo:"foovalue"}, true), "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
-	equal($.render.templateForArray([[]]), "Content", 'Can render a template against an empty array without iteration, by wrapping array in an array');
-	equal($.render.templateForArray([], true), "Content", 'Can render a template against an empty array without iteration, by passing in true as second parameter');
-	equal($.render.templateForArray([], {foo: "foovalue"}, true), "Contentfoovalue", 'Can render a template against an empty array without iteration, by by passing in true as third parameter');
-	equal($.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey');
+	assert.equal($.render.templateForArray([[null,undefined,1]]), "Content012", 'Can render a template against an array without iteration, by wrapping array in an array');
+	assert.equal($.render.templateForArray([null,undefined,1], true), "Content012", 'render(array, true) renders an array without iteration');
+	assert.equal($.render.templateForArray([null,undefined,1], {foo:"foovalue"}, true), "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
+	assert.equal($.templates.templateForArray.render([null,undefined,1], {foo:"foovalue"}, true), "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
+	assert.equal($.render.templateForArray([[]]), "Content", 'Can render a template against an empty array without iteration, by wrapping array in an array');
+	assert.equal($.render.templateForArray([], true), "Content", 'Can render a template against an empty array without iteration, by passing in true as second parameter');
+	assert.equal($.render.templateForArray([], {foo: "foovalue"}, true), "Contentfoovalue", 'Can render a template against an empty array without iteration, by by passing in true as third parameter');
+	assert.equal($.render.primitiveDataTypes([0,1,"abc","",,true,false]), "|0|1|abc|||true|false", 'Primitive types render correctly, even if falsey');
 });
 
-test("converters", function() {
+QUnit.test("converters", function(assert) {
 	function loc(data) {
 		switch (data) {case "desktop": return "bureau";}
 		return data;
 	}
 	$.views.converters({loc2: loc});
-	equal($.templates("{{loc2:#data}}:{{loc2:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({loc: locFunction})");
+	assert.equal($.templates("{{loc2:#data}}:{{loc2:'desktop'}}").render("desktop"), "bureau:bureau", "$.views.converters({loc: locFunction})");
 
 	var locFn = $.views.converters("loc", loc);
-	equal(locFn === loc && $.views.converters.loc === loc && $.views.converters.loc2 === loc, true, 'locFunction === $.views.converters.loc === $.views.converters.loc2');
+	assert.equal(locFn === loc && $.views.converters.loc === loc && $.views.converters.loc2 === loc, true, 'locFunction === $.views.converters.loc === $.views.converters.loc2');
 
 	$.views.converters({loc2: null});
-	equal($.views.converters.loc2, undefined, '$.views.converters({loc2: null}) to remove registered converter');
+	assert.equal($.views.converters.loc2, undefined, '$.views.converters({loc2: null}) to remove registered converter');
 
-	equal($.templates("{{attr:a}}").render({a: 0}), "0", '{{attr:0}} returns "0"');
-	equal($.templates("{{attr:a}}").render({}), "", "{{attr:undefined}} returns empty string");
-	equal($.templates("{{attr:a}}").render({a: ""}), "", "{{attr:''}} returns empty string");
-	equal($.templates("{{attr:a}}").render({a: null}), "", '{{attr:null}} returns empty string');
-	equal($.templates("{{attr:a}}").render({a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{attr:"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
+	assert.equal($.templates("{{attr:a}}").render({a: 0}), "0", '{{attr:0}} returns "0"');
+	assert.equal($.templates("{{attr:a}}").render({}), "", "{{attr:undefined}} returns empty string");
+	assert.equal($.templates("{{attr:a}}").render({a: ""}), "", "{{attr:''}} returns empty string");
+	assert.equal($.templates("{{attr:a}}").render({a: null}), "", '{{attr:null}} returns empty string');
+	assert.equal($.templates("{{attr:a}}").render({a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{attr:"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
 
-	equal($.templates("{{>a}}").render({a: 0}), "0", '{{>0}} returns "0"');
-	equal($.templates("{{>a}}").render({}), "", "{{>undefined}} returns empty string");
-	equal($.templates("{{>a}}").render({a: ""}), "", "{{>''}} returns empty string");
-	equal($.templates("{{>a}}").render({a: null}), "", "{{>null}} returns empty string");
-	equal($.templates("{{>a}}").render({a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{>"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
+	assert.equal($.templates("{{>a}}").render({a: 0}), "0", '{{>0}} returns "0"');
+	assert.equal($.templates("{{>a}}").render({}), "", "{{>undefined}} returns empty string");
+	assert.equal($.templates("{{>a}}").render({a: ""}), "", "{{>''}} returns empty string");
+	assert.equal($.templates("{{>a}}").render({a: null}), "", "{{>null}} returns empty string");
+	assert.equal($.templates("{{>a}}").render({a: "<>&'" + '"'}), "&lt;&gt;&amp;&#39;&#34;", '{{>"<>&' + "'" + '}} returns "&lt;&gt;&amp;&#39;&#34;"');
 
-	equal($.templates("{{loc:a}}").render({a: 0}), "0", '{{cnvt:0}} returns "0"');
-	equal($.templates("{{loc:a}}").render({}), "", '{{cnvt:undefined}} returns empty string');
-	equal($.templates("{{loc:a}}").render({a: ""}), "", "{{cnvt:''}} returns empty string");
-	equal($.templates("{{loc:a}}").render({a: null}), "", "{{cnvt:null}} returns empty string");
+	assert.equal($.templates("{{loc:a}}").render({a: 0}), "0", '{{cnvt:0}} returns "0"');
+	assert.equal($.templates("{{loc:a}}").render({}), "", '{{cnvt:undefined}} returns empty string');
+	assert.equal($.templates("{{loc:a}}").render({a: ""}), "", "{{cnvt:''}} returns empty string");
+	assert.equal($.templates("{{loc:a}}").render({a: null}), "", "{{cnvt:null}} returns empty string");
 
-	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "|||", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
-	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:0}), "0|0|0|0", "{{attr:0}}|{{>0}}|{{loc:0}}|{{:0}} returns correct values");
-	equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:false}), "false|false|false|false", "{{attr:false}}|{{>false}}|{{loc:false}}|{{:false}} returns correct values");
+	assert.equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({}), "|||", "{{attr:undefined}}|{{>undefined}}|{{loc:undefined}}|{{:undefined}} returns correct values");
+	assert.equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:0}), "0|0|0|0", "{{attr:0}}|{{>0}}|{{loc:0}}|{{:0}} returns correct values");
+	assert.equal($.templates("{{attr:a}}|{{>a}}|{{loc:a}}|{{:a}}").render({a:false}), "false|false|false|false", "{{attr:false}}|{{>false}}|{{loc:false}}|{{:false}} returns correct values");
 });
 
-test("{{sometag convert=converter}}", function() {
+QUnit.test("{{sometag convert=converter}}", function(assert) {
 	function loc(data) {
 		switch (data) {
 			case "desktop": return "bureau";
@@ -1569,33 +1569,33 @@ test("{{sometag convert=converter}}", function() {
 	}
 	$.views.converters("loc", loc);
 
-	equal($.templates("1{{:#data convert='loc'}} 2{{:'desktop' convert='loc'}} 3{{:#data convert=~myloc}} 4{{:'desktop' convert=~myloc}}").render("desktop", {myloc: loc}), "1bureau 2bureau 3bureau 4bureau", "{{: convert=~myconverter}}");
-	equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
+	assert.equal($.templates("1{{:#data convert='loc'}} 2{{:'desktop' convert='loc'}} 3{{:#data convert=~myloc}} 4{{:'desktop' convert=~myloc}}").render("desktop", {myloc: loc}), "1bureau 2bureau 3bureau 4bureau", "{{: convert=~myconverter}}");
+	assert.equal($.templates("1:{{:'a<b' convert=~myloc}} 2:{{> 'a<b'}} 3:{{html: 'a<b' convert=~myloc}} 4:{{> 'a<b' convert=~myloc}} 5:{{attr: 'a<b' convert=~myloc}}").render(1, {myloc: loc}),
 		"1:a moins <que b 2:a&lt;b 3:a&lt;b 4:a&lt;b 5:a moins <que b",
 		"{{foo: convert=~myconverter}} convert=converter is used rather than {{foo:, but with {{html: convert=~myconverter}}" +
 		"\nor {{> convert=~myconverter}} html converter takes precedence and ~myconverter is ignored");
-	equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val;}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
-	equal($.templates("{{for #data convert=~reverse}}{{:#data}}{{/for}}").render([1,2,3], {reverse: function(val) {return val.reverse();}}, true), "321", "{{for expression convert=~myconverter}}");
+	assert.equal($.templates("{{if true convert=~invert}}yes{{else false convert=~invert}}no{{else}}neither{{/if}}").render('desktop', {invert: function(val) {return !val;}}), "no", "{{if expression convert=~myconverter}}...{{else expression2 convert=~myconverter}}... ");
+	assert.equal($.templates("{{for #data convert=~reverse}}{{:#data}}{{/for}}").render([1,2,3], {reverse: function(val) {return val.reverse();}}, true), "321", "{{for expression convert=~myconverter}}");
 });
 
-test("tags", function() {
+QUnit.test("tags", function(assert) {
 	// ................................ Reset ..................................
 	towns = [{name: "Seattle"}, {name: "Paris"}, {name: "Delhi"}];
 
 	// ................................ Act ..................................
-	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
+	assert.equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
 
-	equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({people: people}), "BillJo", "Calling render() with inline data-binding {^{...}} renders normally without binding");
+	assert.equal($.templates("{^{sort people reverse=true}}{^{:name}}{{/sort}}").render({people: people}), "BillJo", "Calling render() with inline data-binding {^{...}} renders normally without binding");
 
-	equal($.templates("{{sort people reverse=true towns}}{{:name}}{{/sort}}").render({people: people, towns:towns}), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}");
+	assert.equal($.templates("{{sort people reverse=true towns}}{{:name}}{{/sort}}").render({people: people, towns:towns}), "DelhiParisSeattleBillJo", "Multiple parameters in arbitrary order: {{sort people reverse=true towns}}");
 
-	equal($.templates("{{sort reverse=false people reverse=true towns}}{{:name}}{{/sort}}").render({people: people, towns:towns}), "DelhiParisSeattleBillJo", "Duplicate named parameters - last wins: {{sort reverse=false people reverse=true towns}}");
+	assert.equal($.templates("{{sort reverse=false people reverse=true towns}}{{:name}}{{/sort}}").render({people: people, towns:towns}), "DelhiParisSeattleBillJo", "Duplicate named parameters - last wins: {{sort reverse=false people reverse=true towns}}");
 
 	var sort2 = $.views.tags("sort2", sort);
-	equal(sort2.render === sort && $.views.tags.sort.render === sort && $.views.tags.sort2.render === sort, true, 'sortFunction === $.views.tags.sort.render === $.views.tags.sort2.render');
+	assert.equal(sort2.render === sort && $.views.tags.sort.render === sort && $.views.tags.sort2.render === sort, true, 'sortFunction === $.views.tags.sort.render === $.views.tags.sort2.render');
 
 	$.views.tags("sort2", null);
-	equal($.views.tags.sort2, undefined, '$.views.tags("sort2", null) to remove registered tag');
+	assert.equal($.views.tags.sort2, undefined, '$.views.tags("sort2", null) to remove registered tag');
 
 	$.views.tags("boldTag", {
 		render: function() {
@@ -1603,13 +1603,13 @@ test("tags", function() {
 		},
 		template: "{{:#data}}"
 	});
-	equal($.templates("{{boldTag}}{{:#data}}{{/boldTag}}").render("theData"), "<em>theData</em>",
+	assert.equal($.templates("{{boldTag}}{{:#data}}{{/boldTag}}").render("theData"), "<em>theData</em>",
 		'Data context inside a block tag using tagCtx.render() is the same as the outer context');
 
-	equal($.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
+	assert.equal($.templates("{{boldTag/}}").render("theData"), "<em>theData</em>",
 		'Data context inside the built-in template of a self-closing tag using tagCtx.render() is the same as the outer context');
 
-	equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
+	assert.equal($.templates("{{sort people reverse=true}}{{:name}}{{/sort}}").render({people: people}), "BillJo", "$.views.tags({sort: sortFunction})");
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
@@ -1636,7 +1636,7 @@ test("tags", function() {
 		}).render(person);
 
 	// ............................... Assert .................................
-	equal(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: init render');
+	assert.equal(renderedOutput + "|" + eventData, "Jo special| init render getType", '{^{myWidget/}} - Events fire in order during rendering: init render');
 
 	// =============================== Arrange ===============================
 	$.views.tags({
@@ -1652,19 +1652,19 @@ test("tags", function() {
 	});
 
 	// ............................... Assert .................................
-	equal($.templates("a{{noRenderNoTemplate/}}b{^{noRenderNoTemplate/}}c{{noRenderNoTemplate}}{{/noRenderNoTemplate}}d{^{noRenderNoTemplate}}{{/noRenderNoTemplate}}e").render(1), "abcde",
+	assert.equal($.templates("a{{noRenderNoTemplate/}}b{^{noRenderNoTemplate/}}c{{noRenderNoTemplate}}{{/noRenderNoTemplate}}d{^{noRenderNoTemplate}}{{/noRenderNoTemplate}}e").render(1), "abcde",
 	"non-rendering tag (no template, no render function) renders empty string");
 
-	equal($.templates("a{{voidRender/}}b{^{voidRender/}}c{{voidRender}}{{/voidRender}}d{^{voidRender}}{{/voidRender}}e").render(1), "abcde",
+	assert.equal($.templates("a{{voidRender/}}b{^{voidRender/}}c{{voidRender}}{{/voidRender}}d{^{voidRender}}{{/voidRender}}e").render(1), "abcde",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
-	equal($.templates("a{{emptyRender/}}b{^{emptyRender/}}c{{emptyRender}}{{/emptyRender}}d{^{emptyRender}}{{/emptyRender}}e").render(1), "abcde",
+	assert.equal($.templates("a{{emptyRender/}}b{^{emptyRender/}}c{{emptyRender}}{{/emptyRender}}d{^{emptyRender}}{{/emptyRender}}e").render(1), "abcde",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
-	equal($.templates("a{{emptyTemplate/}}b{^{emptyTemplate/}}c{{emptyTemplate}}{{/emptyTemplate}}d{^{emptyTemplate}}{{/emptyTemplate}}e").render(1), "abcde",
+	assert.equal($.templates("a{{emptyTemplate/}}b{^{emptyTemplate/}}c{{emptyTemplate}}{{/emptyTemplate}}d{^{emptyTemplate}}{{/emptyTemplate}}e").render(1), "abcde",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
-	equal($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
+	assert.equal($.templates("a{{templateReturnsEmpty/}}b{^{templateReturnsEmpty/}}c{{templateReturnsEmpty}}{{/templateReturnsEmpty}}d{^{templateReturnsEmpty}}{{/templateReturnsEmpty}}e").render(1), "abcde",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	$.views.tags({
@@ -1716,64 +1716,64 @@ test("tags", function() {
 		}
 	});
 
-	equal($.templates("a{{include person}}{{tagJustTemplate/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	assert.equal($.templates("a{{include person}}{{tagJustTemplate/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a template and no param renders once against current data, if object");
 
-	equal($.templates("a{{include person}}{{tagJustTemplateObject/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	assert.equal($.templates("a{{include person}}{{tagJustTemplateObject/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a template object and no param renders once against current data, if object");
 
-	equal($.templates("a{{include person}}{{tagJustTemplate undefinedProperty/}}{{/include}}").render({person: {name: "Jo"}}), "aNot defined ",
+	assert.equal($.templates("a{{include person}}{{tagJustTemplate undefinedProperty/}}{{/include}}").render({person: {name: "Jo"}}), "aNot defined ",
 	"Tag with just a template and a parameter which is not defined renders once against 'undefined'");
 
-	equal($.templates("a{{include people}}{{tagJustTemplate/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	assert.equal($.templates("a{{include people}}{{tagJustTemplate/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"Tag with just a template and no param renders once against current data, even if array" +
 	"\n- but can add render method with tagCtx.render(val) to iterate - (next test)");
 
-	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	assert.equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array");
 
-	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData thisisignored/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	assert.equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesAgainstCurrentData thisisignored/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render() iterates against current data if array" +
 	"\n- and ignores argument if provided");
 
-	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	assert.equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render(val) renders against first arg" +
 	"\n- or defaults to current data, and iterates if array");
 
-	equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	assert.equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and no param and render method calling tagCtx.render(val) iterates against argument if array");
 
-	equal($.templates("a{{include people}}{{tagWithTemplateNoIteration/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	assert.equal($.templates("a{{include people}}{{tagWithTemplateNoIteration/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"If current data is an array, a tag with a template and a render method calling" +
 	"\ntagCtx.render(val, true) and no param renders against array without iteration");
 
-	equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArgNoDefaultArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aNot defined ",
+	assert.equal($.templates("a{{include people}}{{tagWithTemplateWhichIteratesFirstArgNoDefaultArg/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aNot defined ",
 	"Tag with a template and no param and render method calling tagCtx.render(val) but with tag.argDefault=false renders against first arg" +
 	"\n- and does not default to current data if arg is undefined");
 
-	equal($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
+	assert.equal($.templates("a{{include people}}{{tagWithTemplateNoIterationWithHelpers/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 foovalue",
 	"If current data is an array, a tag with a template and a render method calling" +
 	"\ntagCtx.render(val, helpers, true) and no param renders against array without iteration");
 
-	equal($.templates("a{{include person}}{{tagJustRender/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
+	assert.equal($.templates("a{{include person}}{{tagJustRender/}}{{/include}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a render and no param renders once against current data, if object");
 
-	equal($.templates("a{{include people}}{{tagJustRenderArray/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	assert.equal($.templates("a{{include people}}{{tagJustRenderArray/}}{{/include}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"Tag with just a render and no param renders once against current data, even if array - but render method can choose to iterate");
 
-	equal($.templates("a{{tagJustTemplate person/}}").render({person: {name: "Jo"}}), "aJo ",
+	assert.equal($.templates("a{{tagJustTemplate person/}}").render({person: {name: "Jo"}}), "aJo ",
 	"Tag with just a template and renders once against first argument data, if object");
 
-	equal($.templates("a{{tagJustTemplate people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
+	assert.equal($.templates("a{{tagJustTemplate people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "a2 ",
 	"Tag with just a template renders once against first argument data even if it is an array" +
 	"\n- but can add render method with tagCtx.render(val) to iterate - (next test)");
 
-	equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
+	assert.equal($.templates("a{{tagWithTemplateWhichIteratesFirstArg people/}}").render({people: [{name: "Jo"}, {name: "Mary"}]}), "aJo Mary ",
 	"Tag with a template and render method calling tagCtx.render(val) renders against first param data, and iterates if array");
 
 });
 
-test("derived tags", function() {
+QUnit.test("derived tags", function(assert) {
 	// =============================== Arrange ===============================
 	var tmpl = $.templates("a:{{A 1/}} b:{{B 2/}}"),
 
@@ -1796,7 +1796,7 @@ test("derived tags", function() {
 	var result = tmpl.render({});
 
 	// ............................... Assert .................................
-	equal(result, "a:A1 b:B2A2", "One level tag inheritance chain - calling base method");
+	assert.equal(result, "a:A1 b:B2A2", "One level tag inheritance chain - calling base method");
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}} d:{{D 31 32 33/}} e:{{E 41 42 43/}}");
@@ -1865,7 +1865,7 @@ test("derived tags", function() {
 	result = tmpl.render({});
 
 	// ............................... Assert .................................
-	equal(result, "a:A1 b:B11A11 c:C21A21FOO-C:21BAR-C212223 d:D31C31A31FOO-C:31BAR-C313233 e:E41D41C41A41FOO-E41FOO-C:41BAR-E414243BAR-C414243", "Complex multi-level inheritance chain");
+	assert.equal(result, "a:A1 b:B11A11 c:C21A21FOO-C:21BAR-C212223 d:D31C31A31FOO-C:31BAR-C313233 e:E41D41C41A41FOO-E41FOO-C:41BAR-E414243BAR-C414243", "Complex multi-level inheritance chain");
 
 	// =============================== Arrange ===============================
 	$.views.settings.debugMode(true);
@@ -1883,7 +1883,7 @@ test("derived tags", function() {
 	result = tmpl.render({});
 
 	// ............................... Assert .................................
-	equal(result.slice(0, 10), "a:{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
+	assert.equal(result.slice(0, 10), "a:{Error: ", "Calling base or baseApply when there is no base tag: Type Error");
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates("a:{{A 1 2 3/}} b:{{B 11 12 13/}} c:{{C 21 22 23/}}");
@@ -1922,12 +1922,12 @@ test("derived tags", function() {
 	result = tmpl.render({});
 
 	// ............................... Assert .................................
-	equal(result, "a:A1 b:B11A11 c:C21BAR-C212223 Missing base method call: .",
+	assert.equal(result, "a:A1 b:B11A11 c:C21BAR-C212223 Missing base method call: .",
 	'Calling base or baseApply when there is no corresponding method on base tag implementation: noop - returning ""');
 
 });
 
-test('{{include}} and wrapping content', function() {
+QUnit.test('{{include}} and wrapping content', function(assert) {
 	var result = $.templates({
 			markup:
 					'Before {{include tmpl="wrapper"}}'
@@ -1938,7 +1938,7 @@ test('{{include}} and wrapping content', function() {
 			}
 		}).render(people);
 
-	equal(result, "Before headerJofooter AfterBefore headerBillfooter After", 'Using {{include ... tmpl="wrapper"}}wrapped{{/include}}');
+	assert.equal(result, "Before headerJofooter AfterBefore headerBillfooter After", 'Using {{include ... tmpl="wrapper"}}wrapped{{/include}}');
 
 	result = $.templates({
 		markup:
@@ -1967,7 +1967,7 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render(people);
 
-	equal(result,
+	assert.equal(result,
 		"This (render method) replaces: replacementText |" 
 		+ " This (original template) adds: addJo |" 
 		+ " This (new template) wraps: headerJofooter |" 
@@ -1986,7 +1986,7 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render({people: people});
 
-	equal(result, "Before headerJoBillfooter After", 'Using {{for ... tmpl="wrapper"}}wrapped{{/for}}');
+	assert.equal(result, "Before headerJoBillfooter After", 'Using {{for ... tmpl="wrapper"}}wrapped{{/for}}');
 
 	result = $.templates({
 		markup:
@@ -2006,7 +2006,7 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render({people: people});
 
-	equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{mytag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
+	assert.equal(result, "This replaces:replacementTextThis wraps:headerJoBillfooter", 'Using {{mytag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
 	result = $.templates({
 		markup:
@@ -2049,7 +2049,7 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render(people);
 
-	equal(result, 
+	assert.equal(result, 
 		"outer Jo /outer |"
 		+ " outer innermost Jo /innermost /outer |"
 		+ " outer inner Jo and innermost Jo /innermost /inner /outer |"
@@ -2100,7 +2100,7 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render(data);
 
-	equal(result, 
+	assert.equal(result, 
 		"outer Ph0 Ph1 Ph2  /outer | Ph0 Ph1 Ph2 ",
 		'Cascading multi-level wrapper around #content with {{for}}'
 	);
@@ -2136,7 +2136,7 @@ test('{{include}} and wrapping content', function() {
 		}
 	}).render(data);
 
-	equal(result, 
+	assert.equal(result, 
 		  "outer A< Ph0 Ph1 Ph2  >  /outer |"
 		+ " outer B< alternate: Alt0 alternate: Alt1 alternate: Alt2  >  /outer |"
 		+ " outer C< alternate: Alt0 alternate: Alt1 alternate: Alt2  >  /outer |"
@@ -2147,7 +2147,7 @@ test('{{include}} and wrapping content', function() {
 	);
 });
 
-test("helpers", 4, function() {
+QUnit.test("helpers", function(assert) {
 	$.views.helpers({
 		not: function(value) {
 			return !value;
@@ -2156,22 +2156,22 @@ test("helpers", 4, function() {
 			return "".concat.apply("", arguments) + "top";
 		}
 	});
-	equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({a: "aVal"}), "aValbtruetop", "~concat('a')");
+	assert.equal($.templates("{{:~concat(a, 'b', ~not(false))}}").render({a: "aVal"}), "aValbtruetop", "~concat('a')");
 
 	function toUpperCase(value) {
 		return value.toUpperCase();
 	}
 	var toUpperCaseFn = $.views.helpers("toUpperCase", toUpperCase);
-	equal($.templates("{{:~toUpperCase(name)}} {{:~toUpperCase('Foo')}}").render(person), "JO FOO", '$.views.helpers("toUpperCase", toUpperCaseFn);... {{:~toUpperCase(name)}}');
+	assert.equal($.templates("{{:~toUpperCase(name)}} {{:~toUpperCase('Foo')}}").render(person), "JO FOO", '$.views.helpers("toUpperCase", toUpperCaseFn);... {{:~toUpperCase(name)}}');
 
 	$.views.helpers({toUpperCase2: toUpperCase});
-	equal(toUpperCaseFn === toUpperCase && $.views.helpers.toUpperCase === toUpperCase && $.views.helpers.toUpperCase2 === toUpperCase, true, 'sortFunction === $.views.helpers.toUpperCase === $.views.helpers("toUpperCase")');
+	assert.equal(toUpperCaseFn === toUpperCase && $.views.helpers.toUpperCase === toUpperCase && $.views.helpers.toUpperCase2 === toUpperCase, true, 'sortFunction === $.views.helpers.toUpperCase === $.views.helpers("toUpperCase")');
 
 	$.views.helpers("toUpperCase2", null);
-	equal($.views.helpers.toUpperCase2, undefined, '$.views.helpers("toUpperCase2", null) to remove registered helper');
+	assert.equal($.views.helpers.toUpperCase2, undefined, '$.views.helpers("toUpperCase2", null) to remove registered helper');
 });
 
-test("settings", function() {
+QUnit.test("settings", function(assert) {
 	// ................................ Act ..................................
 	// Delimiters
 
@@ -2188,7 +2188,7 @@ test("settings", function() {
 		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
 	// ............................... Assert .................................
-	equal(result, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
+	assert.equal(result, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
 
 	// =============================== Arrange ===============================
 	// Debug mode false
@@ -2208,7 +2208,7 @@ test("settings", function() {
 	}
 
 	// ............................... Assert .................................
-	equal($.views.settings.debugMode() + " " + result, 'false true',
+	assert.equal($.views.settings.debugMode() + " " + result, 'false true',
 		'Debug mode false: {{:missing.willThrow}} throws error');
 
 	// ................................ Act ..................................
@@ -2224,7 +2224,7 @@ test("settings", function() {
 	}
 
 	// ............................... Assert .................................
-	equal($.views.settings.debugMode() + " " + result.slice(0, 8), 'true {Error: ',
+	assert.equal($.views.settings.debugMode() + " " + result.slice(0, 8), 'true {Error: ',
 		'Debug mode true: {{:missing.willThrow}} renders error');
 
 	// ................................ Act ..................................
@@ -2240,7 +2240,7 @@ test("settings", function() {
 	result += $.templates('{{:missing.willThrow}}').render(app);
 
 	// ............................... Assert .................................
-	equal(result, "function Override error - _Jo true",
+	assert.equal(result, "function Override error - _Jo true",
 		"Debug mode 'onError' handler override, with {{:missing.willThrow}}");
 
 	// ................................ Act ..................................
@@ -2248,7 +2248,7 @@ test("settings", function() {
 	result += $.templates('{{:missing.willThrow onError="myFallback"}}').render(app);
 
 	// ............................... Assert .................................
-	equal(result, "function Override error - myFallback_Jo true",
+	assert.equal(result, "function Override error - myFallback_Jo true",
 		'Debug mode \'onError\' handler override, with onError fallback: {{:missing.willThrow onError="myFallback"}}');
 
 	// ................................ Act ..................................
@@ -2256,7 +2256,7 @@ test("settings", function() {
 	result += $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
 
 	// ............................... Assert .................................
-	equal(result, 'function Override error - myFallback_Jo true',
+	assert.equal(result, 'function Override error - myFallback_Jo true',
 		'Debug mode \'onError\' handler override, with onError fallback: {{if missing.willThrow onError="myFallback"}}');
 
 	// ................................ Act ..................................
@@ -2272,7 +2272,7 @@ test("settings", function() {
 	result += $.templates('{{:missing.willThrow}}').render(app);
 
 	// ............................... Assert .................................
-	equal(ret + "|" + result.slice(0, 17), "Override error - _Jo true|function {Error: ",
+	assert.equal(ret + "|" + result.slice(0, 17), "Override error - _Jo true|function {Error: ",
 		"Debug mode 'onError' handler (no return) with {{:missing.willThrow}}");
 
 	// ................................ Act ..................................
@@ -2280,7 +2280,7 @@ test("settings", function() {
 	result += $.templates('{{:missing.willThrow onError="myFallback"}}').render(app);
 
 	// ............................... Assert .................................
-	equal(ret + "|" + result, "Override error - myFallback_Jo true|function myFallback",
+	assert.equal(ret + "|" + result, "Override error - myFallback_Jo true|function myFallback",
 		'Debug mode \'onError\' handler (no return) with onError fallback: {{:missing.willThrow onError="myFallback"}}');
 
 	// ................................ Act ..................................
@@ -2288,14 +2288,14 @@ test("settings", function() {
 	result += $.templates('{{if missing.willThrow onError="myFallback"}}yes{{/if}}').render(app);
 
 	// ............................... Assert .................................
-	equal(ret + "|" + result, "Override error - myFallback_Jo true|function myFallback",
+	assert.equal(ret + "|" + result, "Override error - myFallback_Jo true|function myFallback",
 		'Debug mode \'onError\' handler (no return) with onError fallback: {{if missing.willThrow onError="myFallback"}}');
 
 	// ................................ Reset ..................................
 	$.views.settings.debugMode(oldDebugMode);
 });
 
-test("template encapsulation", 8, function() {
+QUnit.test("template encapsulation", function(assert) {
 		// =============================== Arrange ===============================
 $.templates({
 		myTmpl6: {
@@ -2307,7 +2307,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal($.render.myTmpl6({people: people}), "BillJo", '$.templates("myTmpl", tmplObjWithNestedItems);');
+	assert.equal($.render.myTmpl6({people: people}), "BillJo", '$.templates("myTmpl", tmplObjWithNestedItems);');
 
 	// =============================== Arrange ===============================
 	$.views.helpers("h1", "globalHelper");
@@ -2320,7 +2320,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal(tmpl.render({}, {h3:"optionHelper"}), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
+	assert.equal(tmpl.render({}, {h3:"optionHelper"}), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -2331,7 +2331,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal(tmpl.render({}), "templateHelper", 'template helper overrides global helper');
+	assert.equal(tmpl.render({}), "templateHelper", 'template helper overrides global helper');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -2339,7 +2339,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal(tmpl.render({}, {h1: "optionHelper"}), "optionHelper", 'option helper overrides global helper');
+	assert.equal(tmpl.render({}, {h1: "optionHelper"}), "optionHelper", 'option helper overrides global helper');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -2350,7 +2350,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal(tmpl.render({}, {h2: "optionHelper"}), "templateHelper", 'template helper overrides option helper');
+	assert.equal(tmpl.render({}, {h2: "optionHelper"}), "templateHelper", 'template helper overrides option helper');
 
 	// =============================== Arrange ===============================
 	$.views.converters("c1", function(val) {return val + "globalCvt";});
@@ -2363,7 +2363,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal(tmpl.render({}), "1globalCvt2templateCvt", 'template converter and global converter');
+	assert.equal(tmpl.render({}), "1globalCvt2templateCvt", 'template converter and global converter');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -2374,7 +2374,7 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal(tmpl.render({}), "1templateCvt", 'template converter overrides global converter');
+	assert.equal(tmpl.render({}), "1templateCvt", 'template converter overrides global converter');
 
 	// =============================== Arrange ===============================
 
@@ -2407,25 +2407,15 @@ $.templates({
 	});
 
 	// ............................... Assert .................................
-	equal($.templates.nesting.render({}, {b: "optionHelper"}), " templateHelper templateCvt innerTemplateHelper innerTemplateCvt innerInnerCascade innerCascade",
+	assert.equal($.templates.nesting.render({}, {b: "optionHelper"}), " templateHelper templateCvt innerTemplateHelper innerTemplateCvt innerInnerCascade innerCascade",
 		'Inner template, helper, and converter override outer template, helper, and converter');
 });
 
 QUnit.module("Custom tags");
 
-test("contentCtx", function() {
+QUnit.test("contentCtx", function(assert) {
 
-var tmpl = $.templates("\
-{{for 'parent'}}\
-{{mytag 'arg1' 'arg2' 'arg3'}}\
-  {{:#data}}A\
-{{else 'elseArg1'}}\
-  {{:#data}}B\
-{{else}}\
-  {{:#data}}C\
-{{/mytag}}\
-{{/for}}\
-");
+var tmpl = $.templates("{{for 'parent'}}{{mytag 'arg1' 'arg2' 'arg3'}}  {{:#data}}A{{else 'elseArg1'}}  {{:#data}}B{{else}}  {{:#data}}C{{/mytag}}{{/for}}");
 
 	// =============================== Arrange ===============================
 
@@ -2433,7 +2423,7 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'No contentCtx - context is 1st arg or parentView.data');
+	assert.equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'No contentCtx - context is 1st arg or parentView.data');
 
 	// =============================== Arrange ===============================
 
@@ -2444,7 +2434,7 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  0A  0B  0C", 'contentCtx returns 0 - context is 0 (even for falsy values like 0');
+	assert.equal(tmpl.render("outer"), "  0A  0B  0C", 'contentCtx returns 0 - context is 0 (even for falsy values like 0');
 
 	// =============================== Arrange ===============================
 
@@ -2455,7 +2445,7 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'contentCtx returns first arg/parentView - context is 1st arg or parentView.data');
+	assert.equal(tmpl.render("outer"), "  arg1A  elseArg1B  parentC", 'contentCtx returns first arg/parentView - context is 1st arg or parentView.data');
 
 	// =============================== Arrange ===============================
 
@@ -2466,7 +2456,7 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  parentA  parentB  parentC", 'contentCtx returns this.tagCtx.view - context is parentView.data');
+	assert.equal(tmpl.render("outer"), "  parentA  parentB  parentC", 'contentCtx returns this.tagCtx.view - context is parentView.data');
 
 	// =============================== Arrange ===============================
 
@@ -2477,7 +2467,7 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  parentA  parentB  parentC", 'contentCtx returns this.tagCtx.view.data - context is parentView.data');
+	assert.equal(tmpl.render("outer"), "  parentA  parentB  parentC", 'contentCtx returns this.tagCtx.view.data - context is parentView.data');
 
 	// =============================== Arrange ===============================
 
@@ -2488,23 +2478,11 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  arg1A  arg2B  arg3C", 'contentCtx returns arg from first tagCtx indexed on else - context is arg1/arg2/arg3');
+	assert.equal(tmpl.render("outer"), "  arg1A  arg2B  arg3C", 'contentCtx returns arg from first tagCtx indexed on else - context is arg1/arg2/arg3');
 
 	// =============================== Arrange ===============================
 
-var tmpl = $.templates("\
-{{for 'outerparent'}}\
-{{for 'parent'}}\
-{{mytag 'arg1' 'arg2' 'arg3'}}\
-  {{:#data}}A\
-{{else 'elseArg1'}}\
-  {{:#data}}B\
-{{else}}\
-  {{:#data}}C\
-{{/mytag}}\
-{{/for}}\
-{{/for}}\
-");
+var tmpl = $.templates("{{for 'outerparent'}}{{for 'parent'}}{{mytag 'arg1' 'arg2' 'arg3'}}  {{:#data}}A{{else 'elseArg1'}}  {{:#data}}B{{else}}  {{:#data}}C{{/mytag}}{{/for}}{{/for}}");
 
 $.views.tags({mytag: {
 	contentCtx: function(val) {
@@ -2513,7 +2491,7 @@ $.views.tags({mytag: {
 }}, tmpl);
 
 	// ............................... Assert .................................
-	equal(tmpl.render("outer"), "  outerparentA  outerparentB  outerparentC", 'contentCtx returns this.tagCtx.view.parent');
+	assert.equal(tmpl.render("outer"), "  outerparentA  outerparentB  outerparentC", 'contentCtx returns this.tagCtx.view.parent');
 
 });
 

@@ -10,9 +10,9 @@ function undefine() { // Undefine registered modules from previously run tests.
 
 if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qunit async test seems to fail in IE8
 
-module("AMD Script Loader");
+QUnit.module("AMD Script Loader");
 
-test("Loading JsRender, without jQuery, using RequireJS", function(assert) { 
+QUnit.test("Loading JsRender, without jQuery, using RequireJS", function(assert) { 
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
@@ -23,12 +23,12 @@ test("Loading JsRender, without jQuery, using RequireJS", function(assert) {
 		// If there was no global jQuery it would be the jsviews object - but no global would be created.
 
 		var result = $.templates("Name: {{:name}}").render({name: "Jo"}) + " " + (!!$.jsrender);
-		equal(result, "Name: Jo true", "JsRender Loaded");
+		assert.equal(result, "Name: Jo true", "JsRender Loaded");
 		done();
 	});
 });
 
-test("Loading JsRender and jQuery, without forcing load order, using RequireJS", function(assert) {
+QUnit.test("Loading JsRender and jQuery, without forcing load order, using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
@@ -41,13 +41,13 @@ test("Loading JsRender and jQuery, without forcing load order, using RequireJS",
 			// Either way, it is the jQuery instance that has a $.views, $.templates etc.
 
 			var result = $.templates("Name: {{:name}}").render({name: "Jo"}) + " " + ($ === $jq || !!$.jsrender);
-			equal(result, "Name: Jo true", "JsRender Loaded");
+			assert.equal(result, "Name: Jo true", "JsRender Loaded");
 			done();
 		});
 	});
 });
 
-test("Loading JsRender with jQuery, and force jQuery to load before JsRender, using RequireJS", function(assert) {
+QUnit.test("Loading JsRender with jQuery, and force jQuery to load before JsRender, using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
@@ -62,7 +62,7 @@ test("Loading JsRender with jQuery, and force jQuery to load before JsRender, us
 				// Note: $ is a new instance of jQuery (=== $jq) loaded by RequireJS, not the instance loaded by script block in page header, for QUnit.
 
 				var result = $.templates("Name: {{:name}}").render({name: "Jo"}) + " " + (jq !== $ && $ === window.jQuery && $ === $jq);
-				equal(result, "Name: Jo true", "JsRender LoadedX");
+				assert.equal(result, "Name: Jo true", "JsRender LoadedX");
 				done();
 			});
 		});
