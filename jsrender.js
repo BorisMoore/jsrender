@@ -1,4 +1,4 @@
-/*! JsRender v1.0.0: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.1: http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -44,25 +44,19 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v1.0.0",
+var versionNumber = "v1.0.1",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
 //TODO	tmplFnsCache = {},
-	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
-
-	rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-	//        not                               object     helper    view  viewProperty pathTokens      leafToken
-
-	rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|~(?![\w$_])|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
-	//         lftPrn0          lftPrn        bound path             operator err                                         eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
-	// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
+	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings,
+	delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
 
 	isRenderCall,
 	rNewLine = /[ \t]*(\r\n|\n|\r)/g,
 	rUnescapeQuotes = /\\(['"])/g,
 	rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
-	rBuildHash = /(?:\x08|^)(onerror:)?(?:(~?)(([\w$_\.]+):)?([^\x08]+))\x08(,)?([^\x08]+)/gi,
+	rBuildHash = /(?:\x08|^)(onerror:)?(?:(~?)(([\w$.]+):)?([^\x08]+))\x08(,)?([^\x08]+)/gi,
 	rTestElseIf = /^if\s/,
 	rFirstElem = /<(\w+)[>\s]/,
 	rAttrEncode = /[\x00`><"'&=]/g, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
@@ -118,6 +112,12 @@ var versionNumber = "v1.0.0",
 		jsviews: versionNumber,
 		sub: {
 			// subscription, e.g. JsViews integration
+			rPath: /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+			//        not                               object     helper    view  viewProperty pathTokens      leafToken
+
+			rPrm: /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|~(?![\w$])|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
+			//   lftPrn0           lftPrn         bound     path               operator     err                                          eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
+
 			View: View,
 			Err: JsViewsError,
 			tmplFn: tmplFn,
@@ -2092,12 +2092,13 @@ function paramStructure(parts, type) {
 function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 
 	function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, late, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-	// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
-	//  lftPrn0          lftPrn        bound path             operator err                                         eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
-		// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+	// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|~(?![\w$])|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
+	//lftPrn0           lftPrn         bound     path               operator     err                                          eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
+	// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+
 		function parsePath(allPath, not, object, helper, view, viewProperty, pathTokens, leafToken) {
-			//rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-			//          not                               object     helper    view  viewProperty pathTokens      leafToken
+			// /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+			//    not                               object     helper    view  viewProperty pathTokens      leafToken
 			var subPath = object === ".";
 			if (object) {
 				path = path.slice(not.length);
@@ -2246,7 +2247,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 									bindings && ((bindings = bndCtx.bd = pathBindings[named] = []), bindings.skp = !bound), path + ':')
 							: path
 				// path
-								? (path.split("^").join(".").replace(rPath, parsePath)
+								? (path.split("^").join(".").replace($sub.rPath, parsePath)
 									+ (prn
 				// some.fncall(
 										? (bndCtx = bndStack[++parenDepth] = {bd: []}, fnCall[parenDepth] = rtSq, prn)
@@ -2290,7 +2291,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 	if (params[0] === "@") {
 		params = params.replace(rBracketQuote, ".");
 	}
-	result = (params + (tmpl ? " " : "")).replace(rParams, parseTokens);
+	result = (params + (tmpl ? " " : "")).replace($sub.rPrm, parseTokens);
 
 	return !parenDepth && result || syntaxError(params); // Syntax error if unbalanced parens in params expression
 }
