@@ -16,8 +16,7 @@ if (!isBrowser) {
 function compileTmpl(template) {
 	try {
 		return typeof $.templates(template).fn === "function" ? "compiled" : "failed compile";
-	}
-	catch (e) {
+	} catch(e) {
 		return e.message;
 	}
 }
@@ -128,7 +127,7 @@ QUnit.test("paths", function(assert) {
 	assert.equal($.templates("{{:a.b[1].d}}").render({a: {b: [0, {d: "dVal"}]}}), "dVal", "a.b[1].d");
 	assert.equal($.templates("{{:a.b[1].d}}").render({a: {b: {1:{d: "dVal"}}}}), "dVal", "a.b[1].d");
 	assert.equal($.templates("{{:a.b[~incr(1-1)].d}}").render({a: {b: {1:{d: "dVal"}}}}, {incr:function(val) {return val + 1;}}), "dVal", "a.b[~incr(1-1)].d");
-	assert.equal($.templates("{{:a.b.c.d}}").render({a: {b: {'c':{d: "dVal"}}}}), "dVal", "a.b.c.d");
+	assert.equal($.templates("{{:a.b.c.d}}").render({a: {b: {c:{d: "dVal"}}}}), "dVal", "a.b.c.d");
 	assert.equal($.templates("{{:a[0]}}").render({a: [ "bVal" ]}), "bVal", "a[0]");
 	assert.equal($.templates("{{:a.b[1][0].msg}}").render({a: {b: [22,[{msg: " yes - that's right. "}]]}}), " yes - that's right. ", "a.b[1][0].msg");
 	assert.equal($.templates("{{:#data.a}}").render({a: "aVal"}), "aVal", "#data.a");
@@ -162,7 +161,7 @@ QUnit.test("Fallbacks for missing or undefined paths:\nusing {{:some.path onErro
 	var message;
 	try {
 		$.templates("{{:a.missing.willThrow.path}}").render({a:1});
-	} catch (e) {
+	} catch(e) {
 		message = e.message;
 	}
 	assert.ok(!!message,
@@ -289,7 +288,7 @@ QUnit.test("Fallbacks for missing or undefined paths:\nusing {{:some.path onErro
 				return "myCallback: " + this.a;
 			}
 		});
-	} catch (e) {
+	} catch(e) {
 		message = e.message;
 	}
 
@@ -366,7 +365,7 @@ QUnit.test("Fallbacks for missing or undefined paths:\nusing {{:some.path onErro
 				return "myCallback: " + this.a;
 			}
 		});
-	} catch (e) {
+	} catch(e) {
 		message = e.message;
 	}
 
@@ -518,11 +517,11 @@ QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 	var oddIndex = function(item, index, items) { return index%2; };
 	var sortAgeName = function(a, b) {
 		return level(a.details.role.toLowerCase(), b.details.role.toLowerCase()) // First level sort: by role
-			|| level(b.details.age, a.details.age) // 2nd level sort: reverse sort by age
+			|| (this.props.reverseAge ? level(b.details.age, a.details.age) : level(a.details.age, b.details.age)) // 2nd level sort: sort by age, or reverse sort by age
 			|| level(a.name.toLowerCase(), b.name.toLowerCase()); // 3rd level sort: sort by name
 	};
-	var under20 = function(item, index, items) { 
-		return item.details.age < 20;
+	var underLimit = function(item, index, items) {
+		return item.details.age < this.props.limit;
 	};
 
 	// ................................ Assert ..................................
@@ -542,7 +541,7 @@ QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 
 	var myarray = [1, 9, 2, 8, 3, 7, 4, 6, 5];
 
-	assert.equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 ", "{{for #data sort=''}}");
+	assert.equal($.templates("{{for #data }}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 ", "{{for #data}}");
 	assert.equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "1 2 3 4 5 6 7 8 9 ", "{{for #data sort=true}}");
 	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
 	assert.equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}), "9 2 8 3 7 4 6 ", "{{for myarray start=1 end=-1}}");
@@ -587,12 +586,12 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 		"{{for mypeople  sort='details.age'}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ",
-		"{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
-	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
-		"{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
-	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
-		"{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~underLimit limit=20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ",
+		"{{for mypeople  sort='details.age' reverse=true filter=~underLimit...}}");
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+		"{{for mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+		"{{for mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
 }
 	// =============================== Arrange ===============================
 
@@ -609,8 +608,20 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Assert ..................................
 
 	assert.equal($.templates("{{for mypeople sort=~sortAgeName}}{{:name}}: ({{:details.role}}) age {{:details.age}} -{{/for}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+		"Julia: (Assistant) age 18 -Anne: (Assistant) age 32 -Bill: (Lead) age 22 -Jeff: (Lead) age 33.5 -Emma: (Team member) age 19.1 -Bill: (Team member) age 32 -Xavier: (Team member) age 32 -",
+		"{{for mypeople sort=~sortAgeName}}: custom sort function");
+
+	// ................................ Assert ..................................
+
+	assert.equal($.templates("{{for mypeople sort=~sortAgeName reverseAge=true}}{{:name}}: ({{:details.role}}) age {{:details.age}} -{{/for}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
 		"Anne: (Assistant) age 32 -Julia: (Assistant) age 18 -Jeff: (Lead) age 33.5 -Bill: (Lead) age 22 -Bill: (Team member) age 32 -Xavier: (Team member) age 32 -Emma: (Team member) age 19.1 -",
-		"{{for mypeople  sort=~sortAgeName}}: custom sort function");
+		"{{for mypeople sort=~sortAgeName}}: custom sort function - this pointer is tagCtx");
+
+	// ................................ Assert ..................................
+
+	assert.equal($.templates("{{for start=0 end=0}}{{else mypeople sort=~sortAgeName reverseAge=true}}{{:name}}: ({{:details.role}}) age {{:details.age}} -{{/for}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+		"Anne: (Assistant) age 32 -Julia: (Assistant) age 18 -Jeff: (Lead) age 33.5 -Bill: (Lead) age 22 -Bill: (Team member) age 32 -Xavier: (Team member) age 32 -Emma: (Team member) age 19.1 -",
+		"{{for start=0 end=0}}{{else mypeople sort=~sortAgeName}}: custom sort function - this pointer is tagCtx (else block)");
 
 	// =============================== Arrange ===============================
 
@@ -621,8 +632,8 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Assert ..................................
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	assert.equal($.templates("{{for2 mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
-		"{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
+	assert.equal($.templates("{{for2 mypeople sort='details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for2}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
+		"{{for2 mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}} Derived tag");
 }
 });
 
@@ -673,12 +684,12 @@ QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 	var oddIndex = function(item, index, items) { return index%2; };
 	var sortAgeName = function(a, b) {
 		return level(a.prop.details.role.toLowerCase(), b.prop.details.role.toLowerCase()) // First level sort: by role
-			|| level(b.prop.details.age, a.prop.details.age) // 2nd level sort: reverse sort by age
+			|| (this.props.reverseAge ? level(b.prop.details.age, a.prop.details.age) : level(a.prop.details.age, b.prop.details.age)) // 2nd level sort: sort by age, or reverse sort by age
 			|| level(a.prop.name.toLowerCase(), b.prop.name.toLowerCase()); // 3rd level sort: sort by name
 	};
 
-	var under20 = function(item, index, items) { 
-		return item.prop.details.age < 20;
+	var underLimit = function(item, index, items) {
+		return item.prop.details.age < this.props.limit;
 	};
 
 	var myobject = {a: 1, b: 9, c: 2, d:8, A:3, B:7, C:4, D:6, e:5};
@@ -688,8 +699,8 @@ QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{props #data sort='key'}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), 	"a 1 - A 3 - b 9 - B 7 - c 2 - C 4 - d 8 - D 6 - e 5 - ", "{{props #data sort='key'}}");
 	assert.equal($.templates("{{props #data sort='prop' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "b 9 - d 8 - B 7 - D 6 - e 5 - C 4 - A 3 - c 2 - a 1 - ", "{{props #data sort='prop' reverse=true}}");
 	assert.equal($.templates("{{props #data sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render(myobject, true), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props #data sort='key' reverse=true}}");
-	assert.equal($.templates("{{props myobject reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - D 6 - C 4 - B 7 - A 3 - d 8 - c 2 - b 9 - a 1 - ", "{{props myobject reverse=true}}")
-	assert.equal($.templates("{{props myobject sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props myobject sort='key' reverse=true}}")
+	assert.equal($.templates("{{props myobject reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - D 6 - C 4 - B 7 - A 3 - d 8 - c 2 - b 9 - a 1 - ", "{{props myobject reverse=true}}");
+	assert.equal($.templates("{{props myobject sort='key' reverse=true}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}), "e 5 - d 8 - D 6 - c 2 - C 4 - b 9 - B 7 - a 1 - A 3 - ", "{{props myobject sort='key' reverse=true}}");
 	assert.equal($.templates("{{props myobject start=1 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject start=1 end=-1}}");
 	assert.equal($.templates("{{props myobject start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject start=1}}");
 	assert.equal($.templates("{{props myobject end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}),  "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject end=-1}}");
@@ -725,9 +736,9 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	assert.equal($.templates("{{props mypeople sort='prop.details.age'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{props mypeople  sort='details.age'}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20}}");
-	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
-	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople sort='details.age' reverse=true filter=~underLimit...}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
+	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
 }
 	// =============================== Arrange ===============================
 
@@ -744,8 +755,20 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Assert ..................................
 
 	assert.equal($.templates("{{props mypeople sort=~sortAgeName}}{{:prop.name}}: ({{:prop.details.role}}) age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
-		"Anne: (Assistant) age 32 - Julia: (Assistant) age 18 - Jeff: (Lead) age 33.5 - Bill: (Lead) age 22 - Bill: (Team member) age 32 - Xavier: (Team member) age 32 - Emma: (Team member) age 19.1 - ",
+		"Julia: (Assistant) age 18 - Anne: (Assistant) age 32 - Bill: (Lead) age 22 - Jeff: (Lead) age 33.5 - Emma: (Team member) age 19.1 - Bill: (Team member) age 32 - Xavier: (Team member) age 32 - ",
 		"{{props mypeople sort=~sortAgeName}}: custom sort function");
+
+	// ................................ Assert ..................................
+
+	assert.equal($.templates("{{props mypeople sort=~sortAgeName reverseAge=true}}{{:prop.name}}: ({{:prop.details.role}}) age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+		"Anne: (Assistant) age 32 - Julia: (Assistant) age 18 - Jeff: (Lead) age 33.5 - Bill: (Lead) age 22 - Bill: (Team member) age 32 - Xavier: (Team member) age 32 - Emma: (Team member) age 19.1 - ",
+		"{{props mypeople sort=~sortAgeName}}: custom sort function - this pointer is tagCtx");
+
+	// ................................ Assert ..................................
+
+	assert.equal($.templates("{{props ''}}{{else mypeople sort=~sortAgeName reverseAge=true}}{{:prop.name}}: ({{:prop.details.role}}) age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople2}, {sortAgeName: sortAgeName}),
+		"Anne: (Assistant) age 32 - Julia: (Assistant) age 18 - Jeff: (Lead) age 33.5 - Bill: (Lead) age 22 - Bill: (Team member) age 32 - Xavier: (Team member) age 32 - Emma: (Team member) age 19.1 - ",
+		"{{props ''}}{{else mypeople sort=~sortAgeName}}: custom sort function - this pointer is tagCtx (else block)");
 
 	// =============================== Arrange ===============================
 
@@ -756,7 +779,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Assert ..................................
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	assert.equal($.templates("{{props2 mypeople sort='prop.details.age' reverse=true filter=~under20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props2}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for2 mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}} Derived tag");
+	assert.equal($.templates("{{props2 mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props2}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for2 mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}} Derived tag");
 }
 });
 
@@ -919,13 +942,12 @@ QUnit.test("", function(assert) {
 	// ................................ Act ..................................
 	try {
 		tmpl.render({towns: towns});
-	}
-	catch (e) {
+	} catch(e) {
 		message = e.message;
 	}
 
 	// ................................ Assert ..................................
-	assert.ok(tmpl.useViews === false && message.indexOf("undefined") > 0,
+	assert.ok(!tmpl.useViews && message.indexOf("undefined") > 0,
 		"A simple template with useViews=false will not provide access to the views through allowCode");
 
 	// ................................ Act ..................................
@@ -1001,7 +1023,7 @@ QUnit.test("", function(assert) {
 	// ................................ Act ..................................
 	var originalUseViews = tmpl.useViews;
 	tmpl.useViews = false;
-	
+
 	// ................................ Assert ..................................
 	assert.equal(originalUseViews && !tmpl.useViews && tmpl.render({towns: towns}), "!!! Seattle, Paris and Delhi",
 		"Setting tmpl.useViews=false will NOT prevent a richer template from rendering views.");
@@ -1035,8 +1057,8 @@ QUnit.test("", function(assert) {
 	document.title = "";
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates("{{:a.getHtml()}} {{if true}}{{:b}} {{/if}}"),
-		innerTmpl = $.templates("{{:inner}}"),
+	tmpl = $.templates("{{:a.getHtml()}} {{if true}}{{:b}} {{/if}}");
+	var innerTmpl = $.templates("{{:inner}}"),
 
 		data = {
 			a: {
@@ -1088,8 +1110,7 @@ QUnit.test("itemVar", function(assert) {
 				+ "{{:~person.name}} "
 			+ "{{/for}}"
 			).render({people: people});
-	}
-	catch (e) {
+	} catch(e) {
 		message = e.message;
 	}
 
@@ -1385,57 +1406,6 @@ QUnit.test("templates", function(assert) {
 	// ............................... Assert .................................
 	assert.equal($.templates.myTmpl === undefined && $.render.myTmpl === undefined, true,
 		'Remove a named template: $.templates("myTmpl", null);');
-
-	//// =============================== Arrange ===============================
-	//var theTmpl = $.templates("theTmpl", "a ");
-
-	//// ............................... Assert .................................
-	//result = theTmpl.render() + "|"
-	//	+ $.render.theTmpl() + "|"
-	//	+ (theTmpl === $.templates.theTmpl);
-
-	//equal(result, "a |a |true",
-	//	'Registered named template overwriting existing template of same name reassigns existing one to name2');
-
-	//// ................................ Act ..................................
-	//var theTmpl2 = $.templates("theTmpl", "b ");
-
-	//// ............................... Assert .................................
-	//result = theTmpl.render() + theTmpl2.render() + "|"
-	//	+ $.render.theTmpl() + $.render.theTmpl2() + "|"
-	//	+ (theTmpl2 === $.templates.theTmpl) + (theTmpl === $.templates.theTmpl2);
-
-	//equal(result, "a b |b a |truetrue",
-	//	'Second registered named template overwriting existing template of same name reassigns existing one to name3');
-
-	//// ................................ Act ..................................
-	//var theTmpl3 = $.templates("theTmpl", "c ");
-
-	//// ............................... Assert .................................
-	//result = theTmpl.render() + theTmpl2.render() + theTmpl3.render() + "|"
-	//	+ $.render.theTmpl() + $.render.theTmpl2() + $.render.theTmpl3() + "|"
-	//	+ (theTmpl3 === $.templates.theTmpl) + (theTmpl2 === $.templates.theTmpl3) + (theTmpl === $.templates.theTmpl2);
-
-	//equal(result, "a b c |c a b |truetruetrue",
-	//	'Third registered named template overwriting existing template of same name reassigns existing one to name4');
-
-	//// ................................ Act ..................................
-	//var theTmpl4 = $.templates("myTmpl", "d ", theTmpl);
-
-	//// ............................... Assert .................................
-	//result = theTmpl.render() + theTmpl2.render() + theTmpl3.render() + theTmpl4.render() + "|"
-	//	+ $.render.theTmpl() + $.render.theTmpl2() + $.render.theTmpl3() + !$.render.theTmpl4 + "|"
-	//	+ (theTmpl3 === $.templates.theTmpl) + (theTmpl2 === $.templates.theTmpl3) + (theTmpl === $.templates.theTmpl2);
-
-	//equal(result, "a b c d |c a b true|truetruetrue",
-	//	'Registering named template child of template does not create $.render.theTmpl binding');
-
-	//// ............................... Reset ................................
-	//$.templates({
-	//	theTmpl: null,
-	//	theTmpl2: null,
-	//	theTmpl3: null
-	//});
 });
 
 QUnit.test("render", function(assert) {
@@ -1968,11 +1938,11 @@ QUnit.test('{{include}} and wrapping content', function(assert) {
 	}).render(people);
 
 	assert.equal(result,
-		"This (render method) replaces: replacementText |" 
-		+ " This (original template) adds: addJo |" 
-		+ " This (new template) wraps: headerJofooter |" 
-		+ " This (render method) replaces: replacementText |" 
-		+ " This (original template) adds: addBill |" 
+		"This (render method) replaces: replacementText |"
+		+ " This (original template) adds: addJo |"
+		+ " This (new template) wraps: headerJofooter |"
+		+ " This (render method) replaces: replacementText |"
+		+ " This (original template) adds: addBill |"
 		+ " This (new template) wraps: headerBillfooter | ",
 		'Custom tag with wrapped content: {{mytag ... tmpl="wrapper"}}wrapped{{/myTmpl}}');
 
@@ -2015,7 +1985,7 @@ QUnit.test('{{include}} and wrapping content', function(assert) {
 		+ '{{/mytag}} | '
 		+ '{{mytag tmpl="innerwrap"}}'
 			+ '{{:name}}'
-		+ '{{/mytag}} | ' 
+		+ '{{/mytag}} | '
 		+ '{{mytag tmpl="middlewrap"}}'
 			+ '{{:name}}'
 		+ '{{/mytag}} | '
@@ -2028,7 +1998,7 @@ QUnit.test('{{include}} and wrapping content', function(assert) {
 		+ '{{/mytag2}} | '
 		+ '{{mytag2 tmpl="innerwrap"}}'
 			+ '{{:name}}'
-		+ '{{/mytag2}} | ' 
+		+ '{{/mytag2}} | '
 		+ '{{mytag2 tmpl="middlewrap"}}'
 			+ '{{:name}}'
 		+ '{{/mytag2}} | '
@@ -2049,7 +2019,7 @@ QUnit.test('{{include}} and wrapping content', function(assert) {
 		}
 	}).render(people);
 
-	assert.equal(result, 
+	assert.equal(result,
 		"outer Jo /outer |"
 		+ " outer innermost Jo /innermost /outer |"
 		+ " outer inner Jo and innermost Jo /innermost /inner /outer |"
@@ -2100,7 +2070,7 @@ QUnit.test('{{include}} and wrapping content', function(assert) {
 		}
 	}).render(data);
 
-	assert.equal(result, 
+	assert.equal(result,
 		"outer Ph0 Ph1 Ph2  /outer | Ph0 Ph1 Ph2 ",
 		'Cascading multi-level wrapper around #content with {{for}}'
 	);
@@ -2136,7 +2106,7 @@ QUnit.test('{{include}} and wrapping content', function(assert) {
 		}
 	}).render(data);
 
-	assert.equal(result, 
+	assert.equal(result,
 		  "outer A< Ph0 Ph1 Ph2  >  /outer |"
 		+ " outer B< alternate: Alt0 alternate: Alt1 alternate: Alt2  >  /outer |"
 		+ " outer C< alternate: Alt0 alternate: Alt1 alternate: Alt2  >  /outer |"
@@ -2199,11 +2169,10 @@ QUnit.test("settings", function(assert) {
 
 	// ................................ Act ..................................
 	$.views.settings.debugMode(false);
-	
+
 	try {
 		result = $.templates('{{:missing.willThrow}}').render(app);
-	}
-	catch (e) {
+	} catch(e) {
 		result += !!e.message;
 	}
 
@@ -2214,12 +2183,11 @@ QUnit.test("settings", function(assert) {
 	// ................................ Act ..................................
 	// Debug mode true
 
-	$.views.settings.debugMode(true)
+	$.views.settings.debugMode(true);
 
 	try {
 		result = $.templates('{{:missing.willThrow}}').render(app);
-	}
-	catch (e) {
+	} catch(e) {
 		result += !!e.message;
 	}
 
@@ -2378,7 +2346,7 @@ $.templates({
 
 	// =============================== Arrange ===============================
 
-	tmpl = $.templates({
+	$.templates({
 		cascade: "outerCascade",
 		nesting: {
 			markup: "{{if true}} {{c1:~h1}} {{include tmpl='inner'/}}{{/if}} {{include tmpl='cascade'/}}",
@@ -2482,7 +2450,7 @@ $.views.tags({mytag: {
 
 	// =============================== Arrange ===============================
 
-var tmpl = $.templates("{{for 'outerparent'}}{{for 'parent'}}{{mytag 'arg1' 'arg2' 'arg3'}}  {{:#data}}A{{else 'elseArg1'}}  {{:#data}}B{{else}}  {{:#data}}C{{/mytag}}{{/for}}{{/for}}");
+	tmpl = $.templates("{{for 'outerparent'}}{{for 'parent'}}{{mytag 'arg1' 'arg2' 'arg3'}}  {{:#data}}A{{else 'elseArg1'}}  {{:#data}}B{{else}}  {{:#data}}C{{/mytag}}{{/for}}{{/for}}");
 
 $.views.tags({mytag: {
 	contentCtx: function(val) {

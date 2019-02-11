@@ -1,11 +1,11 @@
-/*! JsRender v1.0.1: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.2: http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2018, Boris Moore
+ * Copyright 2019, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v1.0.1",
+var versionNumber = "v1.0.2",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
@@ -493,7 +493,6 @@ function contextParameter(key, value, get) {
 				return res.apply((!this || this === global) ? callView : this, arguments);
 			};
 			$extend(wrapped, res); // Attach same expandos (if any) to the wrapped function
-			wrapped._vw = callView;
 		}
 		return wrapped || res;
 	}
@@ -513,10 +512,9 @@ function getTemplate(tmpl) {
 function convertVal(converter, view, tagCtx, onError) {
 	// Called from compiled template code for {{:}}
 	// self is template object or linkCtx object
-	var tag, value, argsLen, bindTo,
+	var tag, linkCtx, value, argsLen, bindTo,
 		// If tagCtx is an integer, then it is the key for the compiled function to return the boundTag tagCtx
-		boundTag = typeof tagCtx === "number" && view.tmpl.bnds[tagCtx-1],
-		linkCtx = view._lc; // For data-link="{cvt:...}"...
+		boundTag = typeof tagCtx === "number" && view.tmpl.bnds[tagCtx-1];
 
 	if (onError === undefined && boundTag && boundTag._lr) { // lateRender
 		onError = "";
@@ -528,6 +526,7 @@ function convertVal(converter, view, tagCtx, onError) {
 	}
 	boundTag = boundTag._bd && boundTag;
 	if (converter || boundTag) {
+		linkCtx = view._lc; // For data-link="{cvt:...}"... See onDataLinkedTagChange
 		tag = linkCtx && linkCtx.tag;
 		tagCtx.view = view;
 		if (!tag) {
@@ -688,7 +687,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		content, callInit, mapDef, thisMap, args, bdArgs, props, tagDataMap, contentCtx, key, bindFromLength, bindToLength, linkedElement, defaultCtx,
 		i = 0,
 		ret = "",
-		linkCtx = parentView._lc || false,
+		linkCtx = parentView._lc || false, // For data-link="{myTag...}"... See onDataLinkedTagChange
 		ctx = parentView.ctx,
 		parentTmpl = tmpl || parentView.tmpl,
 		// If tagCtxs is an integer, then it is the key for the compiled function to return the boundTag tagCtxs
@@ -1505,10 +1504,6 @@ function registerStore(storeName, storeSettings) {
 			return item || $views;
 		}
 		// Adding a single unnamed item to the store
-		if (item === undefined) {
-			item = name;
-			name = undefined;
-		}
 		if (name && "" + name !== name) { // name must be a string
 			parentTmpl = item;
 			item = name;
@@ -1521,6 +1516,10 @@ function registerStore(storeName, storeSettings) {
 			: theStore;
 		compile = storeSettings.compile;
 
+		if (item === undefined) {
+			item = compile ? name : thisStore[name];
+			name = undefined;
+		}
 		if (item === null) {
 			// If item is null, delete this entry
 			if (name) {
@@ -1824,8 +1823,7 @@ function onRenderError(e, view, fallback) {
 	if ($subSettings.onError && (fallback = $subSettings.onError.call(view.data, e, fallback && message, view)) !== undefined) {
 		message = fallback; // There is a settings.debugMode(handler) onError override. Call it, and use return value (if any) to replace message
 	}
-
-	return view && !view._lc ? $converters.html(message) : message;
+	return view && !view._lc ? $converters.html(message) : message; // For data-link=\"{... onError=...}"... See onDataLinkedTagChange
 }
 
 function error(message) {
@@ -2188,7 +2186,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 			if (bindings && rtPrnDot && !aposed && !quoted) {
 				// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
 				// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
-				if (parenDepth && (!named || boundName || bindto)) {
+				if (parenDepth) {
 					expr = pathStart[parenDepth - 1];
 					if (full.length - 1 > index - (expr || 0)) { // We need to compile a subexpression
 						expr = full.slice(expr, index + all.length);
@@ -2512,17 +2510,24 @@ function getTargetProps(source, tagCtx) {
 	// this pointer is theMap - which has tagCtx.props too
 	// arguments: tagCtx.args.
 	var key, prop,
-		props = [];
+		map = tagCtx.map,
+		propsArr = map && map.propsArr;
 
-	if (typeof source === OBJECT || $isFunction(source)) {
-		for (key in source) {
-			prop = source[key];
-			if (key !== $expando && source.hasOwnProperty(key) && (!tagCtx.props.noFunctions || !$.isFunction(prop))) {
-				props.push({key: key, prop: prop});
+	if (!propsArr) { // map.propsArr is the full array of {key:..., prop:...} objects
+		propsArr = [];
+		if (typeof source === OBJECT || $isFunction(source)) {
+			for (key in source) {
+				prop = source[key];
+				if (key !== $expando && source.hasOwnProperty(key) && (!tagCtx.props.noFunctions || !$.isFunction(prop))) {
+					propsArr.push({key: key, prop: prop});
+				}
 			}
 		}
+		if (map) {
+			map.propsArr = map.options && propsArr; // If bound {^{props}} and not isRenderCall, store propsArr on map (map.options is defined only for bound, && !isRenderCall)
+		}
 	}
-	return getTargetSorted(props, tagCtx);
+	return getTargetSorted(propsArr, tagCtx); // Obtains map.tgt, by filtering, sorting and splicing the full propsArr
 }
 
 function getTargetSorted(value, tagCtx) {
@@ -2558,9 +2563,11 @@ function getTargetSorted(value, tagCtx) {
 		value = value.slice(); // Clone array first if not already a new array
 	}
 	if ($isFunction(sort)) {
-		value = value.sort(sort);
+		value = value.sort(function() { // Wrap the sort function to provide tagCtx as 'this' pointer
+			return sort.apply(tagCtx, arguments);
+		});
 	}
-	if (reverse < 0 && !sort) { // Reverse result if not already reversed in sort
+	if (reverse < 0 && (!sort || $isFunction(sort))) { // Reverse result if not already reversed in sort
 		value = value.reverse();
 	}
 
@@ -2787,18 +2794,18 @@ if (!(jsr || $ && $.render)) {
 		"for": {
 			sortDataMap: dataMap(getTargetSorted),
 			init: function(val, cloned) {
-				var l, tagCtx, props, sort,
+				var l, tagCtx, paramsProps, sort,
 					self = this,
 					tagCtxs = self.tagCtxs;
 				l = tagCtxs.length;
 				while (l--) {
 					tagCtx = tagCtxs[l];
-					props = tagCtx.props;
-					tagCtx.argDefault = props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
+					paramsProps = tagCtx.params.props;
+					tagCtx.argDefault = tagCtx.props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
 
 					if (tagCtx.argDefault !== false && $isArray(tagCtx.args[0])
-						&& (props.sort !== undefined || tagCtx.params.props.start || tagCtx.params.props.end || props.step !== undefined || props.filter || props.reverse)) {
-						props.dataMap = self.sortDataMap;
+						&& (paramsProps.sort !== undefined || paramsProps.start || paramsProps.end || paramsProps.step || paramsProps.filter || paramsProps.reverse)) {
+						tagCtx.props.dataMap = self.sortDataMap;
 					}
 				}
 			},

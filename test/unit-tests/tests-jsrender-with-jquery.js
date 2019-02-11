@@ -152,18 +152,18 @@ QUnit.test("templates", function(assert) {
 	assert.equal($.templates.my_tmpl, undefined, 'Remove a named template: $.templates("my_tmpl", null);');
 
 	$.templates({
-		"scriptTmpl": {
+		scriptTmpl: {
 			markup: "#my_tmpl",
 			debug:true
 		},
-		"tmplFromString": {
+		tmplFromString: {
 			markup: "X_{{:name}}_Y",
 			debug:true
 		}
 	});
 	assert.equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0
 		&& $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0
-		&& $.templates.scriptTmpl({name: "Jo"}) + $.templates.tmplFromString({name: "Jo"}), isIE8 
+		&& $.templates.scriptTmpl({name: "Jo"}) + $.templates.tmplFromString({name: "Jo"}), isIE8
 		? "\nA_Jo_BX_Jo_Y"
 		: "A_Jo_BX_Jo_Y",
 		'Debug a template: set debug:true on object');
@@ -445,7 +445,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 		"viewModels, hierarchy");
 
 	// ................................ Act ..................................
-	var t2new= viewModels.T2(viewModels.T1("a3 ", "b3 "), [viewModels.T1("a1 ", "b1 "), viewModels.T1("a2 ", "b2 ")], viewModels.T1("a4 ", "b4 ") );
+	var t2new= viewModels.T2(viewModels.T1("a3 ", "b3 "), [viewModels.T1("a1 ", "b1 "), viewModels.T1("a2 ", "b2 ")], viewModels.T1("a4 ", "b4 "));
 	result = JSON.stringify(t2new.unmap());
 
 	// ............................... Assert .................................

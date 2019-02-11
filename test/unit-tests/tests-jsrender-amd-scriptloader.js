@@ -12,7 +12,7 @@ if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qu
 
 QUnit.module("AMD Script Loader");
 
-QUnit.test("Loading JsRender, without jQuery, using RequireJS", function(assert) { 
+QUnit.test("Loading JsRender, without jQuery, using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();

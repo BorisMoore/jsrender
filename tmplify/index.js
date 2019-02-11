@@ -1,7 +1,7 @@
-/*! JsRender tmplify submodule v0.9.84 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender tmplify submodule v1.0.2: http://jsviews.com/#jsrender */
 /*! Browserify transform for JsRender templates */
 /*
- * Copyright 2018, Boris Moore
+ * Copyright 2019, Boris Moore
  * Released under the MIT License.
 */
 
