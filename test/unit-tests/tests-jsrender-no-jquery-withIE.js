@@ -4,6 +4,7 @@
 
 var global = (0, eval)('this'), // jshint ignore:line
 
+	isIE8 = global.attachEvent && !global.addEventListener,
 	isBrowser = !!global.document,
 
 	$ = global.jsrender || global.jQuery; // On Node.js with QUnit, jsrender is added as namespace, to global
@@ -549,6 +550,7 @@ QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "1 2 3 4 5 6 7 8 9 ", "{{for myarray sort=true}}");
 	assert.equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "9 8 7 6 5 4 3 2 1 ", "{{for myarray sort=true reverse=true}}");
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 ", "{{for myarray filter=~oddValue}}");
 	assert.equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray filter=~oddIndex}}");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
@@ -556,7 +558,7 @@ QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
-
+}
 	assert.equal($.templates("{{for myarray step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 ", "{{for myarray step=2 start=1}}");
 	assert.equal($.templates("{{for myarray sort=true step=2 start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 6 8 ", "{{for myarray sort=true step=2 start=1}}");
 	assert.equal($.templates("{{for myarray sort=true step=2 start=3 end=6}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "4 6 ", "{{for myarray sort=true step=2 start=3 end=6}}");
@@ -583,13 +585,14 @@ QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ",
 		"{{for mypeople  sort='details.age'}}");
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~underLimit limit=20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ",
 		"{{for mypeople  sort='details.age' reverse=true filter=~underLimit...}}");
 	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
 		"{{for mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
 	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
 		"{{for mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
-
+}
 	// =============================== Arrange ===============================
 
 	var mypeople2 = [
@@ -628,8 +631,10 @@ QUnit.test("{{for start end sort filter reverse}}", function(assert) {
 
 	// ................................ Assert ..................................
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{for2 mypeople sort='details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for2}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ",
 		"{{for2 mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}} Derived tag");
+}
 });
 
 QUnit.module("{{props}}");
@@ -700,6 +705,7 @@ QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{props myobject start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - e 5 - ", "{{props myobject start=1}}");
 	assert.equal($.templates("{{props myobject end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}),  "a 1 - b 9 - c 2 - d 8 - A 3 - B 7 - C 4 - D 6 - ", "{{props myobject end=-1}}");
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{props myobject filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - b 9 - A 3 - B 7 - e 5 - ", "{{props myobject filter=~oddValue}}");
 	assert.equal($.templates("{{props myobject filter=~oddIndex}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject filter=~oddIndex}}");
 	assert.equal($.templates("{{props myobject sort='prop' filter=~oddValue}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddValue: oddValue}), "a 1 - A 3 - e 5 - B 7 - b 9 - ", "{{props myobject sort='prop' filter=~oddValue}}");
@@ -707,7 +713,7 @@ QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=1 end=3}}");
 	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
 	assert.equal($.templates("{{props myobject sort='prop' filter=~oddIndex start=3 end=3}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "", "{{props myobject sort='key' filter=~oddIndex start=3 end=3}} (outputs nothing)");
-
+}
 	assert.equal($.templates("{{props myobject step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "b 9 - d 8 - B 7 - D 6 - ", "{{props myobject step=2 start=1}}");
 	assert.equal($.templates("{{props myobject sort='prop' step=2 start=1}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "c 2 - C 4 - D 6 - d 8 - ", "{{props myobject sort='prop' step=2 start=1}}");
 	assert.equal($.templates("{{props myobject sort='prop' step=2 start=3 end=6}}{{:key}} {{:prop}} - {{/props}}").render({myobject: myobject}, {oddIndex: oddIndex}), "C 4 - D 6 - ", "{{props myobject sort='prop' step=2 start=3 end=6}}");
@@ -729,10 +735,11 @@ QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{props mypeople sort='prop.name'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople  sort='name'}}");
 	assert.equal($.templates("{{props mypeople sort='prop.details.age'}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{props mypeople  sort='details.age'}}");
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{props mypeople sort='details.age' reverse=true filter=~underLimit...}}");
 	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
 	assert.equal($.templates("{{props mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{props mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}}");
-
+}
 	// =============================== Arrange ===============================
 
 	var mypeople2 = {
@@ -771,7 +778,9 @@ QUnit.test("{{props start end sort filter reverse}}", function(assert) {
 
 	// ................................ Assert ..................................
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{props2 mypeople sort='prop.details.age' reverse=true filter=~underLimit limit=20 start=1 end=-1}}{{:prop.name}}: age {{:prop.details.age}} - {{/props2}}").render({mypeople: mypeople}, {underLimit: underLimit}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for2 mypeople  sort='details.age' reverse=true filter=~underLimit... start=1 end=-1}} Derived tag");
+}
 });
 
 QUnit.module("{{!-- --}}");
@@ -1243,7 +1252,7 @@ QUnit.test("templates", function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(!$.templates["./test/templates/file/path.html"] && tmpl0.render({name: "Jo0"}),
-		"ServerRenderedTemplate_Jo0_B",
+		isIE8 ? "\nServerRenderedTemplate_Jo0_B" : "ServerRenderedTemplate_Jo0_B",
 		"Compile server-generated template, without caching");
 
 	// ................................ Act ..................................
@@ -1251,7 +1260,7 @@ QUnit.test("templates", function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(tmpl1 !== tmpl0 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl1.render({name: "Jo1"}),
-		"ServerRenderedTemplate_Jo1_B",
+		isIE8 ? "\nServerRenderedTemplate_Jo1_B" : "ServerRenderedTemplate_Jo1_B",
 		"Compile server-generated template, and cache on file path");
 
 	// ................................ Act ..................................
@@ -1259,7 +1268,7 @@ QUnit.test("templates", function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}),
-		"ServerRenderedTemplate_Jo2_B",
+		isIE8 ? "\nServerRenderedTemplate_Jo2_B" : "ServerRenderedTemplate_Jo2_B",
 		"Re-use cached server-generated template");
 
 	// ................................ Act ..................................
@@ -1267,7 +1276,7 @@ QUnit.test("templates", function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.templates["./test/templates/file/path.html"] === tmpl1 && tmpl3.render({name: "Jo3"}),
-		"ServerRenderedTemplate_Jo3_B",
+		isIE8 ? "\nServerRenderedTemplate_Jo3_B" : "ServerRenderedTemplate_Jo3_B",
 		"Recompile server-generated template, without caching");
 
 	// ................................ Reset ................................

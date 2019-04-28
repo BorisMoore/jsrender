@@ -2,6 +2,8 @@
 (function(global, $, undefined) {
 "use strict";
 
+var isIE8 = window.attachEvent && !window.addEventListener;
+
 function sort(array) {
 	var ret = "";
 	if (this.tagCtx.props.reverse) {
@@ -34,25 +36,25 @@ QUnit.test("templates", function(assert) {
 	var tmpl0 = $.templates({markup: "./test/templates/file/path.html"}); // Compile template but do not cache
 
 	// ............................... Assert .................................
-	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), "ServerRenderedTemplate_Jo0_B", "Compile server-generated template, without caching");
+	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), isIE8 ? "\nServerRenderedTemplate_Jo0_B" : "ServerRenderedTemplate_Jo0_B", "Compile server-generated template, without caching");
 
 	// ................................ Act ..................................
 	var tmpl1 = $.templates("./test/templates/file/path.html"); // Compile and cache, using $.data(elem, "jsvTmpl", tmpl);
 
 	// ............................... Assert .................................
-	assert.equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), "ServerRenderedTemplate_Jo1_B", "Compile server-generated template, and cache on file path");
+	assert.equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), isIE8 ? "\nServerRenderedTemplate_Jo1_B" : "ServerRenderedTemplate_Jo1_B", "Compile server-generated template, and cache on file path");
 
 	// ................................ Act ..................................
 	var tmpl2 = $.templates("./test/templates/file/path.html"); // Use cached template, accessed by path as key
 
 	// ............................... Assert .................................
-	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), "ServerRenderedTemplate_Jo2_B", "Re-use cached server-generated template");
+	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), isIE8 ? "\nServerRenderedTemplate_Jo2_B" : "ServerRenderedTemplate_Jo2_B", "Re-use cached server-generated template");
 
 	// ................................ Act ..................................
 	var tmpl3 = $.templates({markup: "./test/templates/file/path.html"}); // Re-compile template but do not cache. Leaved cached template.
 
 	// ............................... Assert .................................
-	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), "ServerRenderedTemplate_Jo3_B", "Recompile server-generated template, without caching");
+	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), isIE8 ? "\nServerRenderedTemplate_Jo3_B" : "ServerRenderedTemplate_Jo3_B", "Recompile server-generated template, without caching");
 
 	// ................................ Reset ................................
 	delete $.data(tmplElem).jsvTmpl;
@@ -66,25 +68,25 @@ QUnit.test("templates", function(assert) {
 	tmpl0 = $.templates({markup: "#myTmpl"}); // Compile template declared in script block, but do not cache
 
 	// ............................... Assert .................................
-	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), "A_Jo0_B", "Compile template declared in script block, without caching");
+	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), isIE8 ? "\nA_Jo0_B" : "A_Jo0_B", "Compile template declared in script block, without caching");
 
 	// ................................ Act ..................................
 	tmpl1 = $.templates("#myTmpl"); // Compile and cache, using $.data(elem, "jsvTmpl", tmpl);
 
 	// ............................... Assert .................................
-	assert.equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), "A_Jo1_B", "Compile template declared in script block, and cache on file path");
+	assert.equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), isIE8 ? "\nA_Jo1_B" : "A_Jo1_B", "Compile template declared in script block, and cache on file path");
 
 	// ................................ Act ..................................
 	tmpl2 = $.templates("#myTmpl"); // Use cached template, accessed by $.data(elem, "jsvTmpl")
 
 	// ............................... Assert .................................
-	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), "A_Jo2_B", "Re-use cached template declared in script block");
+	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), isIE8 ? "\nA_Jo2_B" : "A_Jo2_B", "Re-use cached template declared in script block");
 
 	// ................................ Act ..................................
 	tmpl3 = $.templates({markup: "#myTmpl"}); // Re-compile template but do not cache. Leave cached template.
 
 	// ............................... Assert .................................
-	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), "A_Jo3_B", "Recompile template declared in script block, without caching");
+	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), isIE8 ? "\nA_Jo3_B" : "A_Jo3_B", "Recompile template declared in script block, without caching");
 
 	// ................................ Reset ................................
 	delete $.data(tmplElem).jsvTmpl;
@@ -92,7 +94,7 @@ QUnit.test("templates", function(assert) {
 
 	// =============================== Arrange ===============================
 	// ............................... Assert .................................
-	assert.equal($.templates("#my_tmpl2").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
+	assert.equal($.templates("#my_tmpl2").render(), isIE8 ? "\n' \" \\ \\' \\\"" : "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template declared in script block");
 
 	assert.equal($.templates("' \" \\ \\' \\\"").render(), "' \" \\ \\' \\\"", "correct treatment of ' \" and ' in template compiled from string");
 
@@ -161,7 +163,9 @@ QUnit.test("templates", function(assert) {
 	});
 	assert.equal($.templates.tmplFromString.fn.toString().indexOf("debugger;") > 0
 		&& $.templates.scriptTmpl.fn.toString().indexOf("debugger;") > 0
-		&& $.templates.scriptTmpl({name: "Jo"}) + $.templates.tmplFromString({name: "Jo"}), "A_Jo_BX_Jo_Y",
+		&& $.templates.scriptTmpl({name: "Jo"}) + $.templates.tmplFromString({name: "Jo"}), isIE8
+		? "\nA_Jo_BX_Jo_Y"
+		: "A_Jo_BX_Jo_Y",
 		'Debug a template: set debug:true on object');
 
 	// reset
@@ -185,10 +189,10 @@ QUnit.test("render", function(assert) {
 	assert.equal($.templates.my_tmpl5.tmpls[0].render(person), "innerJocontent", 'Nested template objects: $.templates.my_tmpl.tmpls');
 
 	$("#result").html("<script id='tmpl' type='text/x-jsrender'>Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}</script>");
-	assert.equal($("#tmpl").render([null,undefined,1], {foo:"foovalue"}, true), "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
+	assert.equal($("#tmpl").render([null,undefined,1], {foo:"foovalue"}, true), (isIE8 ? "\n" : "") + "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
 
 	$("#result").html("<script id='tmpl' type='text/x-jsrender'>Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}</script>");
-	assert.equal($("#tmpl").render([null, undefined, 1], true), "Content012", 'render(array, true) renders an array without iteration');
+	assert.equal($("#tmpl").render([null, undefined, 1], true), (isIE8 ? "\n" : "") + "Content012", 'render(array, true) renders an array without iteration');
 	$("#result").empty();
 });
 

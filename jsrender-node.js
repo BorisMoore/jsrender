@@ -1,4 +1,4 @@
-/*! JsRender v1.0.2: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.3: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v1.0.2",
+var versionNumber = "v1.0.3",
 
 	// global var is the this object, which is window when running in the usual browser environment
 
@@ -514,6 +514,7 @@ function convertVal(converter, view, tagCtx, onError) {
 				inline: !linkCtx,
 				tagName: ":",
 				convert: converter,
+				onArrayChange: true,
 				flow: true,
 				tagCtx: tagCtx,
 				tagCtxs: [tagCtx],
@@ -962,6 +963,9 @@ function View(context, type, parentView, data, template, key, onRender, contentT
 		self.ctx = context || parentView.ctx;
 	} else {
 		self.ctx = context || {};
+		if (type) {
+			self.root = self; // view whose parent is top view
+		}
 	}
 }
 
@@ -1166,18 +1170,15 @@ function getDefaultVal(defaultVal, data) {
 		: defaultVal;
 }
 
-function unmapArray(modelArr) {
-		var arr = [],
-			i = 0,
-			l = modelArr.length;
-		for (; i<l; i++) {
-			arr.push(modelArr[i].unmap());
-		}
-		return arr;
+function addParentRef(ob, ref, parent) {
+	Object.defineProperty(ob, ref, {
+		value: parent,
+		configurable: true
+	});
 }
 
 function compileViewModel(name, type) {
-	var i, constructor,
+	var i, constructor, parent,
 		viewModels = this,
 		getters = type.getters,
 		extend = type.extend,
@@ -1188,33 +1189,34 @@ function compileViewModel(name, type) {
 			merge: merge
 		}, extend),
 		args = "",
-		body = "",
-		g = getters ? getters.length : 0,
+		cnstr = "",
+		getterCount = getters ? getters.length : 0,
 		$observable = $.observable,
 		getterNames = {};
 
-	function GetNew(args) {
+	function JsvVm(args) {
 		constructor.apply(this, args);
 	}
 
 	function vm() {
-		return new GetNew(arguments);
+		return new JsvVm(arguments);
 	}
 
 	function iterate(data, action) {
-		var getterType, defaultVal, prop, ob,
+		var getterType, defaultVal, prop, ob, parentRef,
 			j = 0;
-		for (; j<g; j++) {
+		for (; j < getterCount; j++) {
 			prop = getters[j];
 			getterType = undefined;
 			if (prop + "" !== prop) {
 				getterType = prop;
 				prop = getterType.getter;
+				parentRef = getterType.parentRef;
 			}
 			if ((ob = data[prop]) === undefined && getterType && (defaultVal = getterType.defaultVal) !== undefined) {
 				ob = getDefaultVal(defaultVal, data);
 			}
-			action(ob, getterType && viewModels[getterType.type], prop);
+			action(ob, getterType && viewModels[getterType.type], prop, parentRef);
 		}
 	}
 
@@ -1222,7 +1224,7 @@ function compileViewModel(name, type) {
 		data = data + "" === data
 			? JSON.parse(data) // Accept JSON string
 			: data;            // or object/array
-		var l, prop,
+		var l, prop, childOb, parentRef,
 			j = 0,
 			ob = data,
 			arr = [];
@@ -1246,10 +1248,24 @@ function compileViewModel(name, type) {
 				}
 				arr.push(ob);
 			});
-
 			ob = this.apply(this, arr); // Instantiate this View Model, passing getters args array to constructor
+			j = getterCount;
+			while (j--) {
+				childOb = arr[j];
+				parentRef = getters[j].parentRef;
+				if (parentRef && childOb && childOb.unmap) {
+					if ($isArray(childOb)) {
+						l = childOb.length;
+						while (l--) {
+							addParentRef(childOb[l], parentRef, ob);
+						}
+					} else {
+						addParentRef(childOb, parentRef, ob);
+					}
+				}
+			}
 			for (prop in data) { // Copy over any other properties. that are not get/set properties
-				if (!getterNames[prop]) {
+				if (prop !== $expando && !getterNames[prop]) {
 					ob[prop] = data[prop];
 				}
 			}
@@ -1257,11 +1273,12 @@ function compileViewModel(name, type) {
 		return ob;
 	}
 
-	function merge(data) {
+	function merge(data, parent, parentRef) {
 		data = data + "" === data
 			? JSON.parse(data) // Accept JSON string
 			: data;            // or object/array
-		var j, l, m, prop, mod, found, assigned, ob, newModArr,
+
+		var j, l, m, prop, mod, found, assigned, ob, newModArr, childOb,
 			k = 0,
 			model = this;
 
@@ -1289,7 +1306,10 @@ function compileViewModel(name, type) {
 					mod.merge(ob);
 					newModArr.push(mod);
 				} else {
-					newModArr.push(vm.map(ob));
+					newModArr.push(childOb = vm.map(ob));
+					if (parentRef) {
+						addParentRef(childOb, parentRef, parent);
+					}
 				}
 			}
 			if ($observable) {
@@ -1299,15 +1319,15 @@ function compileViewModel(name, type) {
 			}
 			return;
 		}
-		iterate(data, function(ob, viewModel, getter) {
+		iterate(data, function(ob, viewModel, getter, parentRef) {
 			if (viewModel) {
-				model[getter]().merge(ob); // Update typed property
-			} else {
+				model[getter]().merge(ob, model, parentRef); // Update typed property
+			} else if (model[getter]() !== ob) {
 				model[getter](ob); // Update non-typed property
 			}
 		});
 		for (prop in data) {
-			if (!getterNames[prop]) {
+			if (prop !== $expando && !getterNames[prop]) {
 				model[prop] = data[prop];
 			}
 		}
@@ -1318,11 +1338,21 @@ function compileViewModel(name, type) {
 			k = 0,
 			model = this;
 
+		function unmapArray(modelArr) {
+			var arr = [],
+				i = 0,
+				l = modelArr.length;
+			for (; i<l; i++) {
+				arr.push(modelArr[i].unmap());
+			}
+			return arr;
+		}
+
 		if ($isArray(model)) {
 			return unmapArray(model);
 		}
 		ob = {};
-		for (; k<g; k++) {
+		for (; k < getterCount; k++) {
 			prop = getters[k];
 			getterType = undefined;
 			if (prop + "" !== prop) {
@@ -1337,23 +1367,23 @@ function compileViewModel(name, type) {
 				: value;
 		}
 		for (prop in model) {
-			if (prop !== "_is" && !getterNames[prop] && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$isFunction(model[prop])) {
+			if (model.hasOwnProperty(prop) && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && prop !== $expando  && !$isFunction(model[prop])) {
 				ob[prop] = model[prop];
 			}
 		}
 		return ob;
 	}
 
-	GetNew.prototype = proto;
+	JsvVm.prototype = proto;
 
-	for (i=0; i<g; i++) {
+	for (i=0; i < getterCount; i++) {
 		(function(getter) {
 			getter = getter.getter || getter;
 			getterNames[getter] = i+1;
 			var privField = "_" + getter;
 
 			args += (args ? "," : "") + getter;
-			body += "this." + privField + " = " + getter + ";\n";
+			cnstr += "this." + privField + " = " + getter + ";\n";
 			proto[getter] = proto[getter] || function(val) {
 				if (!arguments.length) {
 					return this[privField]; // If there is no argument, use as a getter
@@ -1373,7 +1403,17 @@ function compileViewModel(name, type) {
 		})(getters[i]);
 	}
 
-	constructor = new Function(args, body.slice(0, -1));
+	// Constructor for new viewModel instance.
+	cnstr = new Function(args, cnstr);
+
+	constructor = function() {
+		cnstr.apply(this, arguments);
+		// Pass additional parentRef str and parent obj to have a parentRef pointer on instance
+		if (parent = arguments[getterCount + 1]) {
+			addParentRef(this, arguments[getterCount], parent);
+		}
+	};
+
 	constructor.prototype = proto;
 	proto.constructor = constructor;
 
@@ -1507,7 +1547,7 @@ function registerStore(storeName, storeSettings) {
 * @returns {boolean}
 */
 function addSetting(st) {
-	$viewsSettings[st] = function(value) {
+	$viewsSettings[st] = $viewsSettings[st] || function(value) {
 		return arguments.length
 			? ($subSettings[st] = value, $viewsSettings)
 			: $subSettings[st];
@@ -2553,7 +2593,6 @@ function getTargetSorted(value, tagCtx) {
 	if (!isNaN(start) || !isNaN(end)) { // start or end specified, but not the auto-create Number array scenario of {{for start=xxx end=yyy}}
 		start = +start || 0;
 		end = end === undefined || end > value.length ? value.length : +end;
-//		end = end === undefined ? value.length : +end;
 		value = value.slice(start, end);
 	}
 	if (step > 1) {
@@ -2719,20 +2758,7 @@ $viewsSettings = $views.settings;
 		"for": {
 			sortDataMap: dataMap(getTargetSorted),
 			init: function(val, cloned) {
-				var l, tagCtx, paramsProps, sort,
-					self = this,
-					tagCtxs = self.tagCtxs;
-				l = tagCtxs.length;
-				while (l--) {
-					tagCtx = tagCtxs[l];
-					paramsProps = tagCtx.params.props;
-					tagCtx.argDefault = tagCtx.props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
-
-					if (tagCtx.argDefault !== false && $isArray(tagCtx.args[0])
-						&& (paramsProps.sort !== undefined || paramsProps.start || paramsProps.end || paramsProps.step || paramsProps.filter || paramsProps.reverse)) {
-						tagCtx.props.dataMap = self.sortDataMap;
-					}
-				}
+				this.setDataMap(this.tagCtxs);
 			},
 			render: function(val) {
 				// This function is called once for {{for}} and once for each {{else}}.
@@ -2771,6 +2797,21 @@ $viewsSettings = $views.settings;
 					// If nothing was rendered we will look at the next {{else}}. Otherwise, we are done.
 				}
 				return result;
+			},
+			setDataMap: function(tagCtxs) {
+				var tagCtx, props, paramsProps,
+					self = this,
+					l = tagCtxs.length;
+				while (l--) {
+					tagCtx = tagCtxs[l];
+					props = tagCtx.props;
+					paramsProps = tagCtx.params.props;
+					tagCtx.argDefault = props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
+					props.dataMap = (tagCtx.argDefault !== false && $isArray(tagCtx.args[0]) &&
+						(paramsProps.sort || paramsProps.start || paramsProps.end || paramsProps.step || paramsProps.filter || paramsProps.reverse
+						|| props.sort || props.start || props.end || props.step || props.filter || props.reverse))
+						&& self.sortDataMap;
+				}
 			},
 			flow: true
 		},
