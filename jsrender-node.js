@@ -1,4 +1,4 @@
-/*! JsRender v1.0.3: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.4: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v1.0.3",
+var versionNumber = "v1.0.4",
 
 	// global var is the this object, which is window when running in the usual browser environment
 
@@ -395,7 +395,7 @@ function contextParameter(key, value, get) {
 		callView = storeView;
 		if (store && store.hasOwnProperty(key) || (store = $helpers).hasOwnProperty(key)) {
 			res = store[key];
-			if (key === "tag" || key === "tagCtx" || key === "root" || key === "parentTags" || storeView._.it === key ) {
+			if (key === "tag" || key === "tagCtx" || key === "root" || key === "parentTags") {
 				return res;
 			}
 		} else {
@@ -940,6 +940,11 @@ function View(context, type, parentView, data, template, key, onRender, contentT
 	};
 	self.linked = !!onRender;
 	self.type = type || "top";
+
+	if (!parentView || parentView.type === "top") {
+		(self.ctx = context || {}).root = self.data;
+	}
+
 	if (self.parent = parentView) {
 		self.root = parentView.root || self; // view whose parent is top view
 		views = parentView.views;
@@ -961,11 +966,8 @@ function View(context, type, parentView, data, template, key, onRender, contentT
 		// If no context was passed in, use parent context
 		// If context was passed in, it should have been merged already with parent context
 		self.ctx = context || parentView.ctx;
-	} else {
-		self.ctx = context || {};
-		if (type) {
-			self.root = self; // view whose parent is top view
-		}
+	} else if (type) {
+		self.root = self; // view whose parent is top view
 	}
 }
 
@@ -1674,12 +1676,6 @@ function renderContent(data, context, noIteration, parentView, key, onRender) {
 }
 
 function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, tag) {
-	function setItemVar(item) {
-		// When itemVar is specified, set modified ctx with user-named ~item
-		newCtx = $extend({}, context);
-		newCtx[itemVar] = item;
-	}
-
 	// Render template against data as a tree of subviews (nested rendered template instances), or as a string (top-level template).
 	// If the data is the parent view, treat as noIteration, re-render with the same data context.
 	// tmpl can be a string (e.g. rendered by a tag.render() method), or a compiled template.
@@ -1714,12 +1710,6 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 			context = context || {};
 			context.link = false;
 		}
-		if (itemVar = tagCtx.props.itemVar) {
-			if (itemVar[0] !== "~") {
-				syntaxError("Use itemVar='~myItem'");
-			}
-			itemVar = itemVar.slice(1);
-		}
 	}
 
 	if (view) {
@@ -1731,6 +1721,16 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 		}
 
 		context = extendCtx(context, view.ctx);
+		tagCtx = !tag && view.tag
+			? view.tag.tagCtxs[view.tagElse]
+			: tagCtx;
+	}
+
+	if (itemVar = tagCtx && tagCtx.props.itemVar) {
+		if (itemVar[0] !== "~") {
+			syntaxError("Use itemVar='~myItem'");
+		}
+		itemVar = itemVar.slice(1);
 	}
 
 	if (key === true) {
@@ -1770,23 +1770,22 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 		}
 		for (i = 0, l = data.length; i < l; i++) {
 			// Create a view for each data item.
-			if (itemVar) {
-				setItemVar(data[i]); // use modified ctx with user-named ~item
-			}
 			childView = new View(newCtx, "item", newView, data[i], tmpl, (key || 0) + i, onRender, newView.content);
-			childView._.it = itemVar;
-
+			if (itemVar) {
+				(childView.ctx = $extend({}, newCtx))[itemVar] = $sub._cp(data[i], "#data", childView);
+			}
 			itemResult = tmpl.fn(data[i], childView, $sub);
 			result += newView._.onRender ? newView._.onRender(itemResult, childView) : itemResult;
 		}
 	} else {
 		// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "mytag" except for
 		// "item", "array" and "data" views. A "data" view is from programmatic render(object) against a 'singleton'.
-		if (itemVar) {
-			setItemVar(data);
-		}
 		newView = swapContent ? view : new View(newCtx, tmplName || "data", view, data, tmpl, key, onRender, contentTmpl);
-		newView._.it = itemVar;
+
+		if (itemVar) {
+			(newView.ctx = $extend({}, newCtx))[itemVar] = $sub._cp(data, "#data", newView);
+		}
+
 		newView.tag = tag;
 		newView._.nl = noLinking;
 		result += tmpl.fn(data, newView, $sub);
