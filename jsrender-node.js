@@ -1,4 +1,4 @@
-/*! JsRender v1.0.4: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.5: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -19,7 +19,7 @@ if (typeof exports !== 'object' ) {
 
 //========================== Top-level vars ==========================
 
-var versionNumber = "v1.0.4",
+var versionNumber = "v1.0.5",
 
 	// global var is the this object, which is window when running in the usual browser environment
 

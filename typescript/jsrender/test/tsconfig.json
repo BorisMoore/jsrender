@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "lib": [
+            "es6",
+            "dom"
+        ],
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strictNullChecks": false,
+        "strictFunctionTypes": true,
+        "outDir": "./built/",
+        "sourceMap": true,
+        "typeRoots": ["../../"],
+        "types": ["jsrender"]
+    },
+    "include": ["tests.ts"],
+    "noImplicitAny": true
+}

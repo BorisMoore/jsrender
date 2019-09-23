@@ -3,10 +3,11 @@
 /test/browserify/bundles/*.js
 *.config
 gulpfile.js
-
+desktop.ini
 /Scripts
 /node_modules
 /bower_components
 /demos
 /test
 /-*
+built

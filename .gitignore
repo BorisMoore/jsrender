@@ -2,4 +2,6 @@
 node_modules
 bower_components
 *.config
+desktop.ini
+built
 Scripts
