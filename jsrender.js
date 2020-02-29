@@ -1,11 +1,11 @@
-/*! JsRender v1.0.5: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.6: http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2019, Boris Moore
+ * Copyright 2020, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v1.0.5",
+var versionNumber = "v1.0.6",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
@@ -476,9 +476,7 @@ function contextParameter(key, value, get) {
 						: res[1](res[0].data, res[0], $sub)    // = fn(data, view, $sub) for compiled binding expression
 					: res[0]._ocp; // Observable contextual parameter (uninitialized, or initialized as static expression, so no path dependencies)
 				if (isUpdate) {
-					if (res && newRes !== value) {
-						$sub._ucp(key, value, storeView, obsCtxPrm); // Update observable contextual parameter
-					}
+					$sub._ucp(key, value, storeView, obsCtxPrm); // Update observable contextual parameter
 					return storeView;
 				}
 				res = newRes;
