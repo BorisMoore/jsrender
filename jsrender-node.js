@@ -1,4 +1,4 @@
-/*! JsRender v1.0.7: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.8: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -20,7 +20,7 @@ if (typeof exports !== 'object' ) {
 //========================== Top-level vars ==========================
 
 	// global var is the this object, which is window when running in the usual browser environment
-var versionNumber = "v1.0.7",
+var versionNumber = "v1.0.8",
 	$, jsvStoreName, rTag, rTmplString, topView, $views,
 	_ocp = "_ocp",      // Observable contextual parameter
 
@@ -590,8 +590,8 @@ function convertArgs(tagElse, bound) { // tag.cvtArgs() or tag.cvtArgs(tagElse?,
 		}
 		bindFrom = bindFrom || [0];
 		l = bindFrom.length;
-		if (!$isArray(converter) || converter.length !== l) {
-			converter = [converter];
+		if (!$isArray(converter) || (converter.arg0 !== false && (l === 1 || converter.length !== l || converter.arg0))) {
+			converter = [converter]; // Returning converter as first arg, even if converter value is an array
 			bindFrom = [0];
 			l = 1;
 		}
@@ -981,7 +981,7 @@ View.prototype = {
 		if ($subSettings._cchCt > this.cache._ct) {
 			this.cache = {_ct: $subSettings._cchCt};
 		}
-		return this.cache[key] || (this.cache[key] = cpFnStore[key](this.data, this, $sub));
+		return this.cache[key] !== undefined ? this.cache[key] : (this.cache[key] = cpFnStore[key](this.data, this, $sub));
 	},
 	_is: "view"
 };

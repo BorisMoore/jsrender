@@ -474,6 +474,7 @@ QUnit.test("expressions", function(assert) {
 	assert.equal($.templates("{{:!true === false}}").render({}), "true", "!true === false");
 	assert.equal($.templates("{{:false === !true}}").render({}), "true", "false === !true");
 	assert.equal($.templates("{{:false === !null}}").render({}), "false", "false === !null");
+	assert.equal($.templates("{{:\"'\" + 1 + '\"' + 2 + '\\' + 3}}").render({}), "'1\"2\\3", "'1\"2\\3");
 });
 
 QUnit.module("{{for}}");
@@ -1231,6 +1232,31 @@ QUnit.test("itemVar", function(assert) {
 		).render({people: otherPeople}),
 		"Jo: has no tels Bill Tel: 0: 91 Bill Tel: 1: 92 Fred: has no tels ",
 		"itemVar with {{props}}{{else}}{{/props}}, and passing context to nested templates");
+});
+
+QUnit.test("contextual parameter", function(assert) {
+var teams = [
+	{title: "The A Team", members: [{name: "Jeff"}, {name: "Maria"}]},
+	{title: "The B Team", members: [{name: "Francis"}]}
+];
+
+	assert.equal($.templates(
+"{{if members.length ~teamTitle=title ~teamData=#data ~teamIndex=#index}}"
+	+ "{{for members itemVar='~member'}}"
+		+ "{{:~teamTitle}} "
+		+ "{{:~teamData.title}} "
+		+ "{{:~teamIndex}} "
+		+ "{{:~member.name}} "
+	+ "{{/for}}"
++ "{{/if}}"
+).render(teams),
+		"The A Team The A Team 0 Jeff The A Team The A Team 0 Maria The B Team The B Team 1 Francis ",
+		"contextual parameter passing to inner context");
+
+	assert.equal($.templates(
+"{^{if 1 ~a='A'+\"B\"+'\"'+\"'\"+\"\\'\"}}{^{:'Inner'+~a}}{{/if}}").render(),
+		"InnerAB\"'\\'",
+		"contextual parameter correctly escaping quotes and backslash");
 });
 
 QUnit.module("api no jQuery");
