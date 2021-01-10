@@ -1,11 +1,11 @@
-/*! JsRender v1.0.9: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.10: http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2020, Boris Moore
+ * Copyright 2021, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v1.0.9",
+var versionNumber = "v1.0.10",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
 
@@ -2231,7 +2231,8 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 			}
 			if (rtPrnDot && bindings) {
 				// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
-				// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
+				// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes,
+				// to return the new object, and trigger re-binding of the subsequent path)
 				expr = pathStart[fnDp-1];
 				if (full.length - 1 > ind - (expr || 0)) { // We need to compile a subexpression
 					expr = $.trim(full.slice(expr, ind + all.length));
