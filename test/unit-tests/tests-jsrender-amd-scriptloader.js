@@ -13,8 +13,9 @@ if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qu
 QUnit.module("AMD Script Loader");
 
 QUnit.test("Loading JsRender, without jQuery, using RequireJS", function(assert) {
-	var done = assert.async(),
-		jq = window.jQuery;
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var jq = window.jQuery;
 	undefine();
 
 	require(["//www.jsviews.com/download/jsrender.js"], function($) { // Or point to correct local path for jsrender.js on your system
@@ -24,13 +25,14 @@ QUnit.test("Loading JsRender, without jQuery, using RequireJS", function(assert)
 
 		var result = $.templates("Name: {{:name}}").render({name: "Jo"}) + " " + (!!$.jsrender);
 		assert.equal(result, "Name: Jo true", "JsRender Loaded");
-		done();
+		if (assert.async) { done() } else { start() }
 	});
 });
 
 QUnit.test("Loading JsRender and jQuery, without forcing load order, using RequireJS", function(assert) {
-	var done = assert.async(),
-		jq = window.jQuery;
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var jq = window.jQuery;
 	undefine();
 
 // Note JsRender does not require jQuery - so its AMD definition does not specify jQuery dependency.
@@ -42,14 +44,15 @@ QUnit.test("Loading JsRender and jQuery, without forcing load order, using Requi
 
 			var result = $.templates("Name: {{:name}}").render({name: "Jo"}) + " " + ($ === $jq || !!$.jsrender);
 			assert.equal(result, "Name: Jo true", "JsRender Loaded");
-			done();
+			if (assert.async) { done() } else { start() }
 		});
 	});
 });
 
 QUnit.test("Loading JsRender with jQuery, and force jQuery to load before JsRender, using RequireJS", function(assert) {
-	var done = assert.async(),
-		jq = window.jQuery;
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var jq = window.jQuery;
 	undefine();
 
 // Note JsRender does not require jQuery - so its AMD definition does not specify jQuery dependency.
@@ -63,7 +66,7 @@ QUnit.test("Loading JsRender with jQuery, and force jQuery to load before JsRend
 
 				var result = $.templates("Name: {{:name}}").render({name: "Jo"}) + " " + (jq !== $ && $ === window.jQuery && $ === $jq);
 				assert.equal(result, "Name: Jo true", "JsRender LoadedX");
-				done();
+				if (assert.async) { done() } else { start() }
 			});
 		});
 	});

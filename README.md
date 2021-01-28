@@ -40,7 +40,7 @@ When jQuery is present, JsRender loads as a jQuery plugin and adds `$.views`, `$
 
 #### Using JsRender without jQuery
 
-When jQuery is not present, JsRender provides its own `jsrender` namespace object, exposed as `window.jsrender`
+When jQuery is not present, JsRender provides its own global namespace object:  `jsrender` (or `window.jsrender`)
 
 The `jsrender` namespace provides the same methods/APIs as with jQuery, so if jQuery is not present you can still use all the API examples, by simply writing:
 
@@ -49,6 +49,7 @@ var $ = window.jsrender;
 
 // Now use code as in samples/examples, with $.views... $.templates... $.render...
 ```
+(*Note:* If jQuery is not loaded, then [passing a jQuery selector](http://www.jsviews.com/#compiletmpl@fromscriptblock) to `$.templates()` will only work for the *ID selector*)
 
 *Example HTML page:* [JsRender without jQuery](http://www.jsviews.com/#download/pages-jsr)
 
@@ -83,10 +84,10 @@ Name: {{:name}}
 then, somewhere in your script:
 
 ```js
-var tmpl = $.templates("#myTemplate");
+var tmpl = $.templates("#myTemplate"); // Pass in a jQuery selector for the script block
 ```
 
-On Node.js, from an .html file containing the template markup:
+On Node.js, [from an .html file](https://www.jsviews.com/#jsr-node-quickstart@htmlfiles)  containing the template markup: 
 
 ```js
 var $ = require('jsrender'); // returns the jsrender namespace object

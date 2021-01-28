@@ -1,4 +1,4 @@
-/*! JsRender v1.0.10: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.11: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -20,7 +20,7 @@ if (typeof exports !== 'object' ) {
 //========================== Top-level vars ==========================
 
 	// global var is the this object, which is window when running in the usual browser environment
-var versionNumber = "v1.0.10",
+var versionNumber = "v1.0.11",
 	$, jsvStoreName, rTag, rTmplString, topView, $views,
 	_ocp = "_ocp",      // Observable contextual parameter
 
@@ -726,7 +726,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 			tag.linkCtx = linkCtx;
 			if (tag._.bnd = boundTag || linkCtx.fn) {
 				// Bound if {^{tag...}} or data-link="{tag...}"
-				tag._.ths = tagCtx.params.props.this; // Tag has a this=expr binding, to get javascript reference to tag instance
+				tag._.ths = tagCtx.params.props["this"]; // Tag has a this=expr binding, to get javascript reference to tag instance
 				tag._.lt = tagCtxs.lt; // If a late path @some.path has not returned @some object, mark tag as late
 				tag._.arrVws = {};
 			} else if (tag.dataBoundOnly) {

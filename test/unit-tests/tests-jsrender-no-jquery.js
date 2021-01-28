@@ -1261,6 +1261,7 @@ var teams = [
 
 QUnit.module("api no jQuery");
 QUnit.test("templates", function(assert) {
+
 	// ................................ Arrange ..................................
 	$.templates("./test/templates/file/path.html", null); // In case template has been stored in a previous test
 
@@ -1302,7 +1303,61 @@ QUnit.test("templates", function(assert) {
 		document.getElementById("./test/templates/file/path.html").removeAttribute("data-jsv-tmpl");
 	}
 
-	// =============================== Arrange ===============================
+if (isBrowser) {
+	var tmplElem = document.getElementById("myTmpl");
+
+	// ................................ Act ..................................
+	tmpl0 = $.templates({markup: "#myTmpl"}); // Compile template declared in script block, but do not cache
+
+	// ............................... Assert .................................
+	assert.equal(tmpl0.render({name: "Jo0"}), "A_Jo0_B",
+		"Compile template declared in script block, without caching");
+
+	// ................................ Act ..................................
+	tmpl1 = $.templates("#myTmpl"); // Compile and cache, using "#myTmpl" as key);
+
+	// ............................... Assert .................................
+	assert.equal(tmpl1 !== tmpl0 && tmpl1.render({name: "Jo1"}), "A_Jo1_B",
+		"Compile template declared in script block, and cache on file path");
+
+	// ................................ Act ..................................
+	tmpl2 = $.templates("#myTmpl"); // Use cached template, accessed by $.templates["#myTmpl"]
+
+	// ............................... Assert .................................
+	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), "A_Jo2_B",
+		"Re-use cached template declared in script block");
+
+	// ................................ Act ..................................
+	var tmpl2b = $.templates(".myTmpl"); // Try to access script element by class selector - but fail because jQuery not loaded, so only "#xxx" selector is supported
+
+	// ............................... Assert .................................
+	if ($.fn || window._$ || tmpl2b === tmpl2) {
+		assert.equal(tmpl2b === tmpl2 && tmpl2b.render({name: "Jo2"}), "A_Jo2_B",
+		"Try to access script block using class selector - but not supported, by design, when jQuery not loaded");
+	} else {
+		assert.equal(tmpl2b !== tmpl2 && tmpl2b.render({name: "Jo2"}), ".myTmpl",
+		"Can access script block using class selector - when jQuery loaded");
+	}
+
+	// ................................ Act ..................................
+	tmpl2 = $.templates("#myAbsentTmpl");
+
+	// ............................... Assert .................................
+	assert.equal(tmpl2.render({name: "Jo2"}), "#myAbsentTmpl",
+		"Access missing script block template - renders as string");
+
+	// ................................ Act ..................................
+	tmpl3 = $.templates({markup: "#myTmpl"}); // Re-compile template but do not cache. Leave cached template.
+
+	// ............................... Assert .................................
+	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && tmpl3.render({name: "Jo3"}), "A_Jo3_B",
+		"Recompile template declared in script block, without caching");
+
+	// ................................ Reset ................................
+	tmplElem.removeAttribute("data-jsv-tmpl");
+}
+
+// =============================== Arrange ===============================
 	tmplString = "A_{{:name}}_B";
 
 	var tmpl = $.templates(tmplString);

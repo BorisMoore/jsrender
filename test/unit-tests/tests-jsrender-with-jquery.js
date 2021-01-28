@@ -34,7 +34,9 @@ QUnit.test("templates", function(assert) {
 	var tmpl0 = $.templates({markup: "./test/templates/file/path.html"}); // Compile template but do not cache
 
 	// ............................... Assert .................................
-	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), "ServerRenderedTemplate_Jo0_B", "Compile server-generated template, without caching");
+	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}),
+		"ServerRenderedTemplate_Jo0_B",
+		"Compile server-generated template, without caching");
 
 	// ................................ Act ..................................
 	var tmpl1 = $.templates("./test/templates/file/path.html"); // Compile and cache, using $.data(elem, "jsvTmpl", tmpl);
@@ -46,13 +48,17 @@ QUnit.test("templates", function(assert) {
 	var tmpl2 = $.templates("./test/templates/file/path.html"); // Use cached template, accessed by path as key
 
 	// ............................... Assert .................................
-	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), "ServerRenderedTemplate_Jo2_B", "Re-use cached server-generated template");
+	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}),
+		"ServerRenderedTemplate_Jo2_B",
+		"Re-use cached server-generated template");
 
 	// ................................ Act ..................................
 	var tmpl3 = $.templates({markup: "./test/templates/file/path.html"}); // Re-compile template but do not cache. Leaved cached template.
 
 	// ............................... Assert .................................
-	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), "ServerRenderedTemplate_Jo3_B", "Recompile server-generated template, without caching");
+	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}),
+		"ServerRenderedTemplate_Jo3_B",
+		"Recompile server-generated template, without caching");
 
 	// ................................ Reset ................................
 	delete $.data(tmplElem).jsvTmpl;
@@ -66,25 +72,43 @@ QUnit.test("templates", function(assert) {
 	tmpl0 = $.templates({markup: "#myTmpl"}); // Compile template declared in script block, but do not cache
 
 	// ............................... Assert .................................
-	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), "A_Jo0_B", "Compile template declared in script block, without caching");
+	assert.equal(!$.data(tmplElem).jsvTmpl && tmpl0.render({name: "Jo0"}), "A_Jo0_B",
+		"Compile template declared in script block, without caching");
 
 	// ................................ Act ..................................
 	tmpl1 = $.templates("#myTmpl"); // Compile and cache, using $.data(elem, "jsvTmpl", tmpl);
 
 	// ............................... Assert .................................
-	assert.equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), "A_Jo1_B", "Compile template declared in script block, and cache on file path");
+	assert.equal(tmpl1 !== tmpl0 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl1.render({name: "Jo1"}), "A_Jo1_B",
+		"Compile template declared in script block, and cache on file path");
 
 	// ................................ Act ..................................
 	tmpl2 = $.templates("#myTmpl"); // Use cached template, accessed by $.data(elem, "jsvTmpl")
 
 	// ............................... Assert .................................
-	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), "A_Jo2_B", "Re-use cached template declared in script block");
+	assert.equal(tmpl2 === tmpl1 && tmpl1.render({name: "Jo2"}), "A_Jo2_B",
+		"Re-use cached template declared in script block");
+
+	// ................................ Act ..................................
+	var tmpl2b = $.templates(".myTmpl"); // Access script element by class selector. Still get cached template, accessed by $.data(elem, "jsvTmpl")
+
+	// ............................... Assert .................................
+	assert.equal(tmpl2b === tmpl2 && tmpl2.render({name: "Jo2"}), "A_Jo2_B",
+		"Re-use cached template declared in script block - accessed by class selector");
+
+	// ................................ Act ..................................
+	tmpl2 = $.templates("#myAbsentTmpl");
+
+	// ............................... Assert .................................
+	assert.equal(tmpl2.render({name: "Jo2"}), "#myAbsentTmpl",
+		"Access missing script block template - renders as string");
 
 	// ................................ Act ..................................
 	tmpl3 = $.templates({markup: "#myTmpl"}); // Re-compile template but do not cache. Leave cached template.
 
 	// ............................... Assert .................................
-	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), "A_Jo3_B", "Recompile template declared in script block, without caching");
+	assert.equal(tmpl3 !== tmpl0 && tmpl3 !== tmpl1 && $.data(tmplElem).jsvTmpl === tmpl1 && tmpl3.render({name: "Jo3"}), "A_Jo3_B",
+		"Recompile template declared in script block, without caching");
 
 	// ................................ Reset ................................
 	delete $.data(tmplElem).jsvTmpl;
