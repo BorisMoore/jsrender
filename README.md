@@ -1,5 +1,7 @@
 ## JsRender: best-of-breed templating
 
+[![CDNJS version](https://img.shields.io/cdnjs/v/jsrender.svg)](https://cdnjs.com/libraries/jsrender)
+
 *Simple and intuitive, powerful and extensible, lightning fast*
 
 *For templated content in the browser or on Node.js (with Express 4, Hapi and Browserify integration)*
