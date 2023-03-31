@@ -1,11 +1,11 @@
-/*! JsRender v1.0.12: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.13: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2021, Boris Moore
+ * Copyright 2023, Boris Moore
  * Released under the MIT License.
  */
 
@@ -20,7 +20,7 @@ if (typeof exports !== 'object' ) {
 //========================== Top-level vars ==========================
 
 	// global var is the this object, which is window when running in the usual browser environment
-var versionNumber = "v1.0.12",
+var versionNumber = "v1.0.13",
 	$, jsvStoreName, rTag, rTmplString, topView, $views,
 	_ocp = "_ocp",      // Observable contextual parameter
 

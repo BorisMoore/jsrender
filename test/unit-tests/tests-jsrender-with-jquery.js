@@ -213,6 +213,10 @@ QUnit.test("render", function(assert) {
 
 	$("#result").html("<script id='tmpl' type='text/x-jsrender'>Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}</script>");
 	assert.equal($("#tmpl").render([null, undefined, 1], true), "Content012", 'render(array, true) renders an array without iteration');
+
+	$("#result").html('<div id="people"><script class="item-tmpl" type="text/x-jsrender">{{:name}}</script></div>');
+	assert.equal($.templates("#people .item-tmpl").render({name: 'John'}), "John", 'Access template using "descendant" selector (with space): "#people .item-tmpl"');
+
 	$("#result").empty();
 });
 

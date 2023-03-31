@@ -43,7 +43,7 @@ QUnit.test("jsrender.compile", function(assert) {
 QUnit.test("jsrender.tags.clientTemplate", function(assert) {
 	jsrender.views.settings.delimiters("<%", "%>");
 	var tmpl = jsrender.compile(
-		'<script src="//code.jquery.com/jquery-3.6.1.js"></script>\n'
+		'<script src="//code.jquery.com/jquery-3.6.4.js"></script>\n'
 		+ '<script src="//www.jsviews.com/download/jsrender.js"></script>\n'
 		+ '<%clientTemplate "./test/templates/outer.html"/%>\n'
 		+ '<%clientTemplate "./test/templates/inner.html"/%>\n'
@@ -52,7 +52,7 @@ QUnit.test("jsrender.tags.clientTemplate", function(assert) {
 		+ '<script>var tmpl = $.templates("#clientonly"); $("#result").html(tmpl({name: "Jeff"}));</script>');
 	var html = tmpl({name: "Jo"});
 	assert.equal(html,
-		'<script src="//code.jquery.com/jquery-3.6.1.js"></script>\n'
+		'<script src="//code.jquery.com/jquery-3.6.4.js"></script>\n'
 		+ '<script src="//www.jsviews.com/download/jsrender.js"></script>\n'
 		+ '<script id="./test/templates/outer.html" type="text/x-jsrender">Name: {{:name}} (outer.html) {{include tmpl="./test/templates/inner.html"/}}</script>\n'
 		+ '<script id="./test/templates/inner.html" type="text/x-jsrender">Name: {{:name}} (inner.html)</script>\n'
