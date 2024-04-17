@@ -1,4 +1,4 @@
-var testrunner = require("qunit");
+var testrunner = require("node-qunit");
 
 testrunner.run({
 	code: {path: "jsrender-node.js", namespace: "jsrender"}, // sets global require('jsrender')

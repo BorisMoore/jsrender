@@ -1,11 +1,11 @@
-/*! JsRender v1.0.13: http://jsviews.com/#jsrender */
+/*! JsRender v1.0.14: http://jsviews.com/#jsrender */
 /*! **VERSION FOR NODE.JS** (For WEB see http://jsviews.com/download/jsrender.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2023, Boris Moore
+ * Copyright 2024, Boris Moore
  * Released under the MIT License.
  */
 
@@ -20,7 +20,7 @@ if (typeof exports !== 'object' ) {
 //========================== Top-level vars ==========================
 
 	// global var is the this object, which is window when running in the usual browser environment
-var versionNumber = "v1.0.13",
+var versionNumber = "v1.0.14",
 	$, jsvStoreName, rTag, rTmplString, topView, $views,
 	_ocp = "_ocp",      // Observable contextual parameter
 
@@ -405,7 +405,7 @@ function contextParameter(key, value, get) {
 				// Not a contextual parameter
 				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view ("data" view of linked template)
 				storeView = storeView.tagCtx || $isFunction(res)
-					? storeView // Is a tag, not a view, or is a computed contextual parameter, so scope to the callView, no the 'scope view'
+					? storeView // Is a tag, not a view, or is a computed contextual parameter, so scope to the callView, not the 'scope view'
 					: (storeView = storeView.scope || storeView,
 						!storeView.isTop && storeView.ctx.tag // If this view is in a tag, set storeView to the tag
 							|| storeView);
