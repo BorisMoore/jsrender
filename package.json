@@ -1,6 +1,6 @@
 {
   "name": "jsrender",
-  "version": "v1.0.14",
+  "version": "v1.0.15",
   "description": "Best-of-breed templating in browser or on Node.js (with Express 4, Hapi and Browserify integration)",
   "main": "./jsrender-node.js",
   "browser": "./jsrender.js",
@@ -34,11 +34,12 @@
   ],
   "devDependencies": {
     "@types/jquery": "^3.3.31",
-    "browserify": "^11.0.1",
-    "gulp": "^3.9.0",
-    "glob-stream": "^5.0.0",
+    "browserify": "^17.0.0",
+    "gulp": "^5.0.0",
+    "glob-stream": "^8.0.2",
     "jquery": "^3.4.1",
-    "qunit": "^0.7.6"
+    "node-qunit": "^2.0.0",
+    "qunit": "^2.21.0"
   },
   "dependencies": {
     "through2": "^3.0.1"

@@ -1,5 +1,5 @@
 // Type definitions for JsRender 1.0
-// Version: "v1.0.14"
+// Version: "v1.0.15"
 // Project: http://www.jsviews.com/#jsrender
 // Definitions by: Boris Moore <https://github.com/borismoore>
 // Definitions: https://www.jsviews.com/download/typescript/jsrender/index.d.ts

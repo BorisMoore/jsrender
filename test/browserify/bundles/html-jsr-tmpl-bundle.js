@@ -1,5 +1,5 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*! JsRender v1.0.14: http://jsviews.com/#jsrender */
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+/*! JsRender v1.0.15: http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -45,7 +45,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v1.0.14",
+var versionNumber = "v1.0.15",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
 
@@ -3022,7 +3022,7 @@ return $ || jsr;
 }, window));
 
 },{}],2:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 /*global QUnit, test, equal, ok*/
 (function(undefined) {
 "use strict";
@@ -3063,9 +3063,9 @@ test("jQuery global: require('jsrender')", function() {
 }
 })();
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../templates/name-template.html":3,"../templates/name-template.jsr":4,"./../../":1}],3:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 var tmplRefs = [],
   mkup = 'Name: {{:name}} (name-template.html)',
   $ = global.jsrender || global.jQuery;
@@ -3079,9 +3079,9 @@ module.exports = $ ? $.templates("./test/templates/name-template.html", mkup) :
 
     return $.templates("./test/templates/name-template.html", mkup)
   };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],4:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 var tmplRefs = [],
   mkup = 'Name: {{:name}} (name-template.jsr)',
   $ = global.jsrender || global.jQuery;
@@ -3095,5 +3095,5 @@ module.exports = $ ? $.templates("./test/templates/name-template.jsr", mkup) :
 
     return $.templates("./test/templates/name-template.jsr", mkup)
   };
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}]},{},[2]);

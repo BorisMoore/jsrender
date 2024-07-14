@@ -10,7 +10,8 @@ gulp.task('bundle', function() {
 	var tmplify = require('./tmplify');
 	var gs = require('glob-stream');
 
-	return gs.create('./test/browserify/*-unit-tests.js')
+//	return gs.create('./test/browserify/*-unit-tests.js')
+	return gs('./test/browserify/*-unit-tests.js')
 		.on('data', function(file) {
 			// file has path, base, and cwd attrs
 			var fileName = file.path.slice(file.base.length, -14);
