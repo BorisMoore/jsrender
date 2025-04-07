@@ -49,7 +49,7 @@ var versionNumber = "v1.0.15",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
 
-	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings,
+	$templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings,
 	delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
 
 	isRenderCall,
@@ -171,6 +171,16 @@ var versionNumber = "v1.0.15",
 		map: dataMap // If jsObservable loaded first, use that definition of dataMap
 	};
 
+function isFunction(ob) {
+	return typeof ob === "function";
+}
+
+if (!Array.isArray) {
+	Array.isArray = function(obj) {
+		return ({}.toString).call(obj) === "[object Array]";
+	};
+}
+
 function getDerivedMethod(baseMethod, method) {
 	return function() {
 		var ret,
@@ -187,7 +197,7 @@ function getDerivedMethod(baseMethod, method) {
 function getMethod(baseMethod, method) {
 	// For derived methods (or handlers declared declaratively as in {{:foo onChange=~fooChanged}} replace by a derived method, to allow using this.base(...)
 	// or this.baseApply(arguments) to call the base implementation. (Equivalent to this._super(...) and this._superApply(arguments) in jQuery UI)
-	if ($isFunction(method)) {
+	if (isFunction(method)) {
 		method = getDerivedMethod(
 				!baseMethod
 					? noop // no base method implementation, so use noop as base method
@@ -274,7 +284,7 @@ function $viewsDelimiters(openChars, closeChars, link) {
 	if (!openChars) {
 		return $subSettings.delimiters;
 	}
-	if ($isArray(openChars)) {
+	if (Array.isArray(openChars)) {
 		return $viewsDelimiters.apply($views, openChars);
 	}
 	linkChar = link ? link[0] : linkChar;
@@ -432,7 +442,7 @@ function contextParameter(key, value, get) {
 			if (!res || !res._cxp) {
 				// Not a contextual parameter
 				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view ("data" view of linked template)
-				storeView = storeView.tagCtx || $isFunction(res)
+				storeView = storeView.tagCtx || isFunction(res)
 					? storeView // Is a tag, not a view, or is a computed contextual parameter, so scope to the callView, not the 'scope view'
 					: (storeView = storeView.scope || storeView,
 						!storeView.isTop && storeView.ctx.tag // If this view is in a tag, set storeView to the tag
@@ -484,7 +494,7 @@ function contextParameter(key, value, get) {
 				res = newRes;
 			}
 		}
-		if (res && $isFunction(res)) {
+		if (res && isFunction(res)) {
 			// If a helper is of type function we will wrap it, so if called with no this pointer it will be called with the
 			// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
 			// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
@@ -619,7 +629,7 @@ function convertArgs(tagElse, bound) { // tag.cvtArgs() or tag.cvtArgs(tagElse?,
 		}
 		bindFrom = bindFrom || [0];
 		l = bindFrom.length;
-		if (!$isArray(converter) || (converter.arg0 !== false && (l === 1 || converter.length !== l || converter.arg0))) {
+		if (!Array.isArray(converter) || (converter.arg0 !== false && (l === 1 || converter.length !== l || converter.arg0))) {
 			converter = [converter]; // Returning converter as first arg, even if converter value is an array
 			bindFrom = [0];
 			l = 1;
@@ -670,7 +680,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		var bindArray = tag[type];
 
 		if (bindArray !== undefined) {
-			bindArray = $isArray(bindArray) ? bindArray : [bindArray];
+			bindArray = Array.isArray(bindArray) ? bindArray : [bindArray];
 			m = bindArray.length;
 			while (m--) {
 				key = bindArray[m];
@@ -820,14 +830,14 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 				bindFromLength = bindFrom.length;
 
 				if (tag._.bnd && (linkedElement = tag.linkedElement)) {
-					tag.linkedElement = linkedElement = $isArray(linkedElement) ? linkedElement: [linkedElement];
+					tag.linkedElement = linkedElement = Array.isArray(linkedElement) ? linkedElement: [linkedElement];
 
 					if (bindToLength !== linkedElement.length) {
 						error("linkedElement not same length as bindTo");
 					}
 				}
 				if (linkedElement = tag.linkedCtxParam) {
-					tag.linkedCtxParam = linkedElement = $isArray(linkedElement) ? linkedElement: [linkedElement];
+					tag.linkedCtxParam = linkedElement = Array.isArray(linkedElement) ? linkedElement: [linkedElement];
 
 					if (bindFromLength !== linkedElement.length) {
 						error("linkedCtxParam not same length as bindFrom/bindTo");
@@ -1048,7 +1058,7 @@ function compileTag(name, tagDef, parentTmpl) {
 		tag.tagName = name;
 	}
 
-	if ($isFunction(tagDef)) {
+	if (isFunction(tagDef)) {
 		// Simple tag declared as function. No presenter instantation.
 		tagDef = {
 			depends: tagDef.depends,
@@ -1226,7 +1236,7 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 //=================
 
 function getDefaultVal(defaultVal, data) {
-	return $isFunction(defaultVal)
+	return isFunction(defaultVal)
 		? defaultVal.call(data)
 		: defaultVal;
 }
@@ -1290,7 +1300,7 @@ function compileViewModel(name, type) {
 			ob = data,
 			arr = [];
 
-		if ($isArray(data)) {
+		if (Array.isArray(data)) {
 			data = data || [];
 			l = data.length;
 			for (; j<l; j++) {
@@ -1315,7 +1325,7 @@ function compileViewModel(name, type) {
 				childOb = arr[j];
 				parentRef = getters[j].parentRef;
 				if (parentRef && childOb && childOb.unmap) {
-					if ($isArray(childOb)) {
+					if (Array.isArray(childOb)) {
 						l = childOb.length;
 						while (l--) {
 							addParentRef(childOb[l], parentRef, ob);
@@ -1343,7 +1353,7 @@ function compileViewModel(name, type) {
 			k = 0,
 			model = this;
 
-		if ($isArray(model)) {
+		if (Array.isArray(model)) {
 			assigned = {};
 			newModArr = [];
 			l = data.length;
@@ -1409,7 +1419,7 @@ function compileViewModel(name, type) {
 			return arr;
 		}
 
-		if ($isArray(model)) {
+		if (Array.isArray(model)) {
 			return unmapArray(model);
 		}
 		ob = {};
@@ -1422,13 +1432,13 @@ function compileViewModel(name, type) {
 			}
 			value = model[prop]();
 			ob[prop] = getterType && value && viewModels[getterType.type]
-				? $isArray(value)
+				? Array.isArray(value)
 					? unmapArray(value)
 					: value.unmap()
 				: value;
 		}
 		for (prop in model) {
-			if (model.hasOwnProperty(prop) && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && prop !== $expando && !$isFunction(model[prop])) {
+			if (model.hasOwnProperty(prop) && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && prop !== $expando && !isFunction(model[prop])) {
 				ob[prop] = model[prop];
 			}
 		}
@@ -1625,7 +1635,7 @@ function dataMap(mapDef) {
 		options.map = this;
 	}
 
-	if ($isFunction(mapDef)) {
+	if (isFunction(mapDef)) {
 		// Simple map declared as function
 		mapDef = {
 			getTgt: mapDef
@@ -1675,7 +1685,7 @@ function renderContent(data, context, noIteration, parentView, key, onRender) {
 		view = view || tagCtx.view;
 		tmpl = view._getTmpl(tag.template || tagCtx.tmpl);
 		if (!arguments.length) {
-			data = tag.contentCtx && $isFunction(tag.contentCtx)
+			data = tag.contentCtx && isFunction(tag.contentCtx)
 				? data = tag.contentCtx(data)
 				: view; // Default data context for wrapped block content is the first argument
 		}
@@ -1712,7 +1722,7 @@ function renderContent(data, context, noIteration, parentView, key, onRender) {
 				view.data = data;
 				view.ctx = context;
 			}
-			if ($isArray(data) && !noIteration) {
+			if (Array.isArray(data) && !noIteration) {
 				// Create a view for the array, whose child views correspond to each data item. (Note: if key and parentView are passed in
 				// along with parent view, treat as insert -e.g. from view.addViews - so parentView is already the view item for array)
 				for (i = 0, l = data.length; i < l; i++) {
@@ -1813,7 +1823,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 		: context;
 
 	newCtx = context;
-	if ($isArray(data) && !noIteration) {
+	if (Array.isArray(data) && !noIteration) {
 		// Create a view for the array, whose child views correspond to each data item. (Note: if key and view are passed in
 		// along with parent view, treat as insert -e.g. from view.addViews - so view is already the view item for array)
 		newView = swapContent
@@ -1865,7 +1875,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 
 function onRenderError(e, view, fallback) {
 	var message = fallback !== undefined
-		? $isFunction(fallback)
+		? isFunction(fallback)
 			? fallback.call(view.data, e, view)
 			: fallback || ""
 		: "{Error: " + (e.message||e) + "}";
@@ -2640,10 +2650,10 @@ function getTargetProps(source, tagCtx) {
 
 	if (!propsArr) { // map.propsArr is the full array of {key:..., prop:...} objects
 		propsArr = [];
-		if (typeof source === OBJECT || $isFunction(source)) {
+		if (typeof source === OBJECT || isFunction(source)) {
 			for (key in source) {
 				prop = source[key];
-				if (key !== $expando && source.hasOwnProperty(key) && (!tagCtx.props.noFunctions || !$.isFunction(prop))) {
+				if (key !== $expando && source.hasOwnProperty(key) && (!tagCtx.props.noFunctions || !isFunction(prop))) {
 					propsArr.push({key: key, prop: prop});
 				}
 			}
@@ -2667,7 +2677,7 @@ function getTargetSorted(value, tagCtx) {
 		step = parseInt(props.step),
 		reverse = props.reverse ? -1 : 1;
 
-	if (!$isArray(value)) {
+	if (!Array.isArray(value)) {
 		return value;
 	}
 	if (directSort || sort && typeof sort === STRING) {
@@ -2687,12 +2697,12 @@ function getTargetSorted(value, tagCtx) {
 	} else if ((sort || reverse < 0) && !tag.dataMap) {
 		value = value.slice(); // Clone array first if not already a new array
 	}
-	if ($isFunction(sort)) {
+	if (isFunction(sort)) {
 		value = value.sort(function() { // Wrap the sort function to provide tagCtx as 'this' pointer
 			return sort.apply(tagCtx, arguments);
 		});
 	}
-	if (reverse < 0 && (!sort || $isFunction(sort))) { // Reverse result if not already reversed in sort
+	if (reverse < 0 && (!sort || isFunction(sort))) { // Reverse result if not already reversed in sort
 		value = value.reverse();
 	}
 
@@ -2837,13 +2847,6 @@ if (!(jsr || $ && $.render)) {
 		$.renderFile = $.__express = $.compile = function() { throw "Node.js: use npm jsrender, or jsrender-node.js"; };
 
 		//END BROWSER-SPECIFIC CODE
-		$.isFunction = function(ob) {
-			return typeof ob === "function";
-		};
-
-		$.isArray = Array.isArray || function(obj) {
-			return ({}.toString).call(obj) === "[object Array]";
-		};
 
 		$sub._jq = function(jq) { // private method to move from JsRender APIs from jsrender namespace to jQuery namespace
 			if (jq !== $) {
@@ -2859,7 +2862,6 @@ if (!(jsr || $ && $.render)) {
 	}
 	$subSettings = $sub.settings;
 	$subSettings.allowCode = false;
-	$isFunction = $.isFunction;
 	$.render = $render;
 	$.views = $views;
 	$.templates = $templates = $views.templates;
@@ -2884,7 +2886,7 @@ if (!(jsr || $ && $.render)) {
 				$subSettings.debugMode = debugMode,
 				$subSettings.onError = typeof debugMode === STRING
 					? function() { return debugMode; }
-					: $isFunction(debugMode)
+					: isFunction(debugMode)
 						? debugMode
 						: undefined,
 				$viewsSettings);
@@ -2947,7 +2949,7 @@ if (!(jsr || $ && $.render)) {
 						}
 					}
 					if (value !== undefined) {
-						isArray = $isArray(value);
+						isArray = Array.isArray(value);
 						result += tagCtx.render(value, !iterate || props.noIteration);
 						// Iterates if data is an array, except on final else - or if noIteration property
 						// set to true. (Use {{include}} to compose templates without array iteration)
@@ -2969,7 +2971,7 @@ if (!(jsr || $ && $.render)) {
 					props = tagCtx.props;
 					paramsProps = tagCtx.params.props;
 					tagCtx.argDefault = props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
-					props.dataMap = (tagCtx.argDefault !== false && $isArray(tagCtx.args[0]) &&
+					props.dataMap = (tagCtx.argDefault !== false && Array.isArray(tagCtx.args[0]) &&
 						(paramsProps.sort || paramsProps.start || paramsProps.end || paramsProps.step || paramsProps.filter || paramsProps.reverse
 						|| props.sort || props.start || props.end || props.step || props.filter || props.reverse))
 						&& self.sortDataMap;
@@ -3012,7 +3014,6 @@ if (!(jsr || $ && $.render)) {
 }
 //========================== Define default delimiters ==========================
 $subSettings = $sub.settings;
-$isArray = ($||jsr).isArray;
 $viewsSettings.delimiters("{{", "}}", "^");
 
 if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over the stored items (templates, converters, helpers...)
