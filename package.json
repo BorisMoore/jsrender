@@ -1,6 +1,6 @@
 {
-  "name": "jsrender",
-  "version": "v1.0.15",
+  "name": "@labware/jsrender",
+  "version": "1.0.16",
   "description": "Best-of-breed templating in browser or on Node.js (with Express 4, Hapi and Browserify integration)",
   "main": "./jsrender-node.js",
   "browser": "./jsrender.js",
@@ -11,12 +11,15 @@
   "homepage": "http://www.jsviews.com/#jsrender",
   "repository": {
     "type": "git",
-    "url": "https://github.com/borismoore/jsrender.git"
+    "url": "https://github.com/LabWare/jsrender.git"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/borismoore/jsrender/issues"
+    "url": "https://github.com/LabWare/jsrender/issues"
   },
+	"publishConfig": {
+		"@labware:registry": "https://npm.pkg.github.com"
+	},
   "scripts": {
     "test": "node ./test/unit-tests-node-runner.js"
   },
