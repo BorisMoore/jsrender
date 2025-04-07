@@ -1,6 +1,6 @@
 {
   "name": "@labware/jsrender",
-  "version": "v1.0.15.1",
+  "version": "1.0.16",
   "description": "Best-of-breed templating in browser or on Node.js (with Express 4, Hapi and Browserify integration)",
   "main": "./jsrender-node.js",
   "browser": "./jsrender.js",
