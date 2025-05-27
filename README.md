@@ -1,5 +1,6 @@
 ## JsRender: best-of-breed templating
 
+[![NPM Version](https://img.shields.io/npm/v/jsrender)](https://www.npmjs.com/package/jsrender)
 [![CDNJS version](https://img.shields.io/cdnjs/v/jsrender.svg)](https://cdnjs.com/libraries/jsrender)
 
 *Simple and intuitive, powerful and extensible, lightning fast*
@@ -26,8 +27,7 @@ It is also used by the *[JsViews](http://www.jsviews.com/#jsviews)* platform, wh
 
 *jsrender.js* is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site. 
 
-*CDN delivery* is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsrender](https://cdnjs.com/libraries/jsrender).
-
+*CDN delivery* is available from the ***[jsdelivr](https://jsdelivr.com)*** CDN at [jsdelivr.com/package/npm/jsrender](https://jsdelivr.com/package/npm/jsrender?tab=files), and from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsrender](https://cdnjs.com/libraries/jsrender).
 Alternatively:
 - It can be installed with **[Bower](http://bower.io/search/?q=jsrender)**, using `$ bower install jsrender` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
