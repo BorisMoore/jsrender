@@ -1,12 +1,12 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-/*! JsRender v1.0.16: http://jsviews.com/#jsrender */
+/*! JsRender v1.2.0: http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
  * Does not require jQuery, or HTML DOM
  * Integrates with JsViews (http://jsviews.com/#jsviews)
  *
- * Copyright 2025, Boris Moore
+ * Copyright 2026, Boris Moore
  * Released under the MIT License.
  */
 
@@ -45,10 +45,10 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v1.0.16",
+var versionNumber = "v1.2.0",
 	jsvStoreName, rTag, rTmplString, topView, $views, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
-	$isFunction = function(ob) { return typeof ob === "function"; },
+	$isFunction = function(ob) {return typeof ob === "function";},
 	$isArray = Array.isArray,
 	$templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings,
 	delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
@@ -1523,7 +1523,7 @@ function tmplObject(markup, options) {
 	if (htmlTag && htmlTag !== wrapMap.div) {
 		// When using JsViews, we trim templates which are inserted into HTML contexts where text nodes are not rendered (i.e. not 'Phrasing Content').
 		// Currently not trimmed for <li> tag. (Not worth adding perf cost)
-		tmpl.markup = $.trim(tmpl.markup);
+		tmpl.markup = tmpl.markup.trim();
 	}
 
 	return tmpl;
@@ -2250,8 +2250,8 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 				// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes,
 				// to return the new object, and trigger re-binding of the subsequent path)
 				expr = pathStart[fnDp-1];
-				if (full.length - 1 > ind - (expr || 0)) { // We need to compile a subexpression
-					expr = $.trim(full.slice(expr, ind + all.length));
+				if (typeof full !== "undefined" && full.length - 1 > ind - (expr || 0)) { // We need to compile a subexpression
+					expr = full.slice(expr, ind + all.length).trim();
 					binds = bindto || bndStack[fnDp-1].bd;
 					// Insert exprOb object, to be used during binding to return the computed object
 					theOb = binds[binds.length-1];
@@ -2658,7 +2658,7 @@ function getTargetProps(source, tagCtx) {
 		if (typeof source === OBJECT || $isFunction(source)) {
 			for (key in source) {
 				prop = source[key];
-				if (key !== $expando && source.hasOwnProperty(key) && (!tagCtx.props.noFunctions || !$.isFunction(prop))) {
+				if (key !== $expando && source.hasOwnProperty(key) && (!tagCtx.props.noFunctions || !$isFunction(prop))) {
 					propsArr.push({key: key, prop: prop});
 				}
 			}

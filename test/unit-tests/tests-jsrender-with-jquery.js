@@ -132,7 +132,7 @@ QUnit.test("templates", function(assert) {
 
 	tmpl2 = jsv.templates("#my_tmpl");
 	tmpl3 = jsv.templates("#my_tmpl");
-	assert.equal(tmpl2 === tmpl3 && $.trim(tmpl2.render(person)), "A_Jo_B", 'var tmpl = jsv.templates("#my_tmpl"); returns compiled template for script element');
+	assert.equal(tmpl2 === tmpl3 && tmpl2.render(person).trim(), "A_Jo_B", 'var tmpl = jsv.templates("#my_tmpl"); returns compiled template for script element');
 
 	jsv.templates({
 		my_tmpl3: {
@@ -140,17 +140,17 @@ QUnit.test("templates", function(assert) {
 		}
 	});
 
-	assert.equal(jsv.render.my_tmpl3 === jsv.templates.my_tmpl3 && jsv.templates.my_tmpl3 !== tmpl2 && $.trim(jsv.render.my_tmpl3(person)), "A_Jo_B", 'Named template for template object with selector: {markup: "#my_tmpl"}');
+	assert.equal(jsv.render.my_tmpl3 === jsv.templates.my_tmpl3 && jsv.templates.my_tmpl3 !== tmpl2 && jsv.render.my_tmpl3(person).trim(), "A_Jo_B", 'Named template for template object with selector: {markup: "#my_tmpl"}');
 
 	tmpl3 = jsv.templates("", {
 		markup: "#my_tmpl"
 	});
-	assert.equal($.trim(tmpl3.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
+	assert.equal(tmpl3.render(person).trim(), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
 
 	var tmpl4 = jsv.templates({
 		markup: "#my_tmpl"
 	});
-	assert.equal($.trim(tmpl4.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
+	assert.equal(tmpl4.render(person).trim(), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
 
 	assert.equal(jsv.templates("#my_tmpl"), jsv.templates("#my_tmpl"), 'jsv.templates("#my_tmpl") caches compiled template, and does not recompile each time;');
 
@@ -195,7 +195,7 @@ QUnit.test("templates", function(assert) {
 });
 
 QUnit.test("render", function(assert) {
-	assert.equal($.trim($("#my_tmpl").render(person)), "A_Jo_B", '$(tmplSelector).render(data);'); // Trimming because IE adds whitespace
+	assert.equal($("#my_tmpl").render(person).trim(), "A_Jo_B", '$(tmplSelector).render(data);'); // Trimming because IE adds whitespace
 
 	var tmpl3 = jsv.templates("my_tmpl4", tmplString);
 
@@ -475,6 +475,72 @@ QUnit.test("jsv.views.viewModels", function(assert) {
 	// ............................... Assert .................................
 	assert.equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
 		"viewModels, hierarchy");
+
+	// =============================== Arrange ===============================
+	jsv.views.viewModels({
+		Person: {
+			getters: [
+			{getter: "Host"},
+			{getter: "Profile"},
+			{getter: "Voted", type: "Voted_vm"}
+			]
+		},
+		Voted_vm:{
+			getters: ["GUID","State"]
+		}
+		});
+
+	// person plain object hierarchy:
+	var personData = {
+		"Host": "[22, 55]",
+		// "Host": [22, 55],
+		"Profile": "{\"IDs\": [\"bm\", \"gd\"]}",
+		// "Profile": {"IDs": ["bm", "gd"],
+		"Voted": "[{\"GUID\": \"ABC\", \"State\": 30}, {\"GUID\": \"XYZ\", \"State\": \"NY\"}]"
+		// "Voted": [{"GUID": "ABC", "State": 30}, {"GUID": "XYZ", "State": "NY"}]
+	};
+
+	// ................................ Act ..................................
+	var person = jsv.views.viewModels.Person.map(personData);
+	result = person.Host()[0] + person.Host()[1] + person.Profile().IDs[0] + person.Profile().IDs[1]
+  		+ person.Voted()[0].GUID() + person.Voted()[1].State();
+
+	// ............................... Assert .................................
+	assert.equal(result, "77bmgdABCNY", "Object hierarchy passed to map() can include JSON strings in the place of corresponding objects");
+    // See https://github.com/BorisMoore/jsviews/issues/468
+
+	// =============================== Arrange ===============================
+
+	// Compiled template
+	var tmpl = $.templates('{{for phones() sort="number"}}{{:number()}}{{/for}}');
+
+	// Compile View Models
+	jsv.views.viewModels({
+	Person: {
+		getters: [
+		{getter: "phones", type: "Phone"}     // Each phone is of type Phone (View Model)
+		]
+	},
+	Phone:{
+		getters: ["number"]
+	}
+	});
+
+	var personData = {
+		phones: [{number: "111"}, {number: "333"}, {number: "222"}]
+	};
+
+	// Instantiate View Model hierarchy using map()
+	var person = jsv.views.viewModels.Person.map(personData);
+
+	// Render template against person object (instance of Person)
+	result = tmpl.render(person);
+
+	// ............................... Assert .................................
+
+	assert.equal(result, "111222333", "Compiled View Model: {{for phones() sort=\"number\"...");
+	// See: https://github.com/BorisMoore/jsviews/issues/466
 });
+
 
 })(this.jsviews || this.jQuery, this.jsviews && this.jsviews.$ || this.jQuery);

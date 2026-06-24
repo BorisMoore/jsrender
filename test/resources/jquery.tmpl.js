@@ -143,7 +143,7 @@
 			if ( options && options.wrapped ) {
 				updateWrapped( options, options.wrapped );
 			}
-			ret = jQuery.isArray( data ) ?
+			ret = Array.isArray( data ) ?
 				jQuery.map( data, function( dataItem ) {
 					return dataItem ? newTmplItem( options, parentItem, tmpl, dataItem ) : null;
 				}) :
@@ -322,7 +322,7 @@
 			"with($data){__.push('" +
 
 			// Convert the template into pure JavaScript
-			jQuery.trim(markup)
+			markup.trim()
 				.replace( /([\\'])/g, "\\$1" )
 				.replace( /[\r\t\n]/g, " " )
 				.replace( /\$\{([^\}]*)\}/g, "{{= $1}}" )

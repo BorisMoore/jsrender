@@ -11,7 +11,8 @@ var jsrender = require('./../jsrender-node.js'),
 	fs = require('fs'),
 	path = require('path'),
 	pathSep = path.sep,
-	through = require('through2'),
+	throughModule = require('through2'),
+	through = typeof throughModule === "function" ? throughModule : throughModule.default,
 	rootDirPath = path.resolve("./"),
 	rootDirPathLen = rootDirPath.length + 1;
 

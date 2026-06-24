@@ -110,7 +110,7 @@ QUnit.test("templates", function(assert) {
 
 	tmpl2 = $.templates("#my_tmpl");
 	tmpl3 = $.templates("#my_tmpl");
-	assert.equal(tmpl2 === tmpl3 && $.trim(tmpl2.render(person)), "A_Jo_B", 'var tmpl = $.templates("#my_tmpl"); returns compiled template for script element');
+	assert.equal(tmpl2 === tmpl3 && tmpl2.render(person).trim(), "A_Jo_B", 'var tmpl = $.templates("#my_tmpl"); returns compiled template for script element');
 
 	$.templates({
 		my_tmpl3: {
@@ -118,17 +118,17 @@ QUnit.test("templates", function(assert) {
 		}
 	});
 
-	assert.equal($.render.my_tmpl3 === $.templates.my_tmpl3 && $.templates.my_tmpl3 !== tmpl2 && $.trim($.render.my_tmpl3(person)), "A_Jo_B", 'Named template for template object with selector: {markup: "#my_tmpl"}');
+	assert.equal($.render.my_tmpl3 === $.templates.my_tmpl3 && $.templates.my_tmpl3 !== tmpl2 && $.render.my_tmpl3(person).trim(), "A_Jo_B", 'Named template for template object with selector: {markup: "#my_tmpl"}');
 
 	tmpl3 = $.templates("", {
 		markup: "#my_tmpl"
 	});
-	assert.equal($.trim(tmpl3.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
+	assert.equal(tmpl3.render(person).trim(), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
 
 	var tmpl4 = $.templates({
 		markup: "#my_tmpl"
 	});
-	assert.equal($.trim(tmpl4.render(person)), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
+	assert.equal(tmpl4.render(person).trim(), "A_Jo_B", 'Compile from template object with selector, without registering: {markup: "#my_tmpl"}');
 
 	assert.equal($.templates("#my_tmpl"), $.templates("#my_tmpl"), '$.templates("#my_tmpl") caches compiled template, and does not recompile each time;');
 
@@ -175,7 +175,7 @@ QUnit.test("templates", function(assert) {
 });
 
 QUnit.test("render", function(assert) {
-	assert.equal($.trim($("#my_tmpl").render(person)), "A_Jo_B", '$(tmplSelector).render(data);'); // Trimming because IE adds whitespace
+	assert.equal($("#my_tmpl").render(person).trim(), "A_Jo_B", '$(tmplSelector).render(data);'); // Trimming because IE adds whitespace
 
 	var tmpl3 = $.templates("my_tmpl4", tmplString);
 
@@ -186,7 +186,7 @@ QUnit.test("render", function(assert) {
 	assert.equal(tmplObject.render(people), "A_Jo_BA_Bill_B", 'var tmplObject = $.templates.my_tmpl; tmplObject.render(data);');
 
 	$.templates("my_tmpl5", "A_{{for}}inner{{:name}}content{{/for}}_B");
-	assert.equal($.templates.my_tmpl5.tmpls[0].render(person), "innerJocontent", 'Nested template objects: $.templates.my_tmpl.tmpls');
+	assert.equal($.templates.my_tmpl5.tmpls[0].render(person).trim(), "innerJocontent", 'Nested template objects: $.templates.my_tmpl.tmpls');
 
 	$("#result").html("<script id='tmpl' type='text/x-jsrender'>Content{{for #data}}{{:#index}}{{/for}}{{:~foo}}</script>");
 	assert.equal($("#tmpl").render([null,undefined,1], {foo:"foovalue"}, true), (isIE8 ? "\n" : "") + "Content012foovalue", 'render(array, helpers, true) renders an array without iteration, while passing in helpers');
